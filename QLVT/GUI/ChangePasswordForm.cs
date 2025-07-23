@@ -14,7 +14,10 @@ namespace QLVT.GUI
 
         private void ChangePasswordForm_Load(object sender, EventArgs e)
         {
+            // Set focus to old password textbox
             txtOldPassword.Focus();
+            
+            // Clear error message
             lblError.Text = string.Empty;
         }
 
@@ -30,34 +33,28 @@ namespace QLVT.GUI
 
         private void txtNewPassword_TextChanged(object sender, EventArgs e)
         {
-            ValidatePasswords();
+            ValidatePasswordMatch();
         }
 
         private void txtConfirmPassword_TextChanged(object sender, EventArgs e)
         {
-            ValidatePasswords();
+            ValidatePasswordMatch();
         }
 
-        private void ValidatePasswords()
+        private void ValidatePasswordMatch()
         {
-            lblError.Text = string.Empty;
-
-            if (txtNewPassword.Text.Length > 0 && txtNewPassword.Text.Length < 6)
+            if (!string.IsNullOrEmpty(txtNewPassword.Text) && !string.IsNullOrEmpty(txtConfirmPassword.Text))
             {
-                ShowError("Mật khẩu mới phải có ít nhất 6 ký tự!");
-                return;
-            }
-
-            if (txtConfirmPassword.Text.Length > 0 && txtNewPassword.Text != txtConfirmPassword.Text)
-            {
-                ShowError("Mật khẩu xác nhận không khớp!");
-                return;
-            }
-
-            if (txtNewPassword.Text.Length >= 6 && txtNewPassword.Text == txtConfirmPassword.Text)
-            {
-                lblError.Text = "✓ Mật khẩu hợp lệ";
-                lblError.ForeColor = Color.Green;
+                if (txtNewPassword.Text != txtConfirmPassword.Text)
+                {
+                    ShowError("Mật khẩu xác nhận không khớp!");
+                    btnChange.Enabled = false;
+                }
+                else
+                {
+                    lblError.Text = string.Empty;
+                    btnChange.Enabled = true;
+                }
             }
         }
 
@@ -65,6 +62,7 @@ namespace QLVT.GUI
         {
             try
             {
+                // Clear previous error
                 lblError.Text = string.Empty;
 
                 // Get input values
@@ -73,23 +71,30 @@ namespace QLVT.GUI
                 string confirmPassword = txtConfirmPassword.Text;
 
                 // Validate input
-                if (string.IsNullOrEmpty(oldPassword))
+                if (string.IsNullOrWhiteSpace(oldPassword))
                 {
                     ShowError("Vui lòng nhập mật khẩu cũ!");
                     txtOldPassword.Focus();
                     return;
                 }
 
-                if (string.IsNullOrEmpty(newPassword))
+                if (string.IsNullOrWhiteSpace(newPassword))
                 {
                     ShowError("Vui lòng nhập mật khẩu mới!");
                     txtNewPassword.Focus();
                     return;
                 }
 
-                if (string.IsNullOrEmpty(confirmPassword))
+                if (string.IsNullOrWhiteSpace(confirmPassword))
                 {
-                    ShowError("Vui lòng xác nhận mật khẩu mới!");
+                    ShowError("Vui lòng xác nhận mật khẩu!");
+                    txtConfirmPassword.Focus();
+                    return;
+                }
+
+                if (newPassword != confirmPassword)
+                {
+                    ShowError("Mật khẩu xác nhận không khớp!");
                     txtConfirmPassword.Focus();
                     return;
                 }
@@ -101,13 +106,6 @@ namespace QLVT.GUI
                     return;
                 }
 
-                if (newPassword != confirmPassword)
-                {
-                    ShowError("Mật khẩu xác nhận không khớp!");
-                    txtConfirmPassword.Focus();
-                    return;
-                }
-
                 if (oldPassword == newPassword)
                 {
                     ShowError("Mật khẩu mới phải khác mật khẩu cũ!");
@@ -115,7 +113,7 @@ namespace QLVT.GUI
                     return;
                 }
 
-                // Disable buttons during processing
+                // Disable button during processing
                 btnChange.Enabled = false;
                 btnChange.Text = "Đang xử lý...";
 
@@ -131,6 +129,7 @@ namespace QLVT.GUI
                 else
                 {
                     ShowError(result.Message);
+                    txtOldPassword.Clear();
                     txtOldPassword.Focus();
                 }
             }
@@ -140,7 +139,7 @@ namespace QLVT.GUI
             }
             finally
             {
-                // Re-enable buttons
+                // Re-enable button
                 btnChange.Enabled = true;
                 btnChange.Text = "Đổi";
             }
@@ -156,15 +155,28 @@ namespace QLVT.GUI
         {
             if (keyData == Keys.Enter)
             {
-                PerformChangePassword();
-                return true;
+                if (txtOldPassword.Focused)
+                {
+                    txtNewPassword.Focus();
+                    return true;
+                }
+                else if (txtNewPassword.Focused)
+                {
+                    txtConfirmPassword.Focus();
+                    return true;
+                }
+                else if (txtConfirmPassword.Focused)
+                {
+                    PerformChangePassword();
+                    return true;
+                }
             }
             else if (keyData == Keys.Escape)
             {
                 this.Close();
                 return true;
             }
-            
+
             return base.ProcessDialogKey(keyData);
         }
     }
