@@ -166,6 +166,21 @@ namespace QLVT.GUI
                     case "SettingsForm":
                         ShowMessage("Chức năng cài đặt hệ thống sẽ được phát triển trong phiên bản tiếp theo.");
                         break;
+                    case "UnitsForm":
+                        ShowUnitsControl();
+                        break;
+                    case "ManufacturersForm":
+                        ShowManufacturersControl();
+                        break;
+                    case "SuppliesForm":
+                        ShowSuppliesControl();
+                        break;
+                    case "DepartmentsForm":
+                        ShowDepartmentsControl();
+                        break;
+                    case "StaffsForm":
+                        ShowStaffsControl();
+                        break;
                     default:
                         ShowMessage($"Chức năng '{menu.MenuName}' chưa được triển khai.");
                         break;
@@ -211,6 +226,116 @@ namespace QLVT.GUI
         private void ShowMessage(string message)
         {
             MessageBox.Show(message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void ShowUnitsControl()
+        {
+            try
+            {
+                // Clear existing controls
+                pnlMain.Controls.Clear();
+                
+                // Create and show Units UserControl
+                var unitsControl = new UnitsUserControl();
+                unitsControl.Dock = DockStyle.Fill;
+                pnlMain.Controls.Add(unitsControl);
+                
+                lblStatus.Text = "Đang hiển thị danh sách đơn vị tính";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị danh sách đơn vị tính: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi";
+            }
+        }
+
+        private void ShowManufacturersControl()
+        {
+            try
+            {
+                // Clear existing controls
+                pnlMain.Controls.Clear();
+                
+                // Create and show Manufacturers UserControl
+                var manufacturersControl = new ManufacturersUserControl();
+                manufacturersControl.Dock = DockStyle.Fill;
+                pnlMain.Controls.Add(manufacturersControl);
+                
+                lblStatus.Text = "Đang hiển thị danh sách nhà sản xuất";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị danh sách nhà sản xuất: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi";
+            }
+        }
+
+        private void ShowSuppliesControl()
+        {
+            try
+            {
+                // Clear existing controls
+                pnlMain.Controls.Clear();
+                
+                // Create and show Supplies UserControl
+                var suppliesControl = new SuppliesUserControl();
+                suppliesControl.Dock = DockStyle.Fill;
+                pnlMain.Controls.Add(suppliesControl);
+                
+                lblStatus.Text = "Đang hiển thị danh sách vật tư";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị danh sách vật tư: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi";
+            }
+        }
+
+        private void ShowDepartmentsControl()
+        {
+            try
+            {
+                // Clear existing controls
+                pnlMain.Controls.Clear();
+                
+                // Create and show Departments UserControl
+                var departmentsControl = new DepartmentsUserControl();
+                departmentsControl.Dock = DockStyle.Fill;
+                pnlMain.Controls.Add(departmentsControl);
+                
+                lblStatus.Text = "Đang hiển thị danh sách phòng ban";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị danh sách phòng ban: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi";
+            }
+        }
+
+        private void ShowStaffsControl()
+        {
+            try
+            {
+                // Clear existing controls
+                pnlMain.Controls.Clear();
+                
+                // Create and show Staffs UserControl
+                var staffsControl = new StaffsUserControl();
+                staffsControl.Dock = DockStyle.Fill;
+                pnlMain.Controls.Add(staffsControl);
+                
+                lblStatus.Text = "Đang hiển thị danh sách nhân viên";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị danh sách nhân viên: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi";
+            }
         }
 
         private void PerformLogout()

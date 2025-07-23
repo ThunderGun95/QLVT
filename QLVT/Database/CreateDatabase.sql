@@ -16,6 +16,68 @@ GO
 -- Create Tables
 -- ========================================
 
+-- Units Table (Đơn vị tính)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Units' AND xtype='U')
+BEGIN
+    CREATE TABLE Units (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaDVT NVARCHAR(10) NOT NULL UNIQUE,
+        TenDVT NVARCHAR(100) NOT NULL
+    );
+END
+GO
+
+-- Manufacturers Table (Nhà sản xuất)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Manufacturers' AND xtype='U')
+BEGIN
+    CREATE TABLE Manufacturers (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaNSX NVARCHAR(10) NOT NULL UNIQUE,
+        TenNSX NVARCHAR(200) NOT NULL
+    );
+END
+GO
+
+-- Supplies Table (Vật tư)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Supplies' AND xtype='U')
+BEGIN
+    CREATE TABLE Supplies (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        ErpId NVARCHAR(20) NULL,
+        Code NVARCHAR(20) NOT NULL UNIQUE,
+        TenVatTu NVARCHAR(500) NOT NULL,
+        DacTinhKyThuat NVARCHAR(1000) NULL,
+        MaDVT NVARCHAR(10) NOT NULL,
+        MaNSX NVARCHAR(10) NOT NULL,
+        FOREIGN KEY (MaDVT) REFERENCES Units(MaDVT),
+        FOREIGN KEY (MaNSX) REFERENCES Manufacturers(MaNSX)
+    );
+END
+GO
+
+-- Departments Table (Phòng ban)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Departments' AND xtype='U')
+BEGIN
+    CREATE TABLE Departments (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaPB NVARCHAR(10) NOT NULL UNIQUE,
+        TenPB NVARCHAR(200) NOT NULL
+    );
+END
+GO
+
+-- Staffs Table (Nhân viên)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Staffs' AND xtype='U')
+BEGIN
+    CREATE TABLE Staffs (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        ErpIdNV NVARCHAR(20) NULL,
+        MaNV NVARCHAR(15) NOT NULL UNIQUE,
+        TenNV NVARCHAR(100) NOT NULL
+    );
+END
+GO
+
 -- Users Table
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U')
 BEGIN
