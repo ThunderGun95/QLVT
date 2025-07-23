@@ -1,0 +1,219 @@
+-- ========================================
+-- QLVT Database Creation Script
+-- ========================================
+
+-- Create Database
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'QLVT_DB')
+BEGIN
+    CREATE DATABASE QLVT_DB;
+END
+GO
+
+USE QLVT_DB;
+GO
+
+-- ========================================
+-- Create Tables
+-- ========================================
+
+-- Users Table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U')
+BEGIN
+    CREATE TABLE Users (
+        UserID INT IDENTITY(1,1) PRIMARY KEY,
+        Username NVARCHAR(50) NOT NULL UNIQUE,
+        PasswordHash NVARCHAR(256) NOT NULL,
+        FullName NVARCHAR(100),
+        IsActive BIT DEFAULT 1,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        LastLogin DATETIME NULL
+    );
+END
+GO
+
+-- Roles Table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Roles' AND xtype='U')
+BEGIN
+    CREATE TABLE Roles (
+        RoleID INT IDENTITY(1,1) PRIMARY KEY,
+        RoleName NVARCHAR(50) NOT NULL UNIQUE,
+        Description NVARCHAR(200),
+        IsActive BIT DEFAULT 1
+    );
+END
+GO
+
+-- UserRoles Table (Many-to-Many relationship)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='UserRoles' AND xtype='U')
+BEGIN
+    CREATE TABLE UserRoles (
+        UserID INT NOT NULL,
+        RoleID INT NOT NULL,
+        AssignedDate DATETIME DEFAULT GETDATE(),
+        PRIMARY KEY(UserID, RoleID),
+        FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+        FOREIGN KEY (RoleID) REFERENCES Roles(RoleID) ON DELETE CASCADE
+    );
+END
+GO
+
+-- Menus Table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Menus' AND xtype='U')
+BEGIN
+    CREATE TABLE Menus (
+        MenuID INT IDENTITY(1,1) PRIMARY KEY,
+        MenuName NVARCHAR(100) NOT NULL,
+        ParentID INT NULL,
+        FormName NVARCHAR(100),
+        SortOrder INT DEFAULT 0,
+        MenuIcon NVARCHAR(50),
+        IsActive BIT DEFAULT 1,
+        FOREIGN KEY (ParentID) REFERENCES Menus(MenuID)
+    );
+END
+GO
+
+-- Permissions Table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Permissions' AND xtype='U')
+BEGIN
+    CREATE TABLE Permissions (
+        RoleID INT NOT NULL,
+        MenuID INT NOT NULL,
+        CanAccess BIT DEFAULT 1,
+        CanCreate BIT DEFAULT 0,
+        CanRead BIT DEFAULT 1,
+        CanUpdate BIT DEFAULT 0,
+        CanDelete BIT DEFAULT 0,
+        PRIMARY KEY(RoleID, MenuID),
+        FOREIGN KEY (RoleID) REFERENCES Roles(RoleID) ON DELETE CASCADE,
+        FOREIGN KEY (MenuID) REFERENCES Menus(MenuID) ON DELETE CASCADE
+    );
+END
+GO
+
+-- ========================================
+-- Insert Sample Data
+-- ========================================
+
+-- Insert Roles
+IF NOT EXISTS (SELECT * FROM Roles WHERE RoleName = 'Administrator')
+BEGIN
+    INSERT INTO Roles (RoleName, Description) VALUES 
+    ('Administrator', N'Quản trị viên hệ thống - có toàn quyền'),
+    ('Manager', N'Quản lý - có quyền hạn cao'),
+    ('User', N'Người dùng thường - quyền hạn giới hạn'),
+    ('Guest', N'Khách - chỉ xem');
+END
+GO
+
+-- Insert Sample Users (Password: "123456" -> SHA256)
+-- SHA256 of "123456": 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
+IF NOT EXISTS (SELECT * FROM Users WHERE Username = 'admin')
+BEGIN
+    INSERT INTO Users (Username, PasswordHash, FullName, IsActive) VALUES 
+    ('admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', N'Quản trị viên', 1),
+    ('manager', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', N'Nguyễn Văn Quản lý', 1),
+    ('user1', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', N'Trần Thị User', 1),
+    ('guest', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', N'Khách', 1);
+END
+GO
+
+-- Assign Roles to Users
+IF NOT EXISTS (SELECT * FROM UserRoles WHERE UserID = 1 AND RoleID = 1)
+BEGIN
+    INSERT INTO UserRoles (UserID, RoleID) VALUES 
+    (1, 1), -- admin has Administrator role
+    (2, 2), -- manager has Manager role
+    (3, 3), -- user1 has User role
+    (4, 4); -- guest has Guest role
+END
+GO
+
+-- Insert Menu Items
+IF NOT EXISTS (SELECT * FROM Menus WHERE MenuName = N'Hệ thống')
+BEGIN
+    INSERT INTO Menus (MenuName, ParentID, FormName, SortOrder, MenuIcon) VALUES 
+    -- Main Menus
+    (N'Hệ thống', NULL, NULL, 1, 'system'),
+    (N'Quản lý', NULL, NULL, 2, 'management'),
+    (N'Báo cáo', NULL, NULL, 3, 'report'),
+    (N'Tiện ích', NULL, NULL, 4, 'utilities'),
+    
+    -- System Sub-menus
+    (N'Thông tin tài khoản', 1, 'UserProfileForm', 1, 'user'),
+    (N'Đổi mật khẩu', 1, 'ChangePasswordForm', 2, 'password'),
+    (N'Quản lý người dùng', 1, 'UserManagementForm', 3, 'users'),
+    (N'Phân quyền', 1, 'PermissionForm', 4, 'permissions'),
+    (N'Đăng xuất', 1, 'LogoutAction', 5, 'logout'),
+    
+    -- Management Sub-menus
+    (N'Quản lý vật tư', 2, 'MaterialManagementForm', 1, 'materials'),
+    (N'Quản lý kho', 2, 'WarehouseManagementForm', 2, 'warehouse'),
+    (N'Nhập kho', 2, 'ImportForm', 3, 'import'),
+    (N'Xuất kho', 2, 'ExportForm', 4, 'export'),
+    
+    -- Report Sub-menus
+    (N'Báo cáo tồn kho', 3, 'InventoryReportForm', 1, 'inventory'),
+    (N'Báo cáo xuất nhập', 3, 'TransactionReportForm', 2, 'transaction'),
+    
+    -- Utilities Sub-menus
+    (N'Sao lưu dữ liệu', 4, 'BackupForm', 1, 'backup'),
+    (N'Cài đặt hệ thống', 4, 'SettingsForm', 2, 'settings');
+END
+GO
+
+-- Insert Permissions
+IF NOT EXISTS (SELECT * FROM Permissions WHERE RoleID = 1 AND MenuID = 1)
+BEGIN
+    -- Administrator - Full Access to All Menus
+    DECLARE @MenuCount INT = (SELECT COUNT(*) FROM Menus);
+    DECLARE @MenuID INT = 1;
+    
+    WHILE @MenuID <= @MenuCount
+    BEGIN
+        INSERT INTO Permissions (RoleID, MenuID, CanAccess, CanCreate, CanRead, CanUpdate, CanDelete) 
+        VALUES (1, @MenuID, 1, 1, 1, 1, 1);
+        SET @MenuID = @MenuID + 1;
+    END
+    
+    -- Manager - Access to most menus except user management
+    INSERT INTO Permissions (RoleID, MenuID, CanAccess, CanCreate, CanRead, CanUpdate, CanDelete) VALUES 
+    (2, 1, 1, 0, 1, 0, 0),  -- System menu
+    (2, 2, 1, 1, 1, 1, 0),  -- Management menu
+    (2, 3, 1, 0, 1, 0, 0),  -- Report menu
+    (2, 4, 1, 0, 1, 0, 0),  -- Utilities menu
+    (2, 5, 1, 0, 1, 1, 0),  -- User profile
+    (2, 6, 1, 0, 1, 1, 0),  -- Change password
+    (2, 9, 1, 0, 1, 0, 0),  -- Logout
+    (2, 10, 1, 1, 1, 1, 0), -- Material management
+    (2, 11, 1, 1, 1, 1, 0), -- Warehouse management
+    (2, 12, 1, 1, 1, 1, 0), -- Import
+    (2, 13, 1, 1, 1, 1, 0), -- Export
+    (2, 14, 1, 0, 1, 0, 0), -- Inventory report
+    (2, 15, 1, 0, 1, 0, 0); -- Transaction report
+    
+    -- User - Limited access
+    INSERT INTO Permissions (RoleID, MenuID, CanAccess, CanCreate, CanRead, CanUpdate, CanDelete) VALUES 
+    (3, 1, 1, 0, 1, 0, 0),  -- System menu
+    (3, 2, 1, 0, 1, 0, 0),  -- Management menu (limited)
+    (3, 5, 1, 0, 1, 1, 0),  -- User profile
+    (3, 6, 1, 0, 1, 1, 0),  -- Change password
+    (3, 9, 1, 0, 1, 0, 0),  -- Logout
+    (3, 10, 1, 0, 1, 0, 0), -- Material management (read only)
+    (3, 11, 1, 0, 1, 0, 0); -- Warehouse management (read only)
+    
+    -- Guest - Very limited access
+    INSERT INTO Permissions (RoleID, MenuID, CanAccess, CanCreate, CanRead, CanUpdate, CanDelete) VALUES 
+    (4, 1, 1, 0, 1, 0, 0),  -- System menu
+    (4, 5, 1, 0, 1, 0, 0),  -- User profile (read only)
+    (4, 6, 1, 0, 1, 1, 0),  -- Change password
+    (4, 9, 1, 0, 1, 0, 0);  -- Logout
+END
+GO
+
+PRINT 'Database and sample data created successfully!';
+PRINT 'Sample Login Accounts:';
+PRINT 'Username: admin, Password: 123456 (Administrator)';
+PRINT 'Username: manager, Password: 123456 (Manager)';
+PRINT 'Username: user1, Password: 123456 (User)';
+PRINT 'Username: guest, Password: 123456 (Guest)';
