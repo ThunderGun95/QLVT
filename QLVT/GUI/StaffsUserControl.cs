@@ -38,7 +38,8 @@ namespace QLVT.GUI
                 STT = index + 1,
                 ErpIdNV = staff.ErpIdNV,
                 MaNV = staff.MaNV,
-                TenNV = staff.TenNV
+                TenNV = staff.TenNV,
+                TenPB = staff.TenPB
             }).ToList();
 
             dgvStaffs.DataSource = displayList;
@@ -56,8 +57,11 @@ namespace QLVT.GUI
                 dgvStaffs.Columns["MaNV"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;   
                 dgvStaffs.Columns["MaNV"].Width = 120;
                 dgvStaffs.Columns["TenNV"].HeaderText = "Tên nhân viên";
-                dgvStaffs.Columns["TenNV"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;  
-                // dgvStaffs.Columns["TenNV"].Width = 200;
+                dgvStaffs.Columns["TenNV"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgvStaffs.Columns["TenPB"].HeaderText = "Phòng ban";
+                dgvStaffs.Columns["TenPB"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvStaffs.Columns["TenPB"].Width = 120;
+
             }
         }
 
@@ -83,7 +87,8 @@ namespace QLVT.GUI
                     STT = index + 1,
                     ErpIdNV = staff.ErpIdNV,
                     MaNV = staff.MaNV,
-                    TenNV = staff.TenNV
+                    TenNV = staff.TenNV,
+                    TenPB = staff.TenPB
                 }).ToList();
 
                 dgvStaffs.DataSource = displayList;
