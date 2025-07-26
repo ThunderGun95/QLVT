@@ -40,8 +40,7 @@ namespace QLVT.GUI
                 Code = supply.Code,
                 TenVatTu = supply.TenVatTu,
                 DacTinhKyThuat = supply.DacTinhKyThuat,
-                TenDVT = supply.TenDVT,
-                TenNSX = supply.TenNSX
+                TenDVT = supply.TenDVT
             }).ToList();
 
             dgvSupplies.DataSource = displayList;
@@ -67,9 +66,6 @@ namespace QLVT.GUI
                 dgvSupplies.Columns["TenDVT"].HeaderText = "Tên ĐVT";
                 dgvSupplies.Columns["TenDVT"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
                 dgvSupplies.Columns["TenDVT"].Width = 100;
-                dgvSupplies.Columns["TenNSX"].HeaderText = "Tên NSX";
-                dgvSupplies.Columns["TenNSX"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                dgvSupplies.Columns["TenNSX"].Width = 150;
             }
         }
 
@@ -97,8 +93,7 @@ namespace QLVT.GUI
                     Code = supply.Code,
                     TenVatTu = supply.TenVatTu,
                     DacTinhKyThuat = supply.DacTinhKyThuat,
-                    TenDVT = supply.TenDVT,
-                    TenNSX = supply.TenNSX
+                    TenDVT = supply.TenDVT
                 }).ToList();
 
                 dgvSupplies.DataSource = displayList;

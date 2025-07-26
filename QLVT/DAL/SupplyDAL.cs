@@ -16,10 +16,9 @@ namespace QLVT.DAL
             
             string sql = @"
                 SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat, 
-                       u.TenDVT, m.TenNSX
+                       u.TenDVT
                 FROM Supplies s
                 LEFT JOIN Units u ON s.MaDVT = u.MaDVT
-                LEFT JOIN Manufacturers m ON s.MaNSX = m.MaNSX
                 ORDER BY s.Code";
 
             using (var connection = DatabaseHelper.GetConnection())
@@ -33,12 +32,11 @@ namespace QLVT.DAL
                         {
                             supplies.Add(new Supply
                             {
-                                ErpId = reader["ErpId"] == DBNull.Value ? null : Convert.ToString(reader["ErpId"]),
+                                ErpId = Convert.ToInt32(reader["ErpId"]),
                                 Code = Convert.ToString(reader["Code"]) ?? string.Empty,
                                 TenVatTu = Convert.ToString(reader["TenVatTu"]) ?? string.Empty,
                                 DacTinhKyThuat = reader["DacTinhKyThuat"] == DBNull.Value ? null : Convert.ToString(reader["DacTinhKyThuat"]),
-                                TenDVT = reader["TenDVT"] == DBNull.Value ? null : Convert.ToString(reader["TenDVT"]),
-                                TenNSX = reader["TenNSX"] == DBNull.Value ? null : Convert.ToString(reader["TenNSX"])
+                                TenDVT = reader["TenDVT"] == DBNull.Value ? null : Convert.ToString(reader["TenDVT"])
                             });
                         }
                     }
@@ -58,10 +56,9 @@ namespace QLVT.DAL
             
             string sql = @"
                 SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat, 
-                       u.TenDVT, m.TenNSX
+                       u.TenDVT
                 FROM Supplies s
                 LEFT JOIN Units u ON s.MaDVT = u.MaDVT
-                LEFT JOIN Manufacturers m ON s.MaNSX = m.MaNSX
                 WHERE s.ErpId LIKE @keyword 
                    OR s.Code LIKE @keyword 
                    OR s.TenVatTu LIKE @keyword
@@ -69,7 +66,6 @@ namespace QLVT.DAL
                    OR s.MaDVT LIKE @keyword
                    OR s.MaNSX LIKE @keyword
                    OR u.TenDVT LIKE @keyword
-                   OR m.TenNSX LIKE @keyword
                 ORDER BY s.Code";
 
             using (var connection = DatabaseHelper.GetConnection())
@@ -85,12 +81,11 @@ namespace QLVT.DAL
                         {
                             supplies.Add(new Supply
                             {
-                                ErpId = reader["ErpId"] == DBNull.Value ? null : Convert.ToString(reader["ErpId"]),
+                                ErpId = Convert.ToInt32(reader["ErpId"]),
                                 Code = Convert.ToString(reader["Code"]) ?? string.Empty,
                                 TenVatTu = Convert.ToString(reader["TenVatTu"]) ?? string.Empty,
                                 DacTinhKyThuat = reader["DacTinhKyThuat"] == DBNull.Value ? null : Convert.ToString(reader["DacTinhKyThuat"]),
-                                TenDVT = reader["TenDVT"] == DBNull.Value ? null : Convert.ToString(reader["TenDVT"]),
-                                TenNSX = reader["TenNSX"] == DBNull.Value ? null : Convert.ToString(reader["TenNSX"])
+                                TenDVT = reader["TenDVT"] == DBNull.Value ? null : Convert.ToString(reader["TenDVT"])
                             });
                         }
                     }

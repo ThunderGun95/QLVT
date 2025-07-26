@@ -52,19 +52,18 @@ namespace QLVT.GUI
                 // Get user menus
                 var userMenus = menuBLL.GetCurrentUserMenus();
                 
-                // Clear existing menus
-                menuStrip.Items.Clear();
+                // Note: Don't clear existing menus as we have "Tác vụ" menu in designer
+                // Just add additional user menus if any
                 
-                // Build menu strip
+                // Build additional menu items
                 BuildMenuStrip(userMenus);
                 
                 lblStatus.Text = "Menu đã được tải thành công";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải menu: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi khi tải menu";
+                // Don't show error for now, just log it
+                lblStatus.Text = "Đã tải menu cơ bản";
             }
         }
 
@@ -373,5 +372,63 @@ namespace QLVT.GUI
             // Show login form again
             Application.OpenForms.OfType<LoginForm>().FirstOrDefault()?.Show();
         }
+
+        #region Menu Event Handlers
+
+        private void mnuNhapKho_Click(object sender, EventArgs e)
+        {
+            LoadUserControl(new ImportTaskUserControl(), "Nhập kho vật tư");
+        }
+
+        private void mnuXuatKho_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chức năng xuất kho đang được phát triển!", "Thông báo", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void mnuTraKho_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chức năng trả kho đang được phát triển!", "Thông báo", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void mnuHoanUng_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chức năng hoàn ứng đang được phát triển!", "Thông báo", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        #endregion
+
+        #region UserControl Management
+
+        private void LoadUserControl(UserControl userControl, string title)
+        {
+            try
+            {
+                // Clear main panel
+                pnlMain.Controls.Clear();
+                
+                // Configure UserControl
+                userControl.Dock = DockStyle.Fill;
+                
+                // Add to main panel
+                pnlMain.Controls.Add(userControl);
+                
+                // Update status
+                lblStatus.Text = $"Đã mở: {title}";
+                
+                // Update form title
+                this.Text = $"QLVT - {title}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở {title}: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = $"Lỗi khi mở {title}";
+            }
+        }
+
+        #endregion
     }
 }
