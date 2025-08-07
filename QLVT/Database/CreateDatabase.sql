@@ -273,6 +273,167 @@ BEGIN
 END
 GO
 
+-- ========================================
+-- Inventory Management Tables
+-- ========================================
+
+-- Warehouses Table (Kho)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Warehouses' AND xtype='U')
+BEGIN
+    CREATE TABLE Warehouses (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaKho NVARCHAR(20) NOT NULL UNIQUE,
+        TenKho NVARCHAR(100) NOT NULL,
+        LoaiKho NVARCHAR(20) NOT NULL, -- 'COMPANY' hoặc 'PERSONAL'
+        MaNV NVARCHAR(20) NULL, -- Chỉ có giá trị nếu LoaiKho = 'PERSONAL'
+        DiaChi NVARCHAR(255) NULL,
+        GhiChu NVARCHAR(255) NULL,
+        IsActive BIT DEFAULT 1,
+        CreatedDate DATETIME DEFAULT GETDATE()
+    );
+    
+    CREATE INDEX IX_Warehouses_MaKho ON Warehouses(MaKho);
+    CREATE INDEX IX_Warehouses_LoaiKho ON Warehouses(LoaiKho);
+    PRINT N'✅ Đã tạo bảng Warehouses';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng Warehouses đã tồn tại';
+END
+GO
+
+-- Inventory Table (Tồn kho)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Inventory' AND xtype='U')
+BEGIN
+    CREATE TABLE Inventory (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaKho NVARCHAR(20) NOT NULL,
+        ErpId INT NOT NULL, -- Mã vật tư
+        SoLuongTon INT NOT NULL DEFAULT 0, -- Số lượng có thực
+        SoLuongNo INT NOT NULL DEFAULT 0, -- Số lượng nợ (chỉ áp dụng kho cá nhân)
+        LastUpdated DATETIME DEFAULT GETDATE(),
+        
+        FOREIGN KEY (MaKho) REFERENCES Warehouses(MaKho),
+        UNIQUE(MaKho, ErpId) -- Mỗi vật tư chỉ có 1 record trong 1 kho
+    );
+    
+    CREATE INDEX IX_Inventory_MaKho ON Inventory(MaKho);
+    CREATE INDEX IX_Inventory_ErpId ON Inventory(ErpId);
+    PRINT N'✅ Đã tạo bảng Inventory';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng Inventory đã tồn tại';
+END
+GO
+
+-- Transactions Table (Giao dịch)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Transactions' AND xtype='U')
+BEGIN
+    CREATE TABLE Transactions (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        SoPhieu NVARCHAR(50) NOT NULL UNIQUE,
+        NgayGiaoDich DATETIME NOT NULL DEFAULT GETDATE(),
+        LoaiGiaoDich NVARCHAR(20) NOT NULL, -- 'NhapKho', 'XuatKho', 'TraKho', 'HoanUng'
+        MaKhoNguon NVARCHAR(20) NULL, -- Kho xuất (null với nhập kho)
+        MaKhoNhan NVARCHAR(20) NULL, -- Kho nhận (null với hoàn ứng)
+        MaNV NVARCHAR(20) NOT NULL, -- Nhân viên thực hiện
+        GhiChu NVARCHAR(255) NULL,
+        CreatedBy NVARCHAR(50) NOT NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        
+        -- Entity references cho từng loại giao dịch
+        EntityNhapKho NVARCHAR(100) NULL, -- Phiếu ERP hoặc nguồn nhập
+        EntityXuatKho NVARCHAR(100) NULL, -- Lý do xuất (dự án, công việc)
+        EntityTraKho NVARCHAR(100) NULL, -- Lý do trả
+        EntityHoanUng NVARCHAR(100) NULL, -- Lý do hoàn ứng
+        
+        FOREIGN KEY (MaKhoNguon) REFERENCES Warehouses(MaKho),
+        FOREIGN KEY (MaKhoNhan) REFERENCES Warehouses(MaKho)
+    );
+    
+    CREATE INDEX IX_Transactions_SoPhieu ON Transactions(SoPhieu);
+    CREATE INDEX IX_Transactions_LoaiGiaoDich ON Transactions(LoaiGiaoDich);
+    CREATE INDEX IX_Transactions_NgayGiaoDich ON Transactions(NgayGiaoDich);
+    PRINT N'✅ Đã tạo bảng Transactions';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng Transactions đã tồn tại';
+END
+GO
+
+-- TransactionDetails Table (Chi tiết giao dịch)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransactionDetails' AND xtype='U')
+BEGIN
+    CREATE TABLE TransactionDetails (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        TransactionId INT NOT NULL,
+        ErpId INT NOT NULL, -- Mã vật tư
+        SoLuong INT NOT NULL,
+        GhiChu NVARCHAR(255) NULL,
+        
+        FOREIGN KEY (TransactionId) REFERENCES Transactions(Id) ON DELETE CASCADE
+    );
+    
+    CREATE INDEX IX_TransactionDetails_TransactionId ON TransactionDetails(TransactionId);
+    CREATE INDEX IX_TransactionDetails_ErpId ON TransactionDetails(ErpId);
+    PRINT N'✅ Đã tạo bảng TransactionDetails';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng TransactionDetails đã tồn tại';
+END
+GO
+
+-- Opening Inventory Table (Tồn kho đầu kỳ)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='OpeningInventory' AND xtype='U')
+BEGIN
+    CREATE TABLE OpeningInventory (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MaKho NVARCHAR(20) NOT NULL,
+        SupplyId INT NOT NULL,
+        SoLuongTonDauKy INT NOT NULL,
+        NgayNhapTon DATETIME NOT NULL DEFAULT GETDATE(),
+        NguoiNhap NVARCHAR(50) NOT NULL,
+        GhiChu NVARCHAR(255) NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        
+        FOREIGN KEY (MaKho) REFERENCES Warehouses(MaKho),
+        FOREIGN KEY (SupplyId) REFERENCES Supplies(Id),
+        UNIQUE(MaKho, SupplyId) -- Mỗi vật tư chỉ có 1 record tồn đầu kỳ trong 1 kho
+    );
+    
+    CREATE INDEX IX_OpeningInventory_MaKho ON OpeningInventory(MaKho);
+    CREATE INDEX IX_OpeningInventory_NgayNhapTon ON OpeningInventory(NgayNhapTon);
+    PRINT N'✅ Đã tạo bảng OpeningInventory';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng OpeningInventory đã tồn tại';
+END
+GO
+
+-- ========================================
+-- Insert Sample Warehouse Data
+-- ========================================
+
+-- Insert sample warehouses
+IF NOT EXISTS (SELECT * FROM Warehouses WHERE MaKho = 'COMPANY')
+BEGIN
+    INSERT INTO Warehouses (MaKho, TenKho, LoaiKho, DiaChi, GhiChu) VALUES 
+    ('COMPANY', N'Kho công ty chính', 'COMPANY', N'Tầng 1, Tòa nhà ABC', N'Kho chính của công ty'),
+    ('KHO_NV001', N'Kho cá nhân NV001', 'PERSONAL', N'Phòng kỹ thuật', N'Kho cá nhân nhân viên NV001'),
+    ('KHO_NV002', N'Kho cá nhân NV002', 'PERSONAL', N'Phòng thiết kế', N'Kho cá nhân nhân viên NV002');
+    
+    PRINT N'✅ Đã thêm dữ liệu mẫu Warehouses';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Dữ liệu mẫu Warehouses đã tồn tại';
+END
+GO
+
 PRINT 'Database and sample data created successfully!';
 PRINT 'Sample Login Accounts:';
 PRINT 'Username: admin, Password: 123456 (Administrator)';

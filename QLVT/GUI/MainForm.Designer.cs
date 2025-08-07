@@ -34,6 +34,7 @@ namespace QLVT.GUI
             this.mnuXuatKho = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuTraKho = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHoanUng = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuNhapTonDauKy = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblUser = new System.Windows.Forms.ToolStripStatusLabel();
@@ -60,6 +61,8 @@ namespace QLVT.GUI
             // mnuTacVu
             // 
             this.mnuTacVu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuNhapTonDauKy,
+            new System.Windows.Forms.ToolStripSeparator(),
             this.mnuNhapKho,
             this.mnuXuatKho,
             this.mnuTraKho,
@@ -68,31 +71,38 @@ namespace QLVT.GUI
             this.mnuTacVu.Size = new System.Drawing.Size(55, 20);
             this.mnuTacVu.Text = "Tác vụ";
             // 
+            // mnuNhapTonDauKy
+            // 
+            this.mnuNhapTonDauKy.Name = "mnuNhapTonDauKy";
+            this.mnuNhapTonDauKy.Size = new System.Drawing.Size(200, 22);
+            this.mnuNhapTonDauKy.Text = "📋 Nhập tồn đầu kỳ";
+            this.mnuNhapTonDauKy.Click += new System.EventHandler(this.mnuNhapTonDauKy_Click);
+            // 
             // mnuNhapKho
             // 
             this.mnuNhapKho.Name = "mnuNhapKho";
-            this.mnuNhapKho.Size = new System.Drawing.Size(162, 22);
+            this.mnuNhapKho.Size = new System.Drawing.Size(200, 22);
             this.mnuNhapKho.Text = "📦 Nhập kho vật tư";
             this.mnuNhapKho.Click += new System.EventHandler(this.mnuNhapKho_Click);
             // 
             // mnuXuatKho
             // 
             this.mnuXuatKho.Name = "mnuXuatKho";
-            this.mnuXuatKho.Size = new System.Drawing.Size(162, 22);
+            this.mnuXuatKho.Size = new System.Drawing.Size(200, 22);
             this.mnuXuatKho.Text = "📤 Xuất kho vật tư";
             this.mnuXuatKho.Click += new System.EventHandler(this.mnuXuatKho_Click);
             // 
             // mnuTraKho
             // 
             this.mnuTraKho.Name = "mnuTraKho";
-            this.mnuTraKho.Size = new System.Drawing.Size(162, 22);
+            this.mnuTraKho.Size = new System.Drawing.Size(200, 22);
             this.mnuTraKho.Text = "🔄 Trả kho vật tư";
             this.mnuTraKho.Click += new System.EventHandler(this.mnuTraKho_Click);
             // 
             // mnuHoanUng
             // 
             this.mnuHoanUng.Name = "mnuHoanUng";
-            this.mnuHoanUng.Size = new System.Drawing.Size(162, 22);
+            this.mnuHoanUng.Size = new System.Drawing.Size(200, 22);
             this.mnuHoanUng.Text = "↩️ Hoàn ứng vật tư";
             this.mnuHoanUng.Click += new System.EventHandler(this.mnuHoanUng_Click);
             // 
@@ -186,6 +196,7 @@ namespace QLVT.GUI
 
         private System.Windows.Forms.MenuStrip menuStrip;
         private System.Windows.Forms.ToolStripMenuItem mnuTacVu;
+        private System.Windows.Forms.ToolStripMenuItem mnuNhapTonDauKy;
         private System.Windows.Forms.ToolStripMenuItem mnuNhapKho;
         private System.Windows.Forms.ToolStripMenuItem mnuXuatKho;
         private System.Windows.Forms.ToolStripMenuItem mnuTraKho;

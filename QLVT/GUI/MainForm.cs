@@ -375,6 +375,11 @@ namespace QLVT.GUI
 
         #region Menu Event Handlers
 
+        private void mnuNhapTonDauKy_Click(object sender, EventArgs e)
+        {
+            LoadUserControl(new OpeningInventoryUserControl(), "Nhập tồn đầu kỳ");
+        }
+
         private void mnuNhapKho_Click(object sender, EventArgs e)
         {
             LoadUserControl(new ImportTaskUserControl(), "Nhập kho vật tư");
