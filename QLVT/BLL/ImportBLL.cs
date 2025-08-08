@@ -43,10 +43,10 @@ namespace QLVT.BLL
                 // Thực hiện mapping tự động cho từng chi tiết
                 foreach (var detail in order.ChiTiet)
                 {
-                    var supply = supplyMappingDAL.FindSupplyByERPCode(detail.MaVatTu);
+                    var supply = supplyMappingDAL.FindSupplyByERPCode(detail.MaVatTuHangHoa);
                     if (supply != null)
                     {
-                        detail.MappedSupplyErpId = supply.ErpId;
+                        detail.MappedSupplyId = supply.ErpId;
                         detail.MappedSupplyCode = supply.Code;
                         detail.MappedSupplyName = supply.TenVatTu;
                         detail.MappedUnit = supply.TenDVT;
@@ -138,8 +138,8 @@ namespace QLVT.BLL
                     throw new ArgumentException("Chưa chọn nhân viên thực hiện");
 
                 // Kiểm tra lại phiếu đã xử lý chưa
-                if (erpImportDAL.IsImportOrderProcessed(order.SoPhieu, 2025))
-                    throw new Exception($"Phiếu {order.SoPhieu} đã được xử lý rồi");
+                if (erpImportDAL.IsImportOrderProcessed(order.SoPhieuNhapKho, order.NAM))
+                    throw new Exception($"Phiếu {order.SoPhieuNhapKho}-{order.NAM} đã được xử lý rồi");
 
                 // Thực hiện nhập kho
                 return importTransactionDAL.CreateImportTransaction(order, warehouseId, createdBy, staffCode);

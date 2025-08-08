@@ -43,9 +43,9 @@ namespace QLVT.DAL
                             command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Now);
                             command.Parameters.AddWithValue("@warehouseId", warehouseId);
                             command.Parameters.AddWithValue("@maNV", staffCode);
-                            command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieu}-{order.Nam} - {order.TenKho}");
+                            command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieuNhapKho}-{order.NAM} - {order.TenKho}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
-                            command.Parameters.AddWithValue("@entityNhapKho", $"{order.SoPhieu}-{order.Nam}");
+                            command.Parameters.AddWithValue("@entityNhapKho", $"{order.SoPhieuNhapKho}-{order.NAM}");
                             
                             transactionId = Convert.ToInt32(command.ExecuteScalar());
                         }
@@ -61,14 +61,14 @@ namespace QLVT.DAL
                             using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@transactionId", transactionId);
-                                command.Parameters.AddWithValue("@supplyId", detail.MappedSupplyErpId!.Value);
-                                command.Parameters.AddWithValue("@soLuong", detail.SoLuong);
+                                command.Parameters.AddWithValue("@supplyId", detail.MappedSupplyId!.Value);
+                                command.Parameters.AddWithValue("@soLuong", detail.SoLuongNhapKho);
                                 
                                 command.ExecuteNonQuery();
                             }
 
                             // Cập nhật inventory
-                            UpdateInventory(connection, transaction, warehouseId, detail.MappedSupplyErpId!.Value, detail.SoLuong);
+                            UpdateInventory(connection, transaction, warehouseId, detail.MappedSupplyId!.Value, detail.SoLuongNhapKho);
                         }
 
                         transaction.Commit();

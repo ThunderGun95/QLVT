@@ -6,14 +6,17 @@ namespace QLVT.Models
     public class ERPImportOrder
     {
         public int MaPhieuNhapKhoVatTu { get; set; }
-        public string SoPhieu { get; set; } = string.Empty;
-        public int Nam { get; set; }
+        public string SoPhieuNhapKho { get; set; } = string.Empty;
+        public int NAM { get; set; }
         public string TenKho { get; set; } = string.Empty;
         public string MaKhoVatTu { get; set; } = string.Empty;
-        public DateTime NgayTao { get; set; }
-        public string NguoiTao { get; set; } = string.Empty;
-        public string TrangThai { get; set; } = string.Empty;
-        public string GhiChu { get; set; } = string.Empty;
+        public DateTime ThoiGianHoanThanhNhapKho { get; set; }
+        public string MaNhanVienMua { get; set; } = string.Empty;
+        public string NhanVienMua { get; set; } = string.Empty;
+        
+        // Computed property để hiển thị số phiếu đầy đủ
+        public string SoPhieuDayDu => $"{SoPhieuNhapKho}-{NAM}";
+        
         public List<ERPImportOrderDetail> ChiTiet { get; set; } = new();
     }
 
@@ -23,21 +26,20 @@ namespace QLVT.Models
     public class ERPImportOrderDetail
     {
         public int MaPhieuNhapKhoVatTu { get; set; }
-        public string MaVatTu { get; set; } = string.Empty;
+        public string MaVatTuHangHoa { get; set; } = string.Empty;
         public string TenVatTu { get; set; } = string.Empty;
         public string DacTinhKyThuat { get; set; } = string.Empty;
-        public decimal SoLuong { get; set; }
+        public decimal SoLuongNhapKho { get; set; }
         public string DonViTinh { get; set; } = string.Empty;
         public string MaNhaSanXuat { get; set; } = string.Empty;
         public string TenNhaSanXuat { get; set; } = string.Empty;
-        public string VatTuHangHoa { get; set; } = string.Empty;
         
         // Thông tin mapping với hệ thống QLVT
-        public int? MappedSupplyErpId { get; set; }
+        public int? MappedSupplyId { get; set; }
         public string? MappedSupplyCode { get; set; }
         public string? MappedSupplyName { get; set; }
         public string? MappedUnit { get; set; }
-        public bool IsMapped => MappedSupplyErpId.HasValue;
+        public bool IsMapped => MappedSupplyId.HasValue;
     }
 
     /// <summary>

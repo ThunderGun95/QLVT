@@ -44,11 +44,7 @@ namespace QLVT.GUI
             try
             {
                 warehouses = importBLL.GetWarehouses();
-                
-                cmbKho.DataSource = warehouses;
-                cmbKho.DisplayMember = "TenKho";
-                cmbKho.ValueMember = "Id";
-                cmbKho.SelectedIndex = -1;
+                // Bỏ cmbKho - không cần dropdown kho nữa
             }
             catch (Exception ex)
             {
@@ -75,9 +71,9 @@ namespace QLVT.GUI
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "MaVatTu",
+                Name = "MaVatTuHangHoa",
                 HeaderText = "Mã VT",
-                DataPropertyName = "MaVatTu",
+                DataPropertyName = "MaVatTuHangHoa",
                 Width = 100
             });
 
@@ -91,9 +87,9 @@ namespace QLVT.GUI
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "SoLuong",
+                Name = "SoLuongNhapKho",
                 HeaderText = "Số lượng",
-                DataPropertyName = "SoLuong",
+                DataPropertyName = "SoLuongNhapKho",
                 Width = 80,
                 DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
             });
@@ -108,10 +104,10 @@ namespace QLVT.GUI
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "NhaSanXuat",
+                Name = "TenNhaSanXuat",
                 HeaderText = "Nhà sản xuất",
-                DataPropertyName = "NhaSanXuat",
-                Width = 80
+                DataPropertyName = "TenNhaSanXuat",
+                Width = 300
             });
 
             // Event để hiển thị STT và màu sắc
@@ -217,7 +213,7 @@ namespace QLVT.GUI
             if (unmapped == 0)
             {
                 lblMappingStatus.ForeColor = Color.Green;
-                btnXacNhan.Enabled = cmbKho.SelectedIndex >= 0;
+                btnXacNhan.Enabled = true; // Bỏ điều kiện cmbKho
             }
             else
             {
@@ -228,11 +224,11 @@ namespace QLVT.GUI
 
         private void DisplayOrderInfo(ERPImportOrder order)
         {
-            lblSoPhieu.Text = order.SoPhieu;
-            lblNgayTao.Text = order.NgayTao.ToString("dd/MM/yyyy HH:mm");
-            lblNguoiTao.Text = order.NguoiTao;
-            lblTrangThai.Text = order.TrangThai;
-            txtGhiChu.Text = order.GhiChu;
+            lblSoPhieu.Text = $"{order.SoPhieuNhapKho}-{order.NAM}"; // Hiển thị đầy đủ số-năm
+            lblNgayTao.Text = order.ThoiGianHoanThanhNhapKho.ToString("dd/MM/yyyy HH:mm");
+            lblKhoNhap.Text = GetWarehouseName(order.MaKhoVatTu); // Hiển thị tên kho từ mã kho
+            lblNguoiTao.Text = order.NhanVienMua;
+            lblTrangThai.Text = "Hoàn thành"; // Vì đã filter TrangThai = 'HoanThanh'
         }
 
         private void ClearOrderInfo()
@@ -240,35 +236,56 @@ namespace QLVT.GUI
             currentOrder = null;
             lblSoPhieu.Text = "-";
             lblNgayTao.Text = "-";
-            lblNhaCungCap.Text = "-";
+            lblKhoNhap.Text = "-"; // Thay vì lblNhaCungCap
             lblNguoiTao.Text = "-";
             lblTrangThai.Text = "-";
-            txtGhiChu.Text = "";
+            // Bỏ txtGhiChu.Text = "";
             lblMappingStatus.Text = "Chưa có dữ liệu";
             lblMappingStatus.ForeColor = Color.Black;
             dgvChiTiet.DataSource = null;
             btnXacNhan.Enabled = false;
-            cmbKho.SelectedIndex = -1;
+            // Bỏ cmbKho.SelectedIndex = -1;
         }
 
-        private void cmbKho_SelectedIndexChanged(object sender, EventArgs e)
+        /// <summary>
+        /// Lấy tên kho từ mã kho
+        /// </summary>
+        /// <param name="maKho">Mã kho từ ERP</param>
+        /// <returns>Tên kho hoặc mã kho nếu không tìm thấy</returns>
+        private string GetWarehouseName(string maKho)
         {
-            UpdateMappingStatus();
+            try
+            {
+                if (string.IsNullOrEmpty(maKho))
+                    return "-";
+
+                var warehouse = warehouses.FirstOrDefault(w => w.MaKho == maKho);
+                return warehouse != null ? warehouse.TenKho : maKho;
+            }
+            catch
+            {
+                return maKho;
+            }
         }
 
         private void btnXacNhan_Click(object sender, EventArgs e)
         {
-            if (currentOrder == null || cmbKho.SelectedValue == null)
+            if (currentOrder == null)
                 return;
 
-            var selectedWarehouse = warehouses.FirstOrDefault(w => w.Id == (int)cmbKho.SelectedValue);
-            if (selectedWarehouse == null)
+            // Sử dụng kho mặc định là "COMPANY" vì đã bỏ dropdown kho
+            var defaultWarehouse = warehouses.FirstOrDefault(w => w.MaKho == currentOrder.MaKhoVatTu);
+
+            if (defaultWarehouse == null)
+            {
+                MessageBox.Show("Không tìm thấy kho để nhập hàng!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
 
             var result = MessageBox.Show(
                 $"Xác nhận nhập kho?\n\n" +
-                $"Số phiếu: {currentOrder.SoPhieu}\n" +
-                $"Kho đích: {selectedWarehouse.TenKho}\n" +
+                $"Số phiếu: {currentOrder.SoPhieuDayDu}\n" +
+                $"Kho đích: {defaultWarehouse.TenKho}\n" +
                 $"Số mặt hàng: {currentOrder.ChiTiet.Count(d => d.IsMapped)}",
                 "Xác nhận nhập kho",
                 MessageBoxButtons.YesNo,
@@ -276,11 +293,11 @@ namespace QLVT.GUI
 
             if (result == DialogResult.Yes)
             {
-                ProcessImportOrder();
+                ProcessImportOrder(defaultWarehouse);
             }
         }
 
-        private void ProcessImportOrder()
+        private void ProcessImportOrder(Warehouse warehouse)
         {
             try
             {
@@ -288,18 +305,17 @@ namespace QLVT.GUI
                 lblStatus.ForeColor = Color.Blue;
                 btnXacNhan.Enabled = false;
 
-                int warehouseId = (int)cmbKho.SelectedValue;
                 string createdBy = "admin"; // TODO: Lấy từ session
                 string staffCode = "NV001"; // TODO: Lấy từ session hoặc chọn
 
-                int transactionId = importBLL.ProcessImport(currentOrder!, warehouseId, createdBy, staffCode);
+                int transactionId = importBLL.ProcessImport(currentOrder!, warehouse.Id, createdBy, staffCode);
 
                 lblStatus.Text = "✅ Đã nhập kho thành công";
                 lblStatus.ForeColor = Color.Green;
 
                 MessageBox.Show($"Đã nhập kho thành công!\n" +
                               $"Mã giao dịch: NK{DateTime.Now:yyyyMMddHHmmss}\n" +
-                              $"Phiếu ERP: {currentOrder?.SoPhieu}", 
+                              $"Phiếu ERP: {currentOrder?.SoPhieuDayDu}", 
                     "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // Clear form sau khi nhập thành công

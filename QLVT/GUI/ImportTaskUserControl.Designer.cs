@@ -9,14 +9,12 @@ namespace QLVT.GUI
         private Label lblSoPhieu;
         private Label lblNgayTaoLabel;
         private Label lblNgayTao;
-        private Label lblNhaCungCapLabel;
-        private Label lblNhaCungCap;
+        private Label lblKhoNhapLabel;
+        private Label lblKhoNhap;
         private Label lblNguoiTaoLabel;
         private Label lblNguoiTao;
         private Label lblTrangThaiLabel;
         private Label lblTrangThai;
-        private Label lblGhiChuLabel;
-        private TextBox txtGhiChu;
         private GroupBox grpTimKiem;
         private Label lblSoPhieuTimLabel;
         private TextBox txtSoPhieu;
@@ -25,9 +23,6 @@ namespace QLVT.GUI
         private Button btnTimPhieu;
         private Button btnRefresh;
         private Label lblConnectionStatus;
-        private GroupBox grpKho;
-        private Label lblKhoLabel;
-        private ComboBox cmbKho;
         private GroupBox grpChiTiet;
         private DataGridView dgvChiTiet;
         private Label lblMappingStatus;
@@ -60,17 +55,12 @@ namespace QLVT.GUI
             lblSoPhieu = new Label();
             lblNgayTaoLabel = new Label();
             lblNgayTao = new Label();
-            lblNhaCungCapLabel = new Label();
-            lblNhaCungCap = new Label();
+            lblKhoNhapLabel = new Label();
+            lblKhoNhap = new Label();
             lblNguoiTaoLabel = new Label();
             lblNguoiTao = new Label();
             lblTrangThaiLabel = new Label();
             lblTrangThai = new Label();
-            lblGhiChuLabel = new Label();
-            txtGhiChu = new TextBox();
-            grpKho = new GroupBox();
-            lblKhoLabel = new Label();
-            cmbKho = new ComboBox();
             grpChiTiet = new GroupBox();
             lblMappingStatus = new Label();
             dgvChiTiet = new DataGridView();
@@ -79,7 +69,6 @@ namespace QLVT.GUI
             lblStatus = new Label();
             grpTimKiem.SuspendLayout();
             grpPhieuInfo.SuspendLayout();
-            grpKho.SuspendLayout();
             grpChiTiet.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).BeginInit();
             SuspendLayout();
@@ -196,18 +185,16 @@ namespace QLVT.GUI
             grpPhieuInfo.Controls.Add(lblSoPhieu);
             grpPhieuInfo.Controls.Add(lblNgayTaoLabel);
             grpPhieuInfo.Controls.Add(lblNgayTao);
-            grpPhieuInfo.Controls.Add(lblNhaCungCapLabel);
-            grpPhieuInfo.Controls.Add(lblNhaCungCap);
+            grpPhieuInfo.Controls.Add(lblKhoNhapLabel);
+            grpPhieuInfo.Controls.Add(lblKhoNhap);
             grpPhieuInfo.Controls.Add(lblNguoiTaoLabel);
             grpPhieuInfo.Controls.Add(lblNguoiTao);
             grpPhieuInfo.Controls.Add(lblTrangThaiLabel);
             grpPhieuInfo.Controls.Add(lblTrangThai);
-            grpPhieuInfo.Controls.Add(lblGhiChuLabel);
-            grpPhieuInfo.Controls.Add(txtGhiChu);
             grpPhieuInfo.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
             grpPhieuInfo.Location = new Point(20, 140);
             grpPhieuInfo.Name = "grpPhieuInfo";
-            grpPhieuInfo.Size = new Size(700, 150);
+            grpPhieuInfo.Size = new Size(719, 120);
             grpPhieuInfo.TabIndex = 2;
             grpPhieuInfo.TabStop = false;
             grpPhieuInfo.Text = "Thông tin phiếu nhập";
@@ -253,25 +240,25 @@ namespace QLVT.GUI
             lblNgayTao.TabIndex = 3;
             lblNgayTao.Text = "-";
             // 
-            // lblNhaCungCapLabel
+            // lblKhoNhapLabel
             // 
-            lblNhaCungCapLabel.AutoSize = true;
-            lblNhaCungCapLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNhaCungCapLabel.Location = new Point(15, 75);
-            lblNhaCungCapLabel.Name = "lblNhaCungCapLabel";
-            lblNhaCungCapLabel.Size = new Size(86, 15);
-            lblNhaCungCapLabel.TabIndex = 4;
-            lblNhaCungCapLabel.Text = "Nhà cung cấp:";
+            lblKhoNhapLabel.AutoSize = true;
+            lblKhoNhapLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblKhoNhapLabel.Location = new Point(15, 75);
+            lblKhoNhapLabel.Name = "lblKhoNhapLabel";
+            lblKhoNhapLabel.Size = new Size(63, 15);
+            lblKhoNhapLabel.TabIndex = 4;
+            lblKhoNhapLabel.Text = "Kho nhập:";
             // 
-            // lblNhaCungCap
+            // lblKhoNhap
             // 
-            lblNhaCungCap.AutoSize = true;
-            lblNhaCungCap.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNhaCungCap.Location = new Point(120, 75);
-            lblNhaCungCap.Name = "lblNhaCungCap";
-            lblNhaCungCap.Size = new Size(11, 15);
-            lblNhaCungCap.TabIndex = 5;
-            lblNhaCungCap.Text = "-";
+            lblKhoNhap.AutoSize = true;
+            lblKhoNhap.Font = new Font("Microsoft Sans Serif", 9F);
+            lblKhoNhap.Location = new Point(100, 75);
+            lblKhoNhap.Name = "lblKhoNhap";
+            lblKhoNhap.Size = new Size(11, 15);
+            lblKhoNhap.TabIndex = 5;
+            lblKhoNhap.Text = "-";
             // 
             // lblNguoiTaoLabel
             // 
@@ -313,66 +300,13 @@ namespace QLVT.GUI
             lblTrangThai.TabIndex = 9;
             lblTrangThai.Text = "-";
             // 
-            // lblGhiChuLabel
-            // 
-            lblGhiChuLabel.AutoSize = true;
-            lblGhiChuLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblGhiChuLabel.Location = new Point(15, 100);
-            lblGhiChuLabel.Name = "lblGhiChuLabel";
-            lblGhiChuLabel.Size = new Size(52, 15);
-            lblGhiChuLabel.TabIndex = 10;
-            lblGhiChuLabel.Text = "Ghi chú:";
-            // 
-            // txtGhiChu
-            // 
-            txtGhiChu.Font = new Font("Microsoft Sans Serif", 9F);
-            txtGhiChu.Location = new Point(100, 97);
-            txtGhiChu.Multiline = true;
-            txtGhiChu.Name = "txtGhiChu";
-            txtGhiChu.ReadOnly = true;
-            txtGhiChu.Size = new Size(580, 40);
-            txtGhiChu.TabIndex = 11;
-            // 
-            // grpKho
-            // 
-            grpKho.Controls.Add(lblKhoLabel);
-            grpKho.Controls.Add(cmbKho);
-            grpKho.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpKho.Location = new Point(730, 140);
-            grpKho.Name = "grpKho";
-            grpKho.Size = new Size(450, 80);
-            grpKho.TabIndex = 3;
-            grpKho.TabStop = false;
-            grpKho.Text = "Chọn kho đích";
-            // 
-            // lblKhoLabel
-            // 
-            lblKhoLabel.AutoSize = true;
-            lblKhoLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblKhoLabel.Location = new Point(15, 35);
-            lblKhoLabel.Name = "lblKhoLabel";
-            lblKhoLabel.Size = new Size(32, 15);
-            lblKhoLabel.TabIndex = 0;
-            lblKhoLabel.Text = "Kho:";
-            // 
-            // cmbKho
-            // 
-            cmbKho.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbKho.Font = new Font("Microsoft Sans Serif", 10F);
-            cmbKho.FormattingEnabled = true;
-            cmbKho.Location = new Point(60, 32);
-            cmbKho.Name = "cmbKho";
-            cmbKho.Size = new Size(370, 24);
-            cmbKho.TabIndex = 1;
-            cmbKho.SelectedIndexChanged += cmbKho_SelectedIndexChanged;
-            // 
             // grpChiTiet
             // 
             grpChiTiet.Controls.Add(lblMappingStatus);
             grpChiTiet.Controls.Add(dgvChiTiet);
             grpChiTiet.Controls.Add(btnMapping);
             grpChiTiet.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpChiTiet.Location = new Point(20, 300);
+            grpChiTiet.Location = new Point(20, 270);
             grpChiTiet.Name = "grpChiTiet";
             grpChiTiet.Size = new Size(1160, 350);
             grpChiTiet.TabIndex = 4;
@@ -421,7 +355,7 @@ namespace QLVT.GUI
             btnXacNhan.FlatStyle = FlatStyle.Flat;
             btnXacNhan.Font = new Font("Microsoft Sans Serif", 11F, FontStyle.Bold);
             btnXacNhan.ForeColor = Color.White;
-            btnXacNhan.Location = new Point(730, 230);
+            btnXacNhan.Location = new Point(769, 180);
             btnXacNhan.Name = "btnXacNhan";
             btnXacNhan.Size = new Size(150, 50);
             btnXacNhan.TabIndex = 5;
@@ -433,7 +367,7 @@ namespace QLVT.GUI
             // 
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Microsoft Sans Serif", 9F);
-            lblStatus.Location = new Point(20, 670);
+            lblStatus.Location = new Point(20, 640);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(68, 15);
             lblStatus.TabIndex = 6;
@@ -447,18 +381,15 @@ namespace QLVT.GUI
             Controls.Add(lblTitle);
             Controls.Add(grpTimKiem);
             Controls.Add(grpPhieuInfo);
-            Controls.Add(grpKho);
             Controls.Add(grpChiTiet);
             Controls.Add(btnXacNhan);
             Controls.Add(lblStatus);
             Name = "ImportTaskUserControl";
-            Size = new Size(1200, 700);
+            Size = new Size(1200, 640);
             grpTimKiem.ResumeLayout(false);
             grpTimKiem.PerformLayout();
             grpPhieuInfo.ResumeLayout(false);
             grpPhieuInfo.PerformLayout();
-            grpKho.ResumeLayout(false);
-            grpKho.PerformLayout();
             grpChiTiet.ResumeLayout(false);
             grpChiTiet.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).EndInit();

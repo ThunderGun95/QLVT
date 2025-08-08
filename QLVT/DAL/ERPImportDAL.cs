@@ -42,15 +42,14 @@ namespace QLVT.DAL
                                 order = new ERPImportOrder
                                 {
                                     MaPhieuNhapKhoVatTu = Convert.ToInt32(reader["MaPhieuNhapKhoVatTu"]),
-                                    SoPhieu = reader["SoPhieuNhapKho"].ToString() ?? string.Empty,
-                                    Nam = Convert.ToInt32(reader["NAM"]),
+                                    SoPhieuNhapKho = reader["SoPhieuNhapKho"].ToString() ?? string.Empty,
+                                    NAM = Convert.ToInt32(reader["NAM"]),
                                     TenKho = reader["TenKho"].ToString() ?? string.Empty,
                                     MaKhoVatTu = reader["MaKhoVatTu"].ToString() ?? string.Empty,
-                                    NgayTao = reader["ThoiGianHoanThanhNhapKho"] != DBNull.Value ? 
+                                    ThoiGianHoanThanhNhapKho = reader["ThoiGianHoanThanhNhapKho"] != DBNull.Value ? 
                                              Convert.ToDateTime(reader["ThoiGianHoanThanhNhapKho"]) : DateTime.Now,
-                                    NguoiTao = reader["NhanVienMua"].ToString() ?? string.Empty,
-                                    TrangThai = "HoanThanh",
-                                    GhiChu = string.Empty
+                                    MaNhanVienMua = reader["MaNhanVienMua"].ToString() ?? string.Empty,
+                                    NhanVienMua = reader["NhanVienMua"].ToString() ?? string.Empty
                                 };
                             }
                         }
@@ -83,12 +82,12 @@ namespace QLVT.DAL
             string sql = @"
                 SELECT pnk.MaPhieuNhapKhoVatTu, nk.MaVatTuHangHoa, nk.TenVatTu, nk.DacTinhKyThuat, 
                        nk.DonViTinh, SUM(nk.SoLuongNhapKho) as SoLuongNhapKho, 
-                       nk.MaNhaSanXuat, nk.TenNhaSanXuat, nk.VatTuHangHoa
+                       nk.MaNhaSanXuat, nk.TenNhaSanXuat
                 FROM   vt.ViewPhieuNhapKhoVatTuCTs AS nk INNER JOIN
                        vt.PhieuNhapKhoVatTus AS pnk ON pnk.MaPhieuNhapKhoVatTu = nk.MaPhieuNhapKhoVatTu 
                 WHERE (pnk.TrangThai = 'HoanThanh') AND (nk.MaPhieuNhapKhoVatTu = @maPhieuNhapKhoVatTu)
                 GROUP BY pnk.MaPhieuNhapKhoVatTu, nk.MaVatTuHangHoa, nk.TenVatTu, nk.DacTinhKyThuat, 
-                         nk.DonViTinh, nk.MaNhaSanXuat, nk.TenNhaSanXuat, nk.VatTuHangHoa";
+                         nk.DonViTinh, nk.MaNhaSanXuat, nk.TenNhaSanXuat";
 
             try
             {
@@ -106,14 +105,13 @@ namespace QLVT.DAL
                                 details.Add(new ERPImportOrderDetail
                                 {
                                     MaPhieuNhapKhoVatTu = Convert.ToInt32(reader["MaPhieuNhapKhoVatTu"]),
-                                    MaVatTu = reader["MaVatTuHangHoa"].ToString() ?? string.Empty,
+                                    MaVatTuHangHoa = reader["MaVatTuHangHoa"].ToString() ?? string.Empty,
                                     TenVatTu = reader["TenVatTu"].ToString() ?? string.Empty,
                                     DacTinhKyThuat = reader["DacTinhKyThuat"].ToString() ?? string.Empty,
-                                    SoLuong = Convert.ToDecimal(reader["SoLuongNhapKho"]),
+                                    SoLuongNhapKho = Convert.ToDecimal(reader["SoLuongNhapKho"]),
                                     DonViTinh = reader["DonViTinh"].ToString() ?? string.Empty,
                                     MaNhaSanXuat = reader["MaNhaSanXuat"].ToString() ?? string.Empty,
-                                    TenNhaSanXuat = reader["TenNhaSanXuat"].ToString() ?? string.Empty,
-                                    VatTuHangHoa = reader["VatTuHangHoa"].ToString() ?? string.Empty
+                                    TenNhaSanXuat = reader["TenNhaSanXuat"].ToString() ?? string.Empty
                                 });
                             }
                         }
