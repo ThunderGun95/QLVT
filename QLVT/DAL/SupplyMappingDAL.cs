@@ -15,35 +15,73 @@ namespace QLVT.DAL
         {
             Supply? supply = null;
             
-            string sql = @"
-                SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat,
-                       s.MaDVT, u.TenDVT
-                FROM Supplies s
-                LEFT JOIN Units u ON s.MaDVT = u.MaDVT
-                WHERE s.ErpId = @erpCode OR s.Code = @erpCode";
-
             try
             {
                 using (var connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    using (var command = new SqlCommand(sql, connection))
+                    
+                    // Kiểm tra xem erpCode có phải là số không
+                    if (int.TryParse(erpCode, out int erpIdValue))
                     {
-                        command.Parameters.AddWithValue("@erpCode", erpCode);
+                        // Nếu là số, tìm cả ErpId và Code
+                        string sql = @"
+                            SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat,
+                                   s.MaDVT, u.TenDVT
+                            FROM Supplies s
+                            LEFT JOIN Units u ON s.MaDVT = u.MaDVT
+                            WHERE s.ErpId = @erpIdValue OR s.Code = @erpCode";
                         
-                        using (var reader = command.ExecuteReader())
+                        using (var command = new SqlCommand(sql, connection))
                         {
-                            if (reader.Read())
+                            command.Parameters.AddWithValue("@erpIdValue", erpIdValue);
+                            command.Parameters.AddWithValue("@erpCode", erpCode);
+                            
+                            using (var reader = command.ExecuteReader())
                             {
-                                supply = new Supply
+                                if (reader.Read())
                                 {
-                                    ErpId = Convert.ToInt32(reader["ErpId"]),
-                                    Code = reader["Code"].ToString() ?? string.Empty,
-                                    TenVatTu = reader["TenVatTu"].ToString() ?? string.Empty,
-                                    DacTinhKyThuat = reader["DacTinhKyThuat"].ToString(),
-                                    MaDVT = reader["MaDVT"].ToString() ?? string.Empty,
-                                    TenDVT = reader["TenDVT"].ToString()
-                                };
+                                    supply = new Supply
+                                    {
+                                        ErpId = Convert.ToInt32(reader["ErpId"]),
+                                        Code = reader["Code"].ToString() ?? string.Empty,
+                                        TenVatTu = reader["TenVatTu"].ToString() ?? string.Empty,
+                                        DacTinhKyThuat = reader["DacTinhKyThuat"].ToString(),
+                                        MaDVT = reader["MaDVT"].ToString() ?? string.Empty,
+                                        TenDVT = reader["TenDVT"].ToString()
+                                    };
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Nếu không phải số, chỉ tìm theo Code
+                        string sql = @"
+                            SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat,
+                                   s.MaDVT, u.TenDVT
+                            FROM Supplies s
+                            LEFT JOIN Units u ON s.MaDVT = u.MaDVT
+                            WHERE s.Code = @erpCode";
+                        
+                        using (var command = new SqlCommand(sql, connection))
+                        {
+                            command.Parameters.AddWithValue("@erpCode", erpCode);
+                            
+                            using (var reader = command.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    supply = new Supply
+                                    {
+                                        ErpId = Convert.ToInt32(reader["ErpId"]),
+                                        Code = reader["Code"].ToString() ?? string.Empty,
+                                        TenVatTu = reader["TenVatTu"].ToString() ?? string.Empty,
+                                        DacTinhKyThuat = reader["DacTinhKyThuat"].ToString(),
+                                        MaDVT = reader["MaDVT"].ToString() ?? string.Empty,
+                                        TenDVT = reader["TenDVT"].ToString()
+                                    };
+                                }
                             }
                         }
                     }
@@ -67,7 +105,7 @@ namespace QLVT.DAL
             var supplies = new List<Supply>();
             
             string sql = @"
-                SELECT s.Id, s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat,
+                SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat,
                        s.MaDVT, u.TenDVT
                 FROM Supplies s
                 LEFT JOIN Units u ON s.MaDVT = u.MaDVT

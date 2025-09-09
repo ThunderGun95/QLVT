@@ -1,45 +1,41 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.DAL;
 using QLVT.Models;
+using ClosedXML.Excel;
 
 namespace QLVT.GUI
 {
     public partial class OpeningInventoryUserControl : UserControl
     {
         private readonly OpeningInventoryBLL openingInventoryBLL;
+        private readonly ImportTransactionDAL importTransactionDAL;
         private readonly WarehouseDAL warehouseDAL;
-        private List<OpeningInventoryInput> currentInputs = new();
-        private List<OpeningInventory> currentOpeningInventories = new();
+        private List<ExcelImportItem> currentExcelData = new();
 
         public OpeningInventoryUserControl()
         {
             InitializeComponent();
             openingInventoryBLL = new OpeningInventoryBLL();
+            importTransactionDAL = new ImportTransactionDAL();
             warehouseDAL = new WarehouseDAL();
-            SetupDataGridViews();
+            SetupDataGridView();
             LoadWarehouses();
-            LoadOpeningInventories();
+            // Không load tồn kho ban đầu theo yêu cầu
         }
 
-        private void SetupDataGridViews()
-        {
-            // Setup DataGridView cho nhập mới
-            SetupInputDataGridView();
-            
-            // Setup DataGridView cho tồn kho hiện tại
-            SetupCurrentDataGridView();
-        }
-
-        private void SetupInputDataGridView()
+        private void SetupDataGridView()
         {
             dgvInput.AutoGenerateColumns = false;
-            dgvInput.AllowUserToAddRows = true;
-            dgvInput.AllowUserToDeleteRows = true;
+            dgvInput.AllowUserToAddRows = false;
+            dgvInput.AllowUserToDeleteRows = false;
+            dgvInput.ReadOnly = true;
+            dgvInput.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
             dgvInput.Columns.Add(new DataGridViewTextBoxColumn
             {
@@ -49,143 +45,25 @@ namespace QLVT.GUI
                 ReadOnly = true
             });
 
-            dgvInput.Columns.Add(new DataGridViewComboBoxColumn
-            {
-                Name = "MaKho",
-                HeaderText = "Kho",
-                DataPropertyName = "MaKho",
-                Width = 120
-            });
-
             dgvInput.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "MaVatTu",
+                Name = "ItemCode",
                 HeaderText = "Mã vật tư",
-                DataPropertyName = "MaVatTu",
+                DataPropertyName = "ItemCode",
                 Width = 120
             });
 
             dgvInput.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "SoLuong",
+                Name = "Quantity",
                 HeaderText = "Số lượng",
-                DataPropertyName = "SoLuong",
+                DataPropertyName = "Quantity",
                 Width = 100,
-                DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" }
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }
             });
 
-            dgvInput.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "TenVatTu",
-                HeaderText = "Tên vật tư (mapping)",
-                DataPropertyName = "TenVatTu",
-                Width = 250,
-                ReadOnly = true
-            });
-
-            dgvInput.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "MappingStatus",
-                HeaderText = "Trạng thái",
-                DataPropertyName = "MappingStatus",
-                Width = 100,
-                ReadOnly = true
-            });
-
-            dgvInput.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "GhiChu",
-                HeaderText = "Ghi chú",
-                DataPropertyName = "GhiChu",
-                Width = 200
-            });
-
-            // Events
-            dgvInput.RowsAdded += (s, e) => UpdateInputSTT();
-            dgvInput.RowsRemoved += (s, e) => UpdateInputSTT();
-            dgvInput.CellValueChanged += DgvInput_CellValueChanged;
-            dgvInput.CellLeave += DgvInput_CellLeave;
-        }
-
-        private void SetupCurrentDataGridView()
-        {
-            dgvCurrent.AutoGenerateColumns = false;
-            dgvCurrent.AllowUserToAddRows = false;
-            dgvCurrent.AllowUserToDeleteRows = false;
-            dgvCurrent.ReadOnly = true;
-            dgvCurrent.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "STT",
-                HeaderText = "STT",
-                Width = 50
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "TenKho",
-                HeaderText = "Kho",
-                DataPropertyName = "TenKho",
-                Width = 120
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "CodeVatTu",
-                HeaderText = "Mã VT",
-                DataPropertyName = "CodeVatTu",
-                Width = 100
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "TenVatTu",
-                HeaderText = "Tên vật tư",
-                DataPropertyName = "TenVatTu",
-                Width = 250
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "SoLuongTonDauKy",
-                HeaderText = "Tồn đầu kỳ",
-                DataPropertyName = "SoLuongTonDauKy",
-                Width = 100,
-                DefaultCellStyle = new DataGridViewCellStyle 
-                { 
-                    Format = "N0",
-                    Alignment = DataGridViewContentAlignment.MiddleRight
-                }
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "DonViTinh",
-                HeaderText = "ĐVT",
-                DataPropertyName = "DonViTinh",
-                Width = 60
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "NgayNhapTon",
-                HeaderText = "Ngày nhập",
-                DataPropertyName = "NgayNhapTon",
-                Width = 100,
-                DefaultCellStyle = new DataGridViewCellStyle { Format = "dd/MM/yyyy" }
-            });
-
-            dgvCurrent.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "NguoiNhap",
-                HeaderText = "Người nhập",
-                DataPropertyName = "NguoiNhap",
-                Width = 100
-            });
-
-            dgvCurrent.RowsAdded += (s, e) => UpdateCurrentSTT();
-            dgvCurrent.RowsRemoved += (s, e) => UpdateCurrentSTT();
+            dgvInput.RowsAdded += (s, e) => UpdateSTT();
+            dgvInput.RowsRemoved += (s, e) => UpdateSTT();
         }
 
         private void LoadWarehouses()
@@ -194,27 +72,17 @@ namespace QLVT.GUI
             {
                 var warehouses = warehouseDAL.GetWarehouses();
                 
-                // Load vào ComboBox filter
-                cboKhoFilter.Items.Clear();
-                cboKhoFilter.Items.Add(new { MaKho = "", TenKho = "-- Tất cả kho --" });
+                cboWarehouse.Items.Clear();
+                cboWarehouse.DisplayMember = "TenKho";
+                cboWarehouse.ValueMember = "MaKho";
+                
                 foreach (var warehouse in warehouses)
                 {
-                    cboKhoFilter.Items.Add(warehouse);
+                    cboWarehouse.Items.Add(warehouse);
                 }
-                cboKhoFilter.DisplayMember = "TenKho";
-                cboKhoFilter.ValueMember = "MaKho";
-                cboKhoFilter.SelectedIndex = 0;
-
-                // Load vào ComboBox column của DataGridView
-                var maKhoColumn = dgvInput.Columns["MaKho"] as DataGridViewComboBoxColumn;
-                if (maKhoColumn != null)
-                {
-                    maKhoColumn.Items.Clear();
-                    foreach (var warehouse in warehouses)
-                    {
-                        maKhoColumn.Items.Add(warehouse.MaKho);
-                    }
-                }
+                
+                if (cboWarehouse.Items.Count > 0)
+                    cboWarehouse.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -222,227 +90,307 @@ namespace QLVT.GUI
             }
         }
 
-        private void LoadOpeningInventories()
-        {
-            try
-            {
-                lblStatus.Text = "Đang tải tồn kho đầu kỳ...";
-                lblStatus.ForeColor = Color.Blue;
-
-                string selectedKho = cboKhoFilter.SelectedValue?.ToString();
-                if (selectedKho == "") selectedKho = null;
-
-                currentOpeningInventories = openingInventoryBLL.GetOpeningInventories(selectedKho);
-                dgvCurrent.DataSource = currentOpeningInventories;
-                UpdateCurrentSTT();
-
-                lblStatus.Text = $"✅ Đã tải {currentOpeningInventories.Count} bản ghi tồn kho đầu kỳ";
-                lblStatus.ForeColor = Color.Green;
-            }
-            catch (Exception ex)
-            {
-                lblStatus.Text = $"❌ Lỗi: {ex.Message}";
-                lblStatus.ForeColor = Color.Red;
-                ShowError($"Lỗi khi tải tồn kho đầu kỳ: {ex.Message}");
-            }
-        }
-
-        private void UpdateInputSTT()
+        private void UpdateSTT()
         {
             for (int i = 0; i < dgvInput.Rows.Count; i++)
             {
-                if (!dgvInput.Rows[i].IsNewRow)
-                    dgvInput.Rows[i].Cells["STT"].Value = (i + 1).ToString();
+                dgvInput.Rows[i].Cells["STT"].Value = (i + 1).ToString();
             }
         }
 
-        private void UpdateCurrentSTT()
+        private void PerformAutoMapping()
         {
-            for (int i = 0; i < dgvCurrent.Rows.Count; i++)
+            foreach (var item in currentExcelData)
             {
-                dgvCurrent.Rows[i].Cells["STT"].Value = (i + 1).ToString();
-            }
-        }
-
-        private void DgvInput_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                var columnName = dgvInput.Columns[e.ColumnIndex].Name;
-                
-                if (columnName == "MaVatTu" || columnName == "MaKho")
+                try
                 {
-                    PerformAutoMapping(e.RowIndex);
+                    // Mapping chính xác theo mã ERP/Code
+                    var supply = openingInventoryBLL.FindSupplyByERPCode(item.ItemCode);
+
+                    // Cập nhật thông tin mapping
+                    if (supply != null)
+                    {
+                        item.SupplyId = supply.ErpId; // Sử dụng ErpId
+                        item.SupplyName = supply.TenVatTu;
+                        item.MappingStatus = "✅ Đã mapping";
+                    }
+                    else
+                    {
+                        item.SupplyId = null;
+                        item.SupplyName = "";
+                        item.MappingStatus = "❌ Không tìm thấy";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    item.SupplyId = null;
+                    item.SupplyName = "";
+                    item.MappingStatus = $"❌ Lỗi: {ex.Message}";
                 }
             }
         }
 
-        private void DgvInput_CellLeave(object sender, DataGridViewCellEventArgs e)
+        private void UpdateRowColors()
         {
-            UpdateDataSourceFromGrid();
-        }
+            if (dgvInput.DataSource == null) return;
 
-        private void PerformAutoMapping(int rowIndex)
-        {
-            try
+            for (int i = 0; i < dgvInput.Rows.Count && i < currentExcelData.Count; i++)
             {
-                var row = dgvInput.Rows[rowIndex];
-                if (row.IsNewRow) return;
-
-                var maVatTu = row.Cells["MaVatTu"].Value?.ToString();
-                if (string.IsNullOrWhiteSpace(maVatTu)) return;
-
-                var supplies = openingInventoryBLL.SearchSuppliesForMapping(maVatTu);
-                var supply = supplies.FirstOrDefault(s => s.Code == maVatTu || s.ErpId.ToString() == maVatTu);
-
-                if (supply != null)
+                var item = currentExcelData[i];
+                if (item.IsMapped)
                 {
-                    row.Cells["TenVatTu"].Value = supply.TenVatTu;
-                    row.Cells["MappingStatus"].Value = "✅ Đã map";
-                    row.DefaultCellStyle.BackColor = Color.LightGreen;
+                    dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightGreen;
                 }
                 else
                 {
-                    row.Cells["TenVatTu"].Value = "";
-                    row.Cells["MappingStatus"].Value = "❌ Chưa map";
-                    row.DefaultCellStyle.BackColor = Color.LightPink;
+                    dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightPink;
                 }
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Lỗi khi mapping: {ex.Message}");
             }
         }
 
-        private void UpdateDataSourceFromGrid()
+        private void btnBrowseExcel_Click(object sender, EventArgs e)
         {
-            try
+            using (var openFileDialog = new OpenFileDialog())
             {
-                currentInputs.Clear();
-                
-                foreach (DataGridViewRow row in dgvInput.Rows)
+                openFileDialog.Filter = "Excel files (*.xlsx;*.xls)|*.xlsx;*.xls";
+                openFileDialog.Title = "Chọn file Excel";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (row.IsNewRow) continue;
-
-                    var input = new OpeningInventoryInput
-                    {
-                        MaKho = row.Cells["MaKho"].Value?.ToString() ?? "COMPANY",
-                        MaVatTu = row.Cells["MaVatTu"].Value?.ToString() ?? "",
-                        SoLuong = int.TryParse(row.Cells["SoLuong"].Value?.ToString(), out int sl) ? sl : 0,
-                        GhiChu = row.Cells["GhiChu"].Value?.ToString() ?? "",
-                        TenVatTu = row.Cells["TenVatTu"].Value?.ToString()
-                    };
-
-                    if (!string.IsNullOrWhiteSpace(input.TenVatTu))
-                    {
-                        // Tìm SupplyId từ TenVatTu
-                        var supplies = openingInventoryBLL.SearchSuppliesForMapping(input.MaVatTu);
-                        var supply = supplies.FirstOrDefault(s => s.TenVatTu == input.TenVatTu);
-                        if (supply != null)
-                            input.SupplyId = supply.ErpId;
-                    }
-
-                    currentInputs.Add(input);
+                    txtExcelFilePath.Text = openFileDialog.FileName;
+                    btnLoadExcel.Enabled = true;
+                    
+                    lblStatus.Text = $"✅ Đã chọn file: {Path.GetFileName(openFileDialog.FileName)}";
+                    lblStatus.ForeColor = Color.Green;
                 }
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Lỗi khi cập nhật data source: {ex.Message}");
             }
         }
 
-        private void btnAutoMapping_Click(object sender, EventArgs e)
+        private void btnLoadExcel_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtExcelFilePath.Text))
+            {
+                MessageBox.Show("Vui lòng chọn file Excel trước!", "Thông báo", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
-                UpdateDataSourceFromGrid();
-                
-                lblStatus.Text = "Đang thực hiện auto mapping...";
+                lblStatus.Text = "Đang đọc file Excel...";
                 lblStatus.ForeColor = Color.Blue;
 
-                currentInputs = openingInventoryBLL.ProcessAutoMapping(currentInputs);
-                
-                // Cập nhật lại grid
-                dgvInput.DataSource = null;
-                dgvInput.DataSource = currentInputs;
-                UpdateInputSTT();
-
-                // Cập nhật màu sắc
-                for (int i = 0; i < dgvInput.Rows.Count; i++)
+                currentExcelData = LoadExcelData(txtExcelFilePath.Text);
+                if (currentExcelData?.Any() == true)
                 {
-                    var input = currentInputs[i];
-                    if (input.IsMapped)
-                    {
-                        dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightGreen;
-                    }
-                    else if (!string.IsNullOrWhiteSpace(input.MaVatTu))
-                    {
-                        dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightPink;
-                    }
-                }
+                    // Thực hiện mapping ngay sau khi load
+                    lblStatus.Text = "Đang mapping với dữ liệu vật tư...";
+                    lblStatus.ForeColor = Color.Blue;
+                    
+                    PerformAutoMapping();
 
-                var mappedCount = currentInputs.Count(x => x.IsMapped);
-                lblStatus.Text = $"✅ Đã mapping {mappedCount}/{currentInputs.Count} vật tư";
-                lblStatus.ForeColor = Color.Green;
+                    // Hiển thị dữ liệu trong DataGridView
+                    dgvInput.DataSource = null;
+                    dgvInput.DataSource = currentExcelData;
+                    UpdateSTT();
+
+                    // Cập nhật màu sắc theo trạng thái mapping
+                    UpdateRowColors();
+
+                    var mappedCount = currentExcelData.Count(x => x.IsMapped);
+                    var totalCount = currentExcelData.Count;
+                    
+                    lblStatus.Text = $"✅ Đã tải {totalCount} dòng - Mapping thành công: {mappedCount}/{totalCount}";
+                    lblStatus.ForeColor = mappedCount == totalCount ? Color.Green : Color.Orange;
+
+                    var warningMessage = "";
+                    if (mappedCount < totalCount)
+                    {
+                        var unmappedCount = totalCount - mappedCount;
+                        warningMessage = $"\n\n⚠️ Có {unmappedCount} vật tư chưa mapping được!";
+                    }
+
+                    MessageBox.Show($"Đã tải thành công {totalCount} dòng từ Excel!\n" +
+                                  $"Mapping thành công: {mappedCount}/{totalCount} vật tư{warningMessage}\n\n" +
+                                  $"Vui lòng chọn kho và xác nhận lưu.", 
+                        "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    lblStatus.Text = "❌ Không có dữ liệu hợp lệ trong file Excel";
+                    lblStatus.ForeColor = Color.Orange;
+                }
             }
             catch (Exception ex)
             {
-                lblStatus.Text = $"❌ Lỗi mapping: {ex.Message}";
+                lblStatus.Text = $"❌ Lỗi đọc Excel: {ex.Message}";
                 lblStatus.ForeColor = Color.Red;
-                ShowError($"Lỗi khi thực hiện auto mapping: {ex.Message}");
+                ShowError($"Lỗi khi đọc file Excel: {ex.Message}");
             }
+        }
+
+        private List<ExcelImportItem> LoadExcelData(string filePath)
+        {
+            var excelData = new List<ExcelImportItem>();
+
+            using (var workbook = new XLWorkbook(filePath))
+            {
+                var worksheet = workbook.Worksheets.FirstOrDefault();
+                if (worksheet == null)
+                {
+                    throw new Exception("File Excel không có worksheet nào!");
+                }
+
+                var range = worksheet.RangeUsed();
+                if (range == null || range.RowCount() < 2)
+                {
+                    throw new Exception("File Excel phải có ít nhất 2 dòng (header + data)!");
+                }
+
+                // Đọc từ dòng 2 (bỏ qua header)
+                for (int row = 2; row <= range.RowCount(); row++)
+                {
+                    var itemCodeCell = worksheet.Cell(row, 1);
+                    var quantityCell = worksheet.Cell(row, 2);
+                    
+                    var itemCode = itemCodeCell.GetString()?.Trim();
+                    var quantityText = quantityCell.GetString()?.Trim();
+
+                    if (string.IsNullOrWhiteSpace(itemCode)) continue;
+
+                    if (int.TryParse(quantityText, out int quantity) && quantity > 0)
+                    {
+                        excelData.Add(new ExcelImportItem
+                        {
+                            ItemCode = itemCode,
+                            Quantity = quantity
+                        });
+                    }
+                }
+            }
+
+            return excelData;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
             try
             {
-                UpdateDataSourceFromGrid();
-
                 // Validation
-                var errors = openingInventoryBLL.ValidateInputs(currentInputs);
-                if (errors.Any())
+                if (!currentExcelData?.Any() == true)
                 {
-                    MessageBox.Show($"Dữ liệu không hợp lệ:\n{string.Join("\n", errors)}", 
-                        "Lỗi validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Vui lòng tải dữ liệu từ Excel trước!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                // Xác nhận
-                var validInputs = currentInputs.Where(x => x.IsMapped && x.SoLuong > 0).ToList();
-                if (!validInputs.Any())
+                if (cboWarehouse.SelectedItem == null)
                 {
-                    MessageBox.Show("Không có dữ liệu hợp lệ để lưu!", 
-                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Vui lòng chọn kho!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                var result = MessageBox.Show(
-                    $"Xác nhận cập nhật tồn kho đầu kỳ cho {validInputs.Count} vật tư?",
+                // Lấy thông tin kho được chọn
+                var selectedWarehouse = cboWarehouse.SelectedItem as Warehouse;
+                var warehouseCode = selectedWarehouse.Id;
+
+                // Debug: Kiểm tra mã kho truyền vào
+                System.Diagnostics.Debug.WriteLine($"DEBUG: Warehouse Code = '{warehouseCode}', Name = '{selectedWarehouse?.TenKho}'");
+
+                // Kiểm tra mã kho hợp lệ
+                if (warehouseCode == 0)
+                {
+                    MessageBox.Show("Mã kho không hợp lệ!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Kiểm tra mapping
+                var unmappedItems = currentExcelData.Where(x => !x.IsMapped).ToList();
+                if (unmappedItems.Any())
+                {
+                    var unmappedCodes = string.Join(", ", unmappedItems.Take(5).Select(x => x.ItemCode));
+                    var extraCount = unmappedItems.Count > 5 ? $" và {unmappedItems.Count - 5} vật tư khác" : "";
+                    
+                    var result = MessageBox.Show(
+                        $"Có {unmappedItems.Count} vật tư chưa mapping được:\n{unmappedCodes}{extraCount}\n\n" +
+                        $"Chỉ các vật tư đã mapping sẽ được lưu vào hệ thống.\n\n" +
+                        $"Tiếp tục lưu {currentExcelData.Count(x => x.IsMapped)} vật tư đã mapping?",
+                        "Cảnh báo mapping",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.No)
+                        return;
+                }
+
+                // Lấy danh sách vật tư đã mapping
+                var validItems = currentExcelData.Where(x => x.IsMapped).ToList();
+                if (!validItems.Any())
+                {
+                    MessageBox.Show("Không có vật tư nào đã mapping để lưu!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Xác nhận cuối cùng
+                var finalResult = MessageBox.Show(
+                    $"Xác nhận cập nhật tồn kho đầu kỳ?\n\n" +
+                    $"Kho: {selectedWarehouse?.TenKho}\n" +
+                    $"Số lượng vật tư sẽ lưu: {validItems.Count}\n" +
+                    $"Tổng số dòng từ Excel: {currentExcelData.Count}\n\n" +
+                    $"Dữ liệu sẽ được lưu vào hệ thống.",
                     "Xác nhận",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
 
-                if (result == DialogResult.Yes)
+                if (finalResult == DialogResult.Yes)
                 {
                     lblStatus.Text = "Đang lưu tồn kho đầu kỳ...";
                     lblStatus.ForeColor = Color.Blue;
 
-                    string nguoiNhap = "Admin"; // TODO: Lấy từ session hiện tại
-                    int processedCount = openingInventoryBLL.UpdateOpeningInventories(validInputs, nguoiNhap);
+                    // Debug: Hiển thị thông tin mã kho
+                    System.Diagnostics.Debug.WriteLine($"DEBUG: Mã kho được chọn: '{selectedWarehouse?.Id}'");
+                    System.Diagnostics.Debug.WriteLine($"DEBUG: Tên kho được chọn: '{selectedWarehouse?.TenKho}'");
 
-                    lblStatus.Text = $"✅ Đã cập nhật {processedCount} bản ghi thành công";
+                    // Chuyển đổi dữ liệu Excel thành OpeningInventoryInput với đầy đủ thông tin
+                    var inputs = validItems.Select(item => new OpeningInventoryInput
+                    {
+                        MaKho = selectedWarehouse?.MaKho, // Mã kho từ ComboBox được chọn
+                        MaVatTu = item.ItemCode,
+                        SoLuong = item.Quantity,
+                        SupplyId = item.SupplyId.Value, // Đã kiểm tra IsMapped nên .Value an toàn
+                        TenVatTu = item.SupplyName
+                    }).ToList();
+
+                    // Debug: Hiển thị thông tin input đầu tiên
+                    if (inputs.Any())
+                    {
+                        var firstInput = inputs.First();
+                        System.Diagnostics.Debug.WriteLine($"DEBUG: Input đầu tiên - MaKho: '{firstInput.MaKho}', MaVatTu: '{firstInput.MaVatTu}', SoLuong: {firstInput.SoLuong}");
+                    }
+
+                    string nguoiNhap = "Admin"; // TODO: Lấy từ session hiện tại
+                    int transactionId = importTransactionDAL.CreateOpeningInventoryTransaction(selectedWarehouse.Id, inputs, nguoiNhap);
+
+                    lblStatus.Text = $"✅ Đã tạo transaction #{transactionId} thành công";
                     lblStatus.ForeColor = Color.Green;
 
-                    MessageBox.Show($"Đã cập nhật tồn kho đầu kỳ cho {processedCount} vật tư!", 
+                    MessageBox.Show($"Đã tạo transaction tồn đầu kỳ #{transactionId} thành công!\n\n" +
+                                  $"Chi tiết:\n" +
+                                  $"- Tổng dòng Excel: {currentExcelData.Count}\n" +
+                                  $"- Đã mapping: {validItems.Count}\n" +
+                                  $"- Transaction ID: {transactionId}", 
                         "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    // Reload dữ liệu
-                    LoadOpeningInventories();
-                    
-                    // Clear input grid
+                    // Clear dữ liệu sau khi lưu thành công
+                    currentExcelData.Clear();
                     dgvInput.DataSource = null;
-                    currentInputs.Clear();
+                    txtExcelFilePath.Text = "";
+                    btnLoadExcel.Enabled = false;
+                    lblStatus.Text = "Sẵn sàng - Chọn file Excel...";
+                    lblStatus.ForeColor = Color.Blue;
                 }
             }
             catch (Exception ex)
@@ -451,50 +399,6 @@ namespace QLVT.GUI
                 lblStatus.ForeColor = Color.Red;
                 ShowError($"Lỗi khi lưu tồn kho đầu kỳ: {ex.Message}");
             }
-        }
-
-        private void btnDelete_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (dgvCurrent.CurrentRow?.DataBoundItem is OpeningInventory selectedItem)
-                {
-                    var result = MessageBox.Show(
-                        $"Xác nhận xóa tồn kho đầu kỳ:\n{selectedItem.TenVatTu} - {selectedItem.TenKho}?",
-                        "Xác nhận xóa",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        openingInventoryBLL.DeleteOpeningInventory(selectedItem.Id);
-                        
-                        MessageBox.Show("Đã xóa tồn kho đầu kỳ!", 
-                            "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
-                        LoadOpeningInventories();
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Vui lòng chọn bản ghi cần xóa!", 
-                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Lỗi khi xóa: {ex.Message}");
-            }
-        }
-
-        private void cboKhoFilter_SelectedValueChanged(object sender, EventArgs e)
-        {
-            LoadOpeningInventories();
-        }
-
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            LoadOpeningInventories();
         }
 
         private void ShowError(string message)

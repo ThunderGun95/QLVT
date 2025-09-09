@@ -107,7 +107,27 @@ namespace QLVT.BLL
         }
 
         /// <summary>
-        /// Tìm kiếm vật tư cho mapping
+        /// Tìm vật tư chính xác theo mã ERP (cho mapping)
+        /// </summary>
+        /// <param name="erpCode">Mã ERP</param>
+        /// <returns>Vật tư hoặc null</returns>
+        public Supply? FindSupplyByERPCode(string erpCode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(erpCode))
+                    return null;
+
+                return supplyMappingDAL.FindSupplyByERPCode(erpCode);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi BLL - Tìm vật tư theo ERP: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Tìm kiếm vật tư cho mapping (tìm gần đúng)
         /// </summary>
         /// <param name="keyword">Từ khóa</param>
         /// <returns>Danh sách vật tư</returns>
