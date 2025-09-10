@@ -115,11 +115,11 @@ namespace QLVT.BLL
         /// Xử lý nhập kho
         /// </summary>
         /// <param name="order">Phiếu nhập</param>
-        /// <param name="warehouseId">ID kho đích</param>
+        /// <param name="maKho">Mã kho đích</param>
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên</param>
         /// <returns>ID transaction</returns>
-        public int ProcessImport(ERPImportOrder order, int warehouseId, string createdBy, string staffCode)
+        public int ProcessImport(ERPImportOrder order, int maKho, string createdBy, string staffCode)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace QLVT.BLL
                 if (unmapped > 0)
                     throw new Exception($"Còn {unmapped} vật tư chưa được mapping");
 
-                if (warehouseId <= 0)
+                if (maKho == 0)
                     throw new ArgumentException("Chưa chọn kho");
 
                 if (string.IsNullOrWhiteSpace(staffCode))
@@ -142,7 +142,7 @@ namespace QLVT.BLL
                     throw new Exception($"Phiếu {order.SoPhieuNhapKho}-{order.NAM} đã được xử lý rồi");
 
                 // Thực hiện nhập kho
-                return importTransactionDAL.CreateImportTransaction(order, warehouseId, createdBy, staffCode);
+                return importTransactionDAL.CreateImportTransaction(order, maKho, createdBy, staffCode);
             }
             catch (Exception ex)
             {

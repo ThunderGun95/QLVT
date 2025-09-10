@@ -13,6 +13,7 @@ namespace QLVT.GUI
         private readonly ImportBLL importBLL;
         private ERPImportOrder? currentOrder;
         private List<Warehouse> warehouses = new();
+        int IdKhoNhap = 0;
 
         public ImportTaskUserControl()
         {
@@ -260,6 +261,7 @@ namespace QLVT.GUI
                     return "-";
 
                 var warehouse = warehouses.FirstOrDefault(w => w.MaKho == maKho);
+                IdKhoNhap = warehouse != null ? warehouse.Id : 0; 
                 return warehouse != null ? warehouse.TenKho : maKho;
             }
             catch
@@ -308,7 +310,7 @@ namespace QLVT.GUI
                 string createdBy = "admin"; // TODO: Lấy từ session
                 string staffCode = "NV001"; // TODO: Lấy từ session hoặc chọn
 
-                int transactionId = importBLL.ProcessImport(currentOrder!, warehouse.Id, createdBy, staffCode);
+                int transactionId = importBLL.ProcessImport(currentOrder!,IdKhoNhap, createdBy, staffCode);
 
                 lblStatus.Text = "✅ Đã nhập kho thành công";
                 lblStatus.ForeColor = Color.Green;

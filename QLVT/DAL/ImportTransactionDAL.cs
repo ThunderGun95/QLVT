@@ -10,11 +10,11 @@ namespace QLVT.DAL
         /// Tạo transaction nhập kho và cập nhật inventory
         /// </summary>
         /// <param name="order">Phiếu nhập từ ERP</param>
-        /// <param name="warehouseId">ID kho đích</param>
+        /// <param name="maKho">Mã kho đích</param>
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên thực hiện</param>
         /// <returns>ID transaction vừa tạo</returns>
-        public int CreateImportTransaction(ERPImportOrder order, int warehouseId, string createdBy, string staffCode)
+        public int CreateImportTransaction(ERPImportOrder order, int maKho, string createdBy, string staffCode)
         {
             int transactionId = 0;
             
@@ -25,23 +25,25 @@ namespace QLVT.DAL
                 {
                     try
                     {
-                        // 1. Tạo transaction header
+                        // Tạo số phiếu
+                        string soPhieu = GenerateImportTransactionNumber();
+                        
+                        // 1. Tạo transaction header theo schema mới
                         string insertTransactionSql = @"
                             INSERT INTO Transactions 
-                            (MaGiaoDich, LoaiGiaoDich, NgayGiaoDich, WarehouseId, MaNV, 
-                             GhiChu, TrangThai, CreatedBy, EntityNhapKho)
+                            (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNhan, MaNV, 
+                             GhiChu, CreatedBy, EntityNhapKho)
                             VALUES 
-                            (@maGiaoDich, 'NhapKho', @ngayGiaoDich, @warehouseId, @maNV, 
-                             @ghiChu, 'HoanThanh', @createdBy, @entityNhapKho);
+                            (@soPhieu, @ngayGiaoDich, 'NhapKho', @maKhoNhan, @maNV, 
+                             @ghiChu, @createdBy, @entityNhapKho);
                             SELECT SCOPE_IDENTITY();";
 
-                        string maGiaoDich = GenerateTransactionCode();
                         
                         using (var command = new SqlCommand(insertTransactionSql, connection, transaction))
                         {
-                            command.Parameters.AddWithValue("@maGiaoDich", maGiaoDich);
+                            command.Parameters.AddWithValue("@soPhieu", soPhieu);
                             command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Now);
-                            command.Parameters.AddWithValue("@warehouseId", warehouseId);
+                            command.Parameters.AddWithValue("@maKhoNhan", maKho);
                             command.Parameters.AddWithValue("@maNV", staffCode);
                             command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieuNhapKho}-{order.NAM} - {order.TenKho}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
@@ -53,22 +55,23 @@ namespace QLVT.DAL
                         // 2. Tạo transaction details và cập nhật inventory
                         foreach (var detail in order.ChiTiet.Where(d => d.IsMapped))
                         {
-                            // Insert transaction detail
+                            // Insert transaction detail theo schema mới
                             string insertDetailSql = @"
-                                INSERT INTO TransactionDetails (TransactionId, SupplyId, SoLuong)
-                                VALUES (@transactionId, @supplyId, @soLuong)";
+                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu)
+                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu)";
 
                             using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@transactionId", transactionId);
-                                command.Parameters.AddWithValue("@supplyId", detail.MappedSupplyId!.Value);
+                                command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongNhapKho);
+                                command.Parameters.AddWithValue("@ghiChu", $"Nhập từ ERP: {detail.MaVatTuHangHoa}");
                                 
                                 command.ExecuteNonQuery();
                             }
 
-                            // Cập nhật inventory
-                            UpdateInventory(connection, transaction, warehouseId, detail.MappedSupplyId!.Value, detail.SoLuongNhapKho);
+                            // Cập nhật inventory theo schema mới
+                            UpdateInventory(connection, transaction, maKho, detail.MappedSupplyId!.Value, (int)detail.SoLuongNhapKho);
                         }
 
                         transaction.Commit();
@@ -85,27 +88,27 @@ namespace QLVT.DAL
         }
 
         /// <summary>
-        /// Cập nhật inventory (tồn kho)
+        /// Cập nhật inventory (tồn kho) theo schema mới
         /// </summary>
-        private void UpdateInventory(SqlConnection connection, SqlTransaction transaction, int warehouseId, int supplyId, decimal quantity)
+        private void UpdateInventory(SqlConnection connection, SqlTransaction transaction, int maKho, int erpId, int quantity)
         {
             string sql = @"
-                IF EXISTS (SELECT 1 FROM Inventory WHERE WarehouseId = @warehouseId AND SupplyId = @supplyId)
+                IF EXISTS (SELECT 1 FROM Inventory WHERE WarehouseId = @maKho AND SupplyErpId = @erpId)
                 BEGIN
                     UPDATE Inventory 
                     SET SoLuongTon = SoLuongTon + @quantity, LastUpdated = GETDATE()
-                    WHERE WarehouseId = @warehouseId AND SupplyId = @supplyId
+                    WHERE WarehouseId = @maKho AND SupplyErpId = @erpId
                 END
                 ELSE
                 BEGIN
-                    INSERT INTO Inventory (WarehouseId, SupplyId, SoLuongTon, LastUpdated)
-                    VALUES (@warehouseId, @supplyId, @quantity, GETDATE())
+                    INSERT INTO Inventory (WarehouseId, SupplyErpId, SoLuongTon, LastUpdated)
+                    VALUES (@maKho, @erpId, @quantity, GETDATE())
                 END";
 
             using (var command = new SqlCommand(sql, connection, transaction))
             {
-                command.Parameters.AddWithValue("@warehouseId", warehouseId);
-                command.Parameters.AddWithValue("@supplyId", supplyId);
+                command.Parameters.AddWithValue("@maKho", maKho);
+                command.Parameters.AddWithValue("@erpId", erpId);
                 command.Parameters.AddWithValue("@quantity", quantity);
                 
                 command.ExecuteNonQuery();
@@ -113,11 +116,49 @@ namespace QLVT.DAL
         }
 
         /// <summary>
-        /// Tạo mã giao dịch tự động
+        /// Tạo số phiếu cho transaction nhập kho
         /// </summary>
+        private string GenerateImportTransactionNumber()
+        {
+            string dateStr = DateTime.Now.ToString("yyyyMMdd");
+            string prefix = "NK"; // Nhập Kho
+            
+            try
+            {
+                // Đếm số phiếu nhập kho trong ngày
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    string countSql = @"
+                        SELECT COUNT(*) FROM Transactions 
+                        WHERE SoPhieu LIKE @pattern 
+                        AND LoaiGiaoDich = 'NhapKho'
+                        AND CAST(NgayGiaoDich AS DATE) = CAST(GETDATE() AS DATE)";
+                    
+                    using (var command = new SqlCommand(countSql, connection))
+                    {
+                        command.Parameters.AddWithValue("@pattern", $"{prefix}{dateStr}%");
+                        int count = Convert.ToInt32(command.ExecuteScalar()) + 1;
+                        
+                        return $"{prefix}{dateStr}{count:D3}";
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback nếu có lỗi
+                Random random = new Random();
+                return $"{prefix}{dateStr}{random.Next(100, 999)}";
+            }
+        }
+
+        /// <summary>
+        /// Tạo mã giao dịch tự động (legacy method - deprecated)
+        /// </summary>
+        [Obsolete("Sử dụng GenerateImportTransactionNumber() thay thế")]
         private string GenerateTransactionCode()
         {
-            return $"NK{DateTime.Now:yyyyMMddHHmmss}";
+            return GenerateImportTransactionNumber();
         }
 
         /// <summary>
