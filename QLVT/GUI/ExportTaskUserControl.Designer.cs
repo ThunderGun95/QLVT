@@ -139,7 +139,6 @@ namespace QLVT.GUI
             txtNam.Name = "txtNam";
             txtNam.Size = new Size(60, 23);
             txtNam.TabIndex = 3;
-            txtNam.Text = "2025";
             txtNam.KeyPress += txtNam_KeyPress;
             // 
             // btnTimPhieu

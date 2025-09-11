@@ -9,6 +9,7 @@ namespace QLVT.BLL
         private readonly SupplyMappingDAL supplyMappingDAL;
         private readonly WarehouseDAL warehouseDAL;
         private readonly ImportTransactionDAL importTransactionDAL;
+        private readonly WarehouseMappingBLL warehouseMappingBLL;
 
         public ImportBLL()
         {
@@ -16,6 +17,7 @@ namespace QLVT.BLL
             supplyMappingDAL = new SupplyMappingDAL();
             warehouseDAL = new WarehouseDAL();
             importTransactionDAL = new ImportTransactionDAL();
+            warehouseMappingBLL = new WarehouseMappingBLL();
         }
 
         /// <summary>
@@ -94,6 +96,25 @@ namespace QLVT.BLL
             catch (Exception ex)
             {
                 throw new Exception($"Lỗi BLL - Lấy danh sách kho: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Lấy ID kho đích cho Import dựa trên mã kho ERP
+        /// Áp dụng mapping rule: kho ERP (1,3,4,34) -> kho công ty (ID=6)
+        /// </summary>
+        /// <param name="erpWarehouseCode">Mã kho từ ERP</param>
+        /// <returns>ID kho đích trong hệ thống nội bộ</returns>
+        public int? GetTargetWarehouseIdForImport(string erpWarehouseCode)
+        {
+            try
+            {
+                var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(erpWarehouseCode);
+                return internalWarehouse?.Id;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi BLL - Lấy kho đích cho Import: {ex.Message}");
             }
         }
 

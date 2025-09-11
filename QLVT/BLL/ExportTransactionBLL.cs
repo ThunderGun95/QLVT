@@ -9,6 +9,7 @@ namespace QLVT.BLL
         private readonly SupplyMappingDAL supplyMappingDAL;
         private readonly WarehouseDAL warehouseDAL;
         private readonly ExportTransactionDAL exportTransactionDAL;
+        private readonly WarehouseMappingBLL warehouseMappingBLL;
 
         public ExportTransactionBLL()
         {
@@ -16,6 +17,7 @@ namespace QLVT.BLL
             supplyMappingDAL = new SupplyMappingDAL();
             warehouseDAL = new WarehouseDAL();
             exportTransactionDAL = new ExportTransactionDAL();
+            warehouseMappingBLL = new WarehouseMappingBLL();
         }
 
         /// <summary>
@@ -53,14 +55,24 @@ namespace QLVT.BLL
                         detail.MappedUnit = supply.TenDVT;
                     }
 
-                    // Mapping kho nguồn
+                    // Mapping kho nguồn sử dụng WarehouseMappingBLL
                     if (!string.IsNullOrEmpty(detail.MaKhoXuat))
                     {
-                        var warehouse = warehouseDAL.GetWarehouses()
-                            .FirstOrDefault(w => w.MaKho == detail.MaKhoXuat);
-                        if (warehouse != null)
+                        // Sử dụng mapping rule: kho ERP (1,3,4,34) -> kho công ty (ID=6)
+                        var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(detail.MaKhoXuat);
+                        if (internalWarehouse != null)
                         {
-                            detail.SourceWarehouseId = warehouse.Id;
+                            detail.SourceWarehouseId = internalWarehouse.Id;
+                        }
+                        else
+                        {
+                            // Fallback: tìm trực tiếp theo MaKho (để hỗ trợ các kho khác)
+                            var warehouse = warehouseDAL.GetWarehouses()
+                                .FirstOrDefault(w => w.MaKho == detail.MaKhoXuat);
+                            if (warehouse != null)
+                            {
+                                detail.SourceWarehouseId = warehouse.Id;
+                            }
                         }
                     }
                 }

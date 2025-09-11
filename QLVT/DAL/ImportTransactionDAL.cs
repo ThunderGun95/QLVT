@@ -42,7 +42,7 @@ namespace QLVT.DAL
                         using (var command = new SqlCommand(insertTransactionSql, connection, transaction))
                         {
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
-                            command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Now);
+                            command.Parameters.AddWithValue("@ngayGiaoDich", order.ThoiGianHoanThanhNhapKho);
                             command.Parameters.AddWithValue("@maKhoNhan", maKho);
                             command.Parameters.AddWithValue("@maNV", staffCode);
                             command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieuNhapKho}-{order.NAM} - {order.TenKho}");

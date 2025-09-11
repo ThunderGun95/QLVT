@@ -7,7 +7,7 @@ namespace QLVT.DAL
     public class ExportTransactionDAL
     {
         /// <summary>
-        /// Tạo transaction xuất kho và cập nhật inventory (từ kho công ty sang kho nhân viên)
+        /// Tạo transaction xuất kho với chi tiết từng dòng (nhiều kho nguồn khác nhau)
         /// </summary>
         /// <param name="order">Phiếu xuất từ ERP</param>
         /// <param name="employeeWarehouseId">ID kho nhân viên đích</param>
@@ -28,35 +28,37 @@ namespace QLVT.DAL
                         // Tạo số phiếu
                         string soPhieu = GenerateExportTransactionNumber();
                         
-                        // 1. Tạo transaction header theo schema
+                        // 1. Tạo transaction header (không có kho nguồn cố định vì mỗi detail có kho riêng)
                         string insertTransactionSql = @"
                             INSERT INTO Transactions 
                             (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNguon, MaKhoNhan, MaNV, 
                              GhiChu, CreatedBy, EntityXuatKho)
                             VALUES 
-                            (@soPhieu, @ngayGiaoDich, 'XuatKho', @maKhoNguon, @maKhoNhan, @maNV, 
+                            (@soPhieu, @ngayGiaoDich, 'XuatKho', NULL, @maKhoNhan, @maNV, 
                              @ghiChu, @createdBy, @entityXuatKho);
                             SELECT SCOPE_IDENTITY();";
 
                         using (var command = new SqlCommand(insertTransactionSql, connection, transaction))
                         {
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
-                            command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Now);
-                            command.Parameters.AddWithValue("@maKhoNguon", "6"); // Kho công ty (ID = 1)
-                            command.Parameters.AddWithValue("@maKhoNhan", employeeWarehouseId.ToString());
+                            command.Parameters.AddWithValue("@ngayGiaoDich", order.ThoiGianHoanThanhXuatKho);
+                            command.Parameters.AddWithValue("@maKhoNhan", employeeWarehouseId);
                             command.Parameters.AddWithValue("@maNV", staffCode);
-                            command.Parameters.AddWithValue("@ghiChu", $"Xuất kho từ phiếu ERP: {order.SoPhieuXuatKho}-{order.NAM} - {order.TenNhanVien}");
+                            command.Parameters.AddWithValue("@ghiChu", $"Xuất kho từ phiếu ERP: {order.SoPhieuXuatKho}-{order.NAM} - {order.TenNhanVien} (Nhiều kho nguồn)");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
                             command.Parameters.AddWithValue("@entityXuatKho", $"{order.SoPhieuXuatKho}-{order.NAM}");
                             
                             transactionId = Convert.ToInt32(command.ExecuteScalar());
                         }
 
-                        // 2. Tạo transaction details và cập nhật inventory
+                        // 2. Xử lý từng detail riêng biệt với kho nguồn riêng
                         foreach (var detail in order.ChiTiet.Where(d => d.IsMapped))
                         {
-                            // Kiểm tra kho nguồn
-                            int sourceWarehouseId = detail.SourceWarehouseId ?? 1; // Default về kho công ty nếu không có
+                            // Validate kho nguồn phải có
+                            if (!detail.SourceWarehouseId.HasValue)
+                                throw new Exception($"Chi tiết vật tư {detail.MaVatTuHangHoa} chưa xác định được kho nguồn");
+
+                            int sourceWarehouseId = detail.SourceWarehouseId.Value;
 
                             // Insert transaction detail với SourceWarehouseId
                             string insertDetailSql = @"
@@ -68,13 +70,13 @@ namespace QLVT.DAL
                                 command.Parameters.AddWithValue("@transactionId", transactionId);
                                 command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongXuatKho);
-                                command.Parameters.AddWithValue("@ghiChu", $"Xuất từ ERP: {detail.MaVatTuHangHoa} - Kho: {detail.KhoXuatDisplay}");
+                                command.Parameters.AddWithValue("@ghiChu", $"Xuất từ kho {detail.TenKhoXuat} ({detail.MaKhoXuat}) - VT: {detail.MaVatTuHangHoa}");
                                 command.Parameters.AddWithValue("@sourceWarehouseId", sourceWarehouseId);
                                 
                                 command.ExecuteNonQuery();
                             }
 
-                            // Cập nhật inventory: Trừ từ kho nguồn, cộng vào kho nhân viên
+                            // Cập nhật inventory: Trừ từ kho nguồn cụ thể, cộng vào kho nhân viên
                             TransferInventory(connection, transaction, sourceWarehouseId, employeeWarehouseId, detail.MappedSupplyId!.Value, (int)detail.SoLuongXuatKho);
                         }
 
@@ -92,8 +94,15 @@ namespace QLVT.DAL
         }
 
         /// <summary>
-        /// Chuyển inventory từ kho công ty sang kho nhân viên
+        /// Chuyển inventory từ kho nguồn cụ thể sang kho nhân viên đích
+        /// (Mỗi detail có thể có kho nguồn khác nhau)
         /// </summary>
+        /// <param name="connection">Database connection</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="sourceWarehouseId">ID kho nguồn (từ mapping ERP)</param>
+        /// <param name="targetWarehouseId">ID kho nhân viên đích</param>
+        /// <param name="erpId">ERP ID vật tư</param>
+        /// <param name="quantity">Số lượng chuyển</param>
         private void TransferInventory(SqlConnection connection, SqlTransaction transaction, int sourceWarehouseId, int targetWarehouseId, int erpId, int quantity)
         {
             // Kiểm tra tồn kho đủ không
@@ -110,10 +119,10 @@ namespace QLVT.DAL
                 int currentStock = result != null ? Convert.ToInt32(result) : 0;
                 
                 if (currentStock < quantity)
-                    throw new Exception($"Kho công ty không đủ tồn kho cho vật tư ErpId={erpId}. Yêu cầu: {quantity}, Tồn kho: {currentStock}");
+                    throw new Exception($"Kho nguồn (ID={sourceWarehouseId}) không đủ tồn kho cho vật tư ErpId={erpId}. Yêu cầu: {quantity}, Tồn kho: {currentStock}");
             }
 
-            // 1. Trừ khỏi kho công ty
+            // 1. Trừ khỏi kho nguồn
             string updateSourceSql = @"
                 UPDATE Inventory 
                 SET SoLuongTon = SoLuongTon - @quantity, LastUpdated = GETDATE()
@@ -127,7 +136,7 @@ namespace QLVT.DAL
                 
                 int rowsAffected = command.ExecuteNonQuery();
                 if (rowsAffected == 0)
-                    throw new Exception($"Không tìm thấy record tồn kho trong kho công ty cho SupplyErpId={erpId}");
+                    throw new Exception($"Không tìm thấy record tồn kho trong kho nguồn (ID={sourceWarehouseId}) cho SupplyErpId={erpId}");
             }
 
             // 2. Cộng vào kho nhân viên

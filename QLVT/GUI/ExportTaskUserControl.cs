@@ -56,9 +56,9 @@ namespace QLVT.GUI
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "MaVatTuHangHoa",
-                HeaderText = "Mã VT ERP",
-                DataPropertyName = "MaVatTuHangHoa",
+                Name = "MappedSupplyCode",
+                HeaderText = "Mã VT",
+                DataPropertyName = "MappedSupplyCode",
                 Width = 100
             });
 
@@ -95,21 +95,7 @@ namespace QLVT.GUI
                 Width = 120
             });
 
-            dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "MappedSupplyCode",
-                HeaderText = "Mã VT Map",
-                DataPropertyName = "MappedSupplyCode",
-                Width = 100
-            });
-
-            dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "MappedSupplyName",
-                HeaderText = "Tên VT Map",
-                DataPropertyName = "MappedSupplyName",
-                Width = 150
-            });
+            
 
             dgvChiTiet.Columns.Add(new DataGridViewCheckBoxColumn
             {
