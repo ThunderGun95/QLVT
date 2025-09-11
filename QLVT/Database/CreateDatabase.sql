@@ -307,18 +307,17 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Inventory' AND xtype='U')
 BEGIN
     CREATE TABLE Inventory (
         Id INT IDENTITY(1,1) PRIMARY KEY,
-        MaKho NVARCHAR(20) NOT NULL,
-        ErpId INT NOT NULL, -- Mã vật tư
+        WarehouseId NVARCHAR(20) NOT NULL,
+        SupplyErpId INT NOT NULL, -- Mã vật tư
         SoLuongTon INT NOT NULL DEFAULT 0, -- Số lượng có thực
-        SoLuongNo INT NOT NULL DEFAULT 0, -- Số lượng nợ (chỉ áp dụng kho cá nhân)
         LastUpdated DATETIME DEFAULT GETDATE(),
         
-        FOREIGN KEY (MaKho) REFERENCES Warehouses(MaKho),
-        UNIQUE(MaKho, ErpId) -- Mỗi vật tư chỉ có 1 record trong 1 kho
+        FOREIGN KEY (WarehouseId) REFERENCES Warehouses(Id),
+        UNIQUE(WarehouseId, SupplyErpId) -- Mỗi vật tư chỉ có 1 record trong 1 kho
     );
     
-    CREATE INDEX IX_Inventory_MaKho ON Inventory(MaKho);
-    CREATE INDEX IX_Inventory_ErpId ON Inventory(ErpId);
+    CREATE INDEX IX_Inventory_MaKho ON Inventory(WarehouseId);
+    CREATE INDEX IX_Inventory_ErpId ON Inventory(SupplyErpId);
     PRINT N'✅ Đã tạo bảng Inventory';
 END
 ELSE
@@ -335,8 +334,8 @@ BEGIN
         SoPhieu NVARCHAR(50) NOT NULL UNIQUE,
         NgayGiaoDich DATETIME NOT NULL DEFAULT GETDATE(),
         LoaiGiaoDich NVARCHAR(20) NOT NULL, -- 'NhapKho', 'XuatKho', 'TraKho', 'HoanUng'
-        MaKhoNguon NVARCHAR(20) NULL, -- Kho xuất (null với nhập kho)
-        MaKhoNhan NVARCHAR(20) NULL, -- Kho nhận (null với hoàn ứng)
+        MaKhoNguon int NULL, -- Kho xuất (null với nhập kho)
+        MaKhoNhan int NULL, -- Kho nhận (null với hoàn ứng)
         MaNV NVARCHAR(20) NOT NULL, -- Nhân viên thực hiện
         GhiChu NVARCHAR(255) NULL,
         CreatedBy NVARCHAR(50) NOT NULL,
@@ -372,47 +371,35 @@ BEGIN
         ErpId INT NOT NULL, -- Mã vật tư
         SoLuong INT NOT NULL,
         GhiChu NVARCHAR(255) NULL,
+        SourceWarehouseId INT NULL, -- Kho nguồn (cho phiếu xuất)
         
-        FOREIGN KEY (TransactionId) REFERENCES Transactions(Id) ON DELETE CASCADE
+        FOREIGN KEY (TransactionId) REFERENCES Transactions(Id) ON DELETE CASCADE,
+        FOREIGN KEY (SourceWarehouseId) REFERENCES Warehouses(Id)
     );
     
     CREATE INDEX IX_TransactionDetails_TransactionId ON TransactionDetails(TransactionId);
     CREATE INDEX IX_TransactionDetails_ErpId ON TransactionDetails(ErpId);
-    PRINT N'✅ Đã tạo bảng TransactionDetails';
+    CREATE INDEX IX_TransactionDetails_SourceWarehouseId ON TransactionDetails(SourceWarehouseId);
+    PRINT N'✅ Đã tạo bảng TransactionDetails với SourceWarehouseId';
 END
 ELSE
 BEGIN
-    PRINT N'⚠️ Bảng TransactionDetails đã tồn tại';
+    -- Thêm cột SourceWarehouseId nếu chưa có
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TransactionDetails' AND COLUMN_NAME = 'SourceWarehouseId')
+    BEGIN
+        ALTER TABLE TransactionDetails ADD SourceWarehouseId INT NULL;
+        ALTER TABLE TransactionDetails ADD CONSTRAINT FK_TransactionDetails_SourceWarehouse 
+            FOREIGN KEY (SourceWarehouseId) REFERENCES Warehouses(Id);
+        CREATE INDEX IX_TransactionDetails_SourceWarehouseId ON TransactionDetails(SourceWarehouseId);
+        PRINT N'✅ Đã thêm cột SourceWarehouseId vào TransactionDetails';
+    END
+    ELSE
+    BEGIN
+        PRINT N'⚠️ Cột SourceWarehouseId đã tồn tại trong TransactionDetails';
+    END
 END
 GO
 
--- Opening Inventory Table (Tồn kho đầu kỳ)
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='OpeningInventory' AND xtype='U')
-BEGIN
-    CREATE TABLE OpeningInventory (
-        Id INT IDENTITY(1,1) PRIMARY KEY,
-        MaKho NVARCHAR(20) NOT NULL,
-        SupplyId INT NOT NULL,
-        SoLuongTonDauKy INT NOT NULL,
-        NgayNhapTon DATETIME NOT NULL DEFAULT GETDATE(),
-        NguoiNhap NVARCHAR(50) NOT NULL,
-        GhiChu NVARCHAR(255) NULL,
-        CreatedDate DATETIME DEFAULT GETDATE(),
-        
-        FOREIGN KEY (MaKho) REFERENCES Warehouses(MaKho),
-        FOREIGN KEY (SupplyId) REFERENCES Supplies(Id),
-        UNIQUE(MaKho, SupplyId) -- Mỗi vật tư chỉ có 1 record tồn đầu kỳ trong 1 kho
-    );
-    
-    CREATE INDEX IX_OpeningInventory_MaKho ON OpeningInventory(MaKho);
-    CREATE INDEX IX_OpeningInventory_NgayNhapTon ON OpeningInventory(NgayNhapTon);
-    PRINT N'✅ Đã tạo bảng OpeningInventory';
-END
-ELSE
-BEGIN
-    PRINT N'⚠️ Bảng OpeningInventory đã tồn tại';
-END
-GO
 
 -- ========================================
 -- Insert Sample Warehouse Data

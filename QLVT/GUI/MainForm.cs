@@ -387,8 +387,7 @@ namespace QLVT.GUI
 
         private void mnuXuatKho_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Chức năng xuất kho đang được phát triển!", "Thông báo", 
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            LoadUserControl(new ExportTaskUserControl(), "Xuất kho vật tư");
         }
 
         private void mnuTraKho_Click(object sender, EventArgs e)

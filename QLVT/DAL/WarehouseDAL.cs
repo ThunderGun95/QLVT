@@ -111,5 +111,62 @@ namespace QLVT.DAL
 
             return warehouse;
         }
+
+        /// <summary>
+        /// Lấy kho cá nhân theo mã nhân viên
+        /// </summary>
+        /// <param name="staffCode">Mã nhân viên</param>
+        /// <returns>Kho cá nhân của nhân viên hoặc null nếu không có</returns>
+        public Warehouse? GetWarehouseByStaffCode(string staffCode)
+        {
+            if (string.IsNullOrWhiteSpace(staffCode))
+                return null;
+
+            Warehouse? warehouse = null;
+            
+            string sql = @"
+                SELECT w.Id, w.MaKho, w.TenKho, w.LoaiKho, w.MaNV, 
+                       s.TenNV, w.DiaChi, w.GhiChu, w.IsActive
+                FROM Warehouses w
+                LEFT JOIN Staffs s ON w.MaNV = s.MaNV
+                WHERE w.MaNV = @staffCode AND w.LoaiKho = 'CANHAN' AND w.IsActive = 1";
+
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@staffCode", staffCode);
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                warehouse = new Warehouse
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    MaKho = reader["MaKho"].ToString() ?? string.Empty,
+                                    TenKho = reader["TenKho"].ToString() ?? string.Empty,
+                                    LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
+                                    MaNV = reader["MaNV"].ToString(),
+                                    TenNV = reader["TenNV"].ToString(),
+                                    DiaChi = reader["DiaChi"].ToString(),
+                                    GhiChu = reader["GhiChu"].ToString(),
+                                    IsActive = Convert.ToBoolean(reader["IsActive"])
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy kho nhân viên {staffCode}: {ex.Message}");
+            }
+
+            return warehouse;
+        }
     }
 }
