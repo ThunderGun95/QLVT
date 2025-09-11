@@ -351,6 +351,9 @@ namespace QLVT.GUI
                     
                     lblStatus.Text = $"✅ Xuất kho thành công - Mã GD: {transactionId}";
                     lblStatus.ForeColor = Color.Green;
+                    
+                    // Clear form sau khi xuất kho thành công
+                    ResetForm();
                 }
             }
             catch (Exception ex)
