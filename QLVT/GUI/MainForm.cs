@@ -154,10 +154,10 @@ namespace QLVT.GUI
                         ShowMessage("Chức năng xuất kho sẽ được phát triển trong phiên bản tiếp theo.");
                         break;
                     case "InventoryReportForm":
-                        ShowMessage("Chức năng báo cáo tồn kho sẽ được phát triển trong phiên bản tiếp theo.");
+                        ShowInventoryReportControl();
                         break;
                     case "TransactionReportForm":
-                        ShowMessage("Chức năng báo cáo xuất nhập sẽ được phát triển trong phiên bản tiếp theo.");
+                        ShowTransactionReportControl();
                         break;
                     case "BackupForm":
                         ShowMessage("Chức năng sao lưu dữ liệu sẽ được phát triển trong phiên bản tiếp theo.");
@@ -400,6 +400,35 @@ namespace QLVT.GUI
         {
             MessageBox.Show("Chức năng hoàn ứng đang được phát triển!", "Thông báo", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void ShowInventoryReportControl()
+        {
+            var inventoryReportControl = new BaoCaoTonKhoUserControl();
+            LoadUserControl(inventoryReportControl, "Báo cáo tồn kho");
+        }
+
+        private void ShowTransactionReportControl()
+        {
+            var transactionReportControl = new BaoCaoXuatNhapTonUserControl();
+            LoadUserControl(transactionReportControl, "Báo cáo xuất nhập tồn");
+        }
+
+        private void mnuBaoCaoXuatNhapTonChiTiet_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var baoCaoXuatNhapTonChiTietForm = new BaoCaoXuatNhapTonChiTietForm();
+                baoCaoXuatNhapTonChiTietForm.Show();
+                
+                lblStatus.Text = "Đã mở báo cáo xuất nhập tồn chi tiết";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở báo cáo xuất nhập tồn chi tiết: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Lỗi khi mở báo cáo";
+            }
         }
 
         #endregion

@@ -43,14 +43,12 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Supplies' AND xtype='U')
 BEGIN
     CREATE TABLE Supplies (
         Id INT IDENTITY(1,1) PRIMARY KEY,
-        ErpId NVARCHAR(20) NULL,
+        ErpId INT NULL,
         Code NVARCHAR(20) NOT NULL UNIQUE,
         TenVatTu NVARCHAR(500) NOT NULL,
         DacTinhKyThuat NVARCHAR(1000) NULL,
         MaDVT NVARCHAR(10) NOT NULL,
-        MaNSX NVARCHAR(10) NOT NULL,
-        FOREIGN KEY (MaDVT) REFERENCES Units(MaDVT),
-        FOREIGN KEY (MaNSX) REFERENCES Manufacturers(MaNSX)
+        FOREIGN KEY (MaDVT) REFERENCES Units(MaDVT)
     );
 END
 GO
@@ -307,12 +305,11 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Inventory' AND xtype='U')
 BEGIN
     CREATE TABLE Inventory (
         Id INT IDENTITY(1,1) PRIMARY KEY,
-        WarehouseId NVARCHAR(20) NOT NULL,
-        SupplyErpId INT NOT NULL, -- Mã vật tư
+        WarehouseId INT NOT NULL, -- Thay đổi từ NVARCHAR(20) thành INT
+        SupplyErpId INT NOT NULL,
         SoLuongTon INT NOT NULL DEFAULT 0, -- Số lượng có thực
-        LastUpdated DATETIME DEFAULT GETDATE(),
         
-        FOREIGN KEY (WarehouseId) REFERENCES Warehouses(Id),
+        FOREIGN KEY (WarehouseId) REFERENCES Warehouses(Id), -- Sửa FK reference
         UNIQUE(WarehouseId, SupplyErpId) -- Mỗi vật tư chỉ có 1 record trong 1 kho
     );
     
@@ -334,8 +331,8 @@ BEGIN
         SoPhieu NVARCHAR(50) NOT NULL UNIQUE,
         NgayGiaoDich DATETIME NOT NULL DEFAULT GETDATE(),
         LoaiGiaoDich NVARCHAR(20) NOT NULL, -- 'NhapKho', 'XuatKho', 'TraKho', 'HoanUng'
-        MaKhoNguon int NULL, -- Kho xuất (null với nhập kho)
-        MaKhoNhan int NULL, -- Kho nhận (null với hoàn ứng)
+        MaKhoNguon INT NULL, -- Kho xuất (null với nhập kho) - Thay đổi thành INT
+        MaKhoNhan INT NULL, -- Kho nhận (null với hoàn ứng) - Thay đổi thành INT
         MaNV NVARCHAR(20) NOT NULL, -- Nhân viên thực hiện
         GhiChu NVARCHAR(255) NULL,
         CreatedBy NVARCHAR(50) NOT NULL,
@@ -347,8 +344,8 @@ BEGIN
         EntityTraKho NVARCHAR(100) NULL, -- Lý do trả
         EntityHoanUng NVARCHAR(100) NULL, -- Lý do hoàn ứng
         
-        FOREIGN KEY (MaKhoNguon) REFERENCES Warehouses(MaKho),
-        FOREIGN KEY (MaKhoNhan) REFERENCES Warehouses(MaKho)
+        FOREIGN KEY (MaKhoNguon) REFERENCES Warehouses(Id), -- Sửa FK reference
+        FOREIGN KEY (MaKhoNhan) REFERENCES Warehouses(Id)   -- Sửa FK reference
     );
     
     CREATE INDEX IX_Transactions_SoPhieu ON Transactions(SoPhieu);
@@ -368,7 +365,7 @@ BEGIN
     CREATE TABLE TransactionDetails (
         Id INT IDENTITY(1,1) PRIMARY KEY,
         TransactionId INT NOT NULL,
-        ErpId INT NOT NULL, -- Mã vật tư
+        ErpId INT NOT NULL,
         SoLuong INT NOT NULL,
         GhiChu NVARCHAR(255) NULL,
         SourceWarehouseId INT NULL, -- Kho nguồn (cho phiếu xuất)

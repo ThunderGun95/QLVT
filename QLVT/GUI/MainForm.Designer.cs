@@ -35,6 +35,8 @@ namespace QLVT.GUI
             this.mnuTraKho = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHoanUng = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuNhapTonDauKy = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuBaoCao = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuBaoCaoXuatNhapTonChiTiet = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblUser = new System.Windows.Forms.ToolStripStatusLabel();
@@ -51,7 +53,8 @@ namespace QLVT.GUI
             // 
             this.menuStrip.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mnuTacVu});
+            this.mnuTacVu,
+            this.mnuBaoCao});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Size = new System.Drawing.Size(1200, 24);
@@ -105,6 +108,21 @@ namespace QLVT.GUI
             this.mnuHoanUng.Size = new System.Drawing.Size(200, 22);
             this.mnuHoanUng.Text = "↩️ Hoàn ứng vật tư";
             this.mnuHoanUng.Click += new System.EventHandler(this.mnuHoanUng_Click);
+            // 
+            // mnuBaoCao
+            // 
+            this.mnuBaoCao.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuBaoCaoXuatNhapTonChiTiet});
+            this.mnuBaoCao.Name = "mnuBaoCao";
+            this.mnuBaoCao.Size = new System.Drawing.Size(61, 20);
+            this.mnuBaoCao.Text = "Báo cáo";
+            // 
+            // mnuBaoCaoXuatNhapTonChiTiet
+            // 
+            this.mnuBaoCaoXuatNhapTonChiTiet.Name = "mnuBaoCaoXuatNhapTonChiTiet";
+            this.mnuBaoCaoXuatNhapTonChiTiet.Size = new System.Drawing.Size(250, 22);
+            this.mnuBaoCaoXuatNhapTonChiTiet.Text = "📊 Báo cáo xuất nhập tồn chi tiết";
+            this.mnuBaoCaoXuatNhapTonChiTiet.Click += new System.EventHandler(this.mnuBaoCaoXuatNhapTonChiTiet_Click);
             // 
             // statusStrip
             // 
@@ -201,6 +219,8 @@ namespace QLVT.GUI
         private System.Windows.Forms.ToolStripMenuItem mnuXuatKho;
         private System.Windows.Forms.ToolStripMenuItem mnuTraKho;
         private System.Windows.Forms.ToolStripMenuItem mnuHoanUng;
+        private System.Windows.Forms.ToolStripMenuItem mnuBaoCao;
+        private System.Windows.Forms.ToolStripMenuItem mnuBaoCaoXuatNhapTonChiTiet;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
         private System.Windows.Forms.ToolStripStatusLabel lblUser;
