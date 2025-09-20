@@ -1,6 +1,6 @@
 namespace QLVT.GUI
 {
-    partial class ImportTaskUserControl
+    partial class NhapKhoErpUserControl
     {
         private System.ComponentModel.IContainer components = null;
         private Label lblTitle;

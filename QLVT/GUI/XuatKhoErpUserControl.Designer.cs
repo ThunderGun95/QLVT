@@ -1,6 +1,6 @@
 namespace QLVT.GUI
 {
-    partial class ExportTaskUserControl
+    partial class XuatKhoErpUserControl
     {
         private System.ComponentModel.IContainer components = null;
         private Label lblTitle;

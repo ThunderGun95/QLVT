@@ -1,10 +1,10 @@
 using Microsoft.Data.SqlClient;
-using QLVT.Models;
+using QLVT.ERP.Models;
 using QLVT.Utils;
 
 namespace QLVT.DAL
 {
-    public class ExportTransactionDAL
+    public class XuatKhoTransactionDAL
     {
         /// <summary>
         /// Tạo transaction xuất kho với chi tiết từng dòng (nhiều kho nguồn khác nhau)
@@ -14,7 +14,7 @@ namespace QLVT.DAL
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên thực hiện</param>
         /// <returns>ID transaction vừa tạo</returns>
-        public int CreateExportTransaction(ERPExportOrder order, int employeeWarehouseId, string createdBy, string staffCode)
+        public int CreateXuatKhoErpTransaction(ERP_PhieuXuatKho order, int employeeWarehouseId, string createdBy, string staffCode)
         {
             int transactionId = 0;
             
@@ -168,7 +168,7 @@ namespace QLVT.DAL
         /// </summary>
         private string GenerateExportTransactionNumber()
         {
-            string dateStr = DateTime.Now.ToString("yyyyMMdd");
+            string dateStr = DateTime.Now.ToString("yyMMdd");
             string prefix = "XK"; // Xuất Kho
             
             try
@@ -180,14 +180,14 @@ namespace QLVT.DAL
                         SELECT COUNT(*) FROM Transactions 
                         WHERE SoPhieu LIKE @pattern 
                         AND LoaiGiaoDich = 'XuatKho'
-                        AND CAST(NgayGiaoDich AS DATE) = CAST(GETDATE() AS DATE)";
+                        AND CAST(CreatedDate AS DATE) = CAST(GETDATE() AS DATE)";
                     
                     using (var command = new SqlCommand(countSql, connection))
                     {
                         command.Parameters.AddWithValue("@pattern", $"{prefix}{dateStr}%");
                         int count = Convert.ToInt32(command.ExecuteScalar()) + 1;
                         
-                        return $"{prefix}{dateStr}{count:D3}";
+                        return $"{prefix}{dateStr}-{count:D4}";
                     }
                 }
             }

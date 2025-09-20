@@ -1,22 +1,24 @@
 using QLVT.DAL;
 using QLVT.Models;
+using QLVT.ERP.DAL;
+using QLVT.ERP.Models;
 
 namespace QLVT.BLL
 {
-    public class ExportTransactionBLL
+    public class XuatKhoBLL
     {
-        private readonly ERPExportDAL erpExportDAL;
+        private readonly ERPXuatKhoDAL erpXuatKhoErpDAL;
         private readonly SupplyMappingDAL supplyMappingDAL;
         private readonly WarehouseDAL warehouseDAL;
-        private readonly ExportTransactionDAL exportTransactionDAL;
+        private readonly XuatKhoTransactionDAL xuatKhoTransactionDAL;
         private readonly WarehouseMappingBLL warehouseMappingBLL;
 
-        public ExportTransactionBLL()
+        public XuatKhoBLL()
         {
-            erpExportDAL = new ERPExportDAL();
+            erpXuatKhoErpDAL = new ERPXuatKhoDAL();
             supplyMappingDAL = new SupplyMappingDAL();
             warehouseDAL = new WarehouseDAL();
-            exportTransactionDAL = new ExportTransactionDAL();
+            xuatKhoTransactionDAL = new XuatKhoTransactionDAL();
             warehouseMappingBLL = new WarehouseMappingBLL();
         }
 
@@ -26,7 +28,7 @@ namespace QLVT.BLL
         /// <param name="soPhieu">Số phiếu xuất</param>
         /// <param name="nam">Năm của phiếu</param>
         /// <returns>Phiếu xuất với mapping</returns>
-        public ERPExportOrder? GetExportOrderWithMapping(string soPhieu, int nam)
+        public ERP_PhieuXuatKho? GetExportOrderWithMapping(string soPhieu, int nam)
         {
             try
             {
@@ -34,17 +36,42 @@ namespace QLVT.BLL
                     throw new ArgumentException("Số phiếu không được để trống");
 
                 // Kiểm tra phiếu đã được xử lý chưa
-                if (erpExportDAL.IsExportOrderProcessed(soPhieu, nam))
+                if (erpXuatKhoErpDAL.IsExportOrderProcessed(soPhieu, nam))
                     throw new Exception($"Phiếu xuất {soPhieu}-{nam} đã được xử lý rồi");
 
                 // Lấy phiếu xuất từ ERP
-                var order = erpExportDAL.GetExportOrderByNumber(soPhieu, nam);
-                if (order == null)
+                var erpOrder = erpXuatKhoErpDAL.GetPhieuXuatKhoErp(soPhieu, nam);
+                if (erpOrder == null)
                     throw new Exception($"Không tìm thấy phiếu xuất {soPhieu}-{nam} trong hệ thống ERP");
 
-                // Thực hiện mapping tự động cho từng chi tiết
-                foreach (var detail in order.ChiTiet)
+                // Convert sang model của QLVT với mapping
+                var order = new ERP_PhieuXuatKho
                 {
+                    MaPhieuXuatKhoVatTu = erpOrder.MaPhieuXuatKhoVatTu,
+                    SoPhieuXuatKho = erpOrder.SoPhieuXuatKho,
+                    NAM = erpOrder.NAM,
+                    TenNhanVien = erpOrder.TenNhanVien,
+                    MaNhanVien = erpOrder.MaNhanVien,
+                    ThoiGianHoanThanhXuatKho = erpOrder.ThoiGianHoanThanhXuatKho,
+                    MaNhanVienXuat = erpOrder.MaNhanVienXuat,
+                    TenNhanVienXuat = erpOrder.TenNhanVienXuat,
+                    ChiTiet = new List<ERP_PhieuXuatKhoChiTiet>()
+                };
+
+                // Thực hiện mapping tự động cho từng chi tiết
+                foreach (var erpDetail in erpOrder.ChiTiet)
+                {
+                    var detail = new ERP_PhieuXuatKhoChiTiet
+                    {
+                        MaPhieuXuatKhoVatTu = erpDetail.MaPhieuXuatKhoVatTu,
+                        MaVatTuHangHoa = erpDetail.MaVatTuHangHoa,
+                        TenVatTu = erpDetail.TenVatTu,
+                        SoLuongXuatKho = erpDetail.SoLuongXuatKho,
+                        DonViTinh = erpDetail.DonViTinh,
+                        MaKhoXuat = erpDetail.MaKhoXuat,
+                        TenKhoXuat = erpDetail.TenKhoXuat
+                    };
+
                     // Mapping vật tư
                     var supply = supplyMappingDAL.FindSupplyByERPCode(detail.MaVatTuHangHoa);
                     if (supply != null)
@@ -75,6 +102,8 @@ namespace QLVT.BLL
                             }
                         }
                     }
+
+                    order.ChiTiet.Add(detail);
                 }
 
                 return order;
@@ -143,12 +172,12 @@ namespace QLVT.BLL
         /// </summary>
         /// <param name="order">Phiếu xuất</param>
         /// <returns>Thông tin trạng thái</returns>
-        public (int TotalItems, int MappedItems, int UnmappedItems, int MissingWarehouses) GetMappingStatus(ERPExportOrder order)
+        public (int TotalItems, int MappedItems, int UnmappedItems, int MissingWarehouses) GetMappingStatus(ERP_PhieuXuatKho order)
         {
             var totalItems = order.ChiTiet.Count;
             var mappedItems = order.ChiTiet.Count(d => d.IsMapped);
             var unmappedItems = totalItems - mappedItems;
-            var missingWarehouses = order.ChiTiet.Count(d => !d.HasSourceWarehouse);
+            var missingWarehouses = order.ChiTiet.Count(d => !d.HasWarehouseMapping);
 
             return (totalItems, mappedItems, unmappedItems, missingWarehouses);
         }
@@ -161,7 +190,7 @@ namespace QLVT.BLL
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên</param>
         /// <returns>ID transaction</returns>
-        public int ProcessExport(ERPExportOrder order, int employeeWarehouseId, string createdBy, string staffCode)
+        public int ProcessExport(ERP_PhieuXuatKho order, int employeeWarehouseId, string createdBy, string staffCode)
         {
             try
             {
@@ -183,11 +212,11 @@ namespace QLVT.BLL
                     throw new ArgumentException("Chưa chọn nhân viên thực hiện");
 
                 // Kiểm tra lại phiếu đã xử lý chưa
-                if (erpExportDAL.IsExportOrderProcessed(order.SoPhieuXuatKho, order.NAM))
+                if (erpXuatKhoErpDAL.IsExportOrderProcessed(order.SoPhieuXuatKho, order.NAM))
                     throw new Exception($"Phiếu {order.SoPhieuXuatKho}-{order.NAM} đã được xử lý rồi");
 
                 // Thực hiện xuất kho
-                return exportTransactionDAL.CreateExportTransaction(order, employeeWarehouseId, createdBy, staffCode);
+                return xuatKhoTransactionDAL.CreateXuatKhoErpTransaction(order, employeeWarehouseId, createdBy, staffCode);
             }
             catch (Exception ex)
             {

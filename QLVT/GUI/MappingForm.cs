@@ -4,14 +4,15 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using QLVT.BLL;
+using QLVT.ERP.Models;
 using QLVT.Models;
 
 namespace QLVT.GUI
 {
     public partial class MappingForm : Form
     {
-        private List<ERPExportOrderDetail> orderDetails;
-        private ExportTransactionBLL exportBLL;
+        private List<ERP_PhieuXuatKhoChiTiet> orderDetails;
+        private XuatKhoBLL exportBLL;
         private DataGridView dgvOrderDetails;
         private DataGridView dgvSearchResults;
         private TextBox txtSearch;
@@ -22,7 +23,7 @@ namespace QLVT.GUI
         private Label lblStatus;
         private Label lblInstruction;
 
-        public MappingForm(List<ERPExportOrderDetail> details, ExportTransactionBLL bll)
+        public MappingForm(List<ERP_PhieuXuatKhoChiTiet> details, XuatKhoBLL bll)
         {
             orderDetails = details;
             exportBLL = bll;

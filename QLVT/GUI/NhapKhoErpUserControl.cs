@@ -5,20 +5,21 @@ using System.Linq;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.Models;
+using QLVT.ERP.Models;
 
 namespace QLVT.GUI
 {
-    public partial class ImportTaskUserControl : UserControl
+    public partial class NhapKhoErpUserControl : UserControl
     {
-        private readonly ImportBLL importBLL;
-        private ERPImportOrder? currentOrder;
+        private readonly NhapKhoBLL nhapKhoErpBLL;
+        private ERP_PhieuNhapKho? currentOrder;
         private List<Warehouse> warehouses = new();
         int IdKhoNhap = 0;
 
-        public ImportTaskUserControl()
+        public NhapKhoErpUserControl()
         {
             InitializeComponent();
-            importBLL = new ImportBLL();
+            nhapKhoErpBLL = new NhapKhoBLL();
             SetupDataGridView();
             LoadWarehouses();
             CheckERPConnection();
@@ -26,7 +27,7 @@ namespace QLVT.GUI
 
         private void CheckERPConnection()
         {
-            if (!importBLL.TestERPConnection())
+            if (!nhapKhoErpBLL.TestERPConnection())
             {
                 lblConnectionStatus.Text = "❌ Không thể kết nối ERP";
                 lblConnectionStatus.ForeColor = Color.Red;
@@ -44,7 +45,7 @@ namespace QLVT.GUI
         {
             try
             {
-                warehouses = importBLL.GetWarehouses();
+                warehouses = nhapKhoErpBLL.GetWarehouses();
                 // Bỏ cmbKho - không cần dropdown kho nữa
             }
             catch (Exception ex)
@@ -125,7 +126,7 @@ namespace QLVT.GUI
                 row.Cells["STT"].Value = (i + 1).ToString();
 
                 // Tô màu dòng theo trạng thái mapping
-                if (row.DataBoundItem is ERPImportOrderDetail detail)
+                if (row.DataBoundItem is ERP_PhieuNhapKhoChiTiet detail)
                 {
                     if (detail.IsMapped)
                     {
@@ -171,7 +172,7 @@ namespace QLVT.GUI
                 lblStatus.ForeColor = Color.Blue;
                 btnXacNhan.Enabled = false;
 
-                currentOrder = importBLL.GetImportOrderWithMapping(soPhieu, nam);
+                currentOrder = nhapKhoErpBLL.GetPhieuNhapKhoErpWithMapping(soPhieu, nam);
 
                 if (currentOrder == null)
                 {
@@ -207,7 +208,7 @@ namespace QLVT.GUI
         {
             if (currentOrder == null) return;
 
-            var (total, mapped, unmapped) = importBLL.GetMappingStatus(currentOrder);
+            var (total, mapped, unmapped) = nhapKhoErpBLL.GetMappingStatus(currentOrder);
             
             lblMappingStatus.Text = $"Mapping: {mapped}/{total} vật tư ({unmapped} chưa map)";
             
@@ -223,7 +224,7 @@ namespace QLVT.GUI
             }
         }
 
-        private void DisplayOrderInfo(ERPImportOrder order)
+        private void DisplayOrderInfo(ERP_PhieuNhapKho order)
         {
             lblSoPhieu.Text = $"{order.SoPhieuNhapKho}-{order.NAM}"; // Hiển thị đầy đủ số-năm
             lblNgayTao.Text = order.ThoiGianHoanThanhNhapKho.ToString("dd/MM/yyyy HH:mm");
@@ -310,7 +311,7 @@ namespace QLVT.GUI
                 string createdBy = "admin"; // TODO: Lấy từ session
                 string staffCode = "NV001"; // TODO: Lấy từ session hoặc chọn
 
-                int transactionId = importBLL.ProcessImport(currentOrder!,IdKhoNhap, createdBy, staffCode);
+                int transactionId = nhapKhoErpBLL.ProcessNhapKhoErp(currentOrder!,IdKhoNhap, createdBy, staffCode);
 
                 lblStatus.Text = "✅ Đã nhập kho thành công";
                 lblStatus.ForeColor = Color.Green;
@@ -349,7 +350,7 @@ namespace QLVT.GUI
 
         private void btnMapping_Click(object sender, EventArgs e)
         {
-            if (dgvChiTiet.CurrentRow?.DataBoundItem is ERPImportOrderDetail detail && !detail.IsMapped)
+            if (dgvChiTiet.CurrentRow?.DataBoundItem is ERP_PhieuNhapKhoChiTiet detail && !detail.IsMapped)
             {
                 // TODO: Mở form mapping thủ công
                 MessageBox.Show($"Chức năng mapping thủ công cho vật tư:\n{detail.TenVatTu}\nSẽ được phát triển trong phiên bản tiếp theo.", 

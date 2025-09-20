@@ -5,19 +5,20 @@ using System.Linq;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.Models;
+using QLVT.ERP.Models;
 
 namespace QLVT.GUI
 {
-    public partial class ExportTaskUserControl : UserControl
+    public partial class XuatKhoErpUserControl : UserControl
     {
-        private readonly ExportTransactionBLL exportBLL;
-        private ERPExportOrder? currentOrder;
+        private readonly XuatKhoBLL exportBLL;
+        private ERP_PhieuXuatKho? currentOrder;
         private int selectedEmployeeWarehouseId = 0;
 
-        public ExportTaskUserControl()
+        public XuatKhoErpUserControl()
         {
             InitializeComponent();
-            exportBLL = new ExportTransactionBLL();
+            exportBLL = new XuatKhoBLL();
             SetupDataGridView();
             CheckERPConnection();
         }

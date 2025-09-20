@@ -1,10 +1,10 @@
 using Microsoft.Data.SqlClient;
-using QLVT.Models;
+using QLVT.ERP.Models;
 using QLVT.Utils;
 
-namespace QLVT.DAL
+namespace QLVT.ERP.DAL
 {
-    public class ERPExportDAL
+    public class ERPXuatKhoDAL
     {
         /// <summary>
         /// Lấy phiếu xuất kho từ hệ thống ERP theo số phiếu và năm
@@ -12,7 +12,7 @@ namespace QLVT.DAL
         /// <param name="soPhieu">Số phiếu xuất</param>
         /// <param name="nam">Năm</param>
         /// <returns>Phiếu xuất kho hoặc null nếu không tìm thấy</returns>
-        public ERPExportOrder? GetExportOrderByNumber(string soPhieu, int nam)
+        public ERP_PhieuXuatKho? GetPhieuXuatKhoErp(string soPhieu, int nam)
         {
             try
             {
@@ -27,9 +27,9 @@ namespace QLVT.DAL
                             LEFT JOIN ViewNhanViens nv on nv.UserID = px.MaNguoiNhan
                          WHERE TTXK = 'TT_A'
                             AND SoPhieuXuatKho = @soPhieu AND NAM = @nam";
-                    
 
-                    ERPExportOrder? order = null;
+
+                    ERP_PhieuXuatKho? order = null;
 
                     using (var command = new SqlCommand(sql, connection))
                     {
@@ -40,7 +40,7 @@ namespace QLVT.DAL
                         {
                             if (reader.Read())
                             {
-                                order = new ERPExportOrder
+                                order = new ERP_PhieuXuatKho
                                 {
                                     MaPhieuXuatKhoVatTu = Convert.ToInt32(reader["MaPhieuXuatKhoVatTu"]),
                                     SoPhieuXuatKho = reader["SoPhieuXuatKho"].ToString() ?? string.Empty,
@@ -76,7 +76,7 @@ namespace QLVT.DAL
                         {
                             while (reader.Read())
                             {
-                                order.ChiTiet.Add(new ERPExportOrderDetail
+                                order.ChiTiet.Add(new ERP_PhieuXuatKhoChiTiet
                                 {
                                     MaPhieuXuatKhoVatTu = Convert.ToInt32(reader["MaPhieuXuatKhoVatTu"]),
                                     MaVatTuHangHoa = reader["MaVatTuHangHoa"]?.ToString() ?? string.Empty,
@@ -140,67 +140,5 @@ namespace QLVT.DAL
         /// <param name="nam">Năm (tùy chọn)</param>
         /// <param name="limit">Số lượng kết quả tối đa</param>
         /// <returns>Danh sách phiếu xuất</returns>
-        public List<ERPExportOrder> SearchExportOrders(string keyword, int? nam = null, int limit = 50)
-        {
-            var orders = new List<ERPExportOrder>();
-            
-            try
-            {
-                using (var connection = ExternalDatabaseHelper.GetExternalConnection())
-                {
-                    connection.Open();
-                    
-                    string sql = @"
-                        SELECT TOP (@limit) MaPhieuXuatKhoVatTu, SoPhieuXuatKho, NAM,
-                               TenNhanVien, MaNhanVien, ThoiGianHoanThanhXuatKho,
-                               MaNhanVienXuat, TenNhanVienXuat
-                        FROM PhieuXuatKhoVatTu 
-                        WHERE (SoPhieuXuatKho LIKE @keyword OR TenNhanVien LIKE @keyword)";
-
-                    if (nam.HasValue)
-                    {
-                        sql += " AND NAM = @nam";
-                    }
-                    
-                    sql += " ORDER BY ThoiGianHoanThanhXuatKho DESC";
-
-                    using (var command = new SqlCommand(sql, connection))
-                    {
-                        command.Parameters.AddWithValue("@keyword", $"%{keyword}%");
-                        command.Parameters.AddWithValue("@limit", limit);
-                        
-                        if (nam.HasValue)
-                        {
-                            command.Parameters.AddWithValue("@nam", nam.Value);
-                        }
-
-                        using (var reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                orders.Add(new ERPExportOrder
-                                {
-                                    MaPhieuXuatKhoVatTu = Convert.ToInt32(reader["MaPhieuXuatKhoVatTu"]),
-                                    SoPhieuXuatKho = reader["SoPhieuXuatKho"]?.ToString() ?? string.Empty,
-                                    NAM = Convert.ToInt32(reader["NAM"]),
-                                    TenNhanVien = reader["TenNhanVien"]?.ToString() ?? string.Empty,
-                                    MaNhanVien = reader["MaNhanVien"]?.ToString() ?? string.Empty,
-                                    ThoiGianHoanThanhXuatKho = reader["ThoiGianHoanThanhXuatKho"] != DBNull.Value ? 
-                                             Convert.ToDateTime(reader["ThoiGianHoanThanhXuatKho"]) : DateTime.MinValue,
-                                    MaNhanVienXuat = reader["MaNhanVienXuat"]?.ToString() ?? string.Empty,
-                                    TenNhanVienXuat = reader["TenNhanVienXuat"]?.ToString() ?? string.Empty
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi khi tìm kiếm phiếu xuất kho: {ex.Message}");
-            }
-
-            return orders;
-        }
     }
 }

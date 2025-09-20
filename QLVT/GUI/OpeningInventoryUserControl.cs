@@ -14,7 +14,7 @@ namespace QLVT.GUI
     public partial class OpeningInventoryUserControl : UserControl
     {
         private readonly OpeningInventoryBLL openingInventoryBLL;
-        private readonly ImportTransactionDAL importTransactionDAL;
+        private readonly NhapKhoTransactionDAL importTransactionDAL;
         private readonly WarehouseDAL warehouseDAL;
         private List<ExcelImportItem> currentExcelData = new();
 
@@ -22,7 +22,7 @@ namespace QLVT.GUI
         {
             InitializeComponent();
             openingInventoryBLL = new OpeningInventoryBLL();
-            importTransactionDAL = new ImportTransactionDAL();
+            importTransactionDAL = new NhapKhoTransactionDAL();
             warehouseDAL = new WarehouseDAL();
             SetupDataGridView();
             LoadWarehouses();

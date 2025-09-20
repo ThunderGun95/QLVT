@@ -1,5 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.Models;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
@@ -49,22 +56,64 @@ namespace QLVT.GUI
         {
             try
             {
-                // Get user menus
+                // Xóa tất cả menu hiện tại trước
+                menuStrip.Items.Clear();
+                
+                // Get user menus from database
+                System.Diagnostics.Debug.WriteLine("MainForm: Loading user menus from database...");
                 var userMenus = menuBLL.GetCurrentUserMenus();
                 
-                // Note: Don't clear existing menus as we have "Tác vụ" menu in designer
-                // Just add additional user menus if any
+                if (userMenus == null || !userMenus.Any())
+                {
+                    System.Diagnostics.Debug.WriteLine("MainForm: No menus from database, creating basic menu");
+                    // Nếu không có menu từ database, tạo menu cơ bản
+                    CreateBasicMenu();
+                    lblStatus.Text = "Đã tải menu cơ bản";
+                    return;
+                }
                 
-                // Build additional menu items
+                System.Diagnostics.Debug.WriteLine($"MainForm: Found {userMenus.Count} root menus from database");
+                // Build menu từ database
                 BuildMenuStrip(userMenus);
                 
-                lblStatus.Text = "Menu đã được tải thành công";
+                lblStatus.Text = "Menu đã được tải từ cơ sở dữ liệu";
             }
             catch (Exception ex)
             {
-                // Don't show error for now, just log it
-                lblStatus.Text = "Đã tải menu cơ bản";
+                System.Diagnostics.Debug.WriteLine($"MainForm: Error loading menus: {ex.Message}");
+                // Fallback to basic menu if database fails
+                CreateBasicMenu();
+                lblStatus.Text = "Đã tải menu cơ bản (lỗi database)";
+                System.Diagnostics.Debug.WriteLine($"Lỗi load menu: {ex.Message}");
             }
+        }
+
+        private void CreateBasicMenu()
+        {
+            // Tạo menu cơ bản nếu không load được từ database
+            var tacVuMenu = new ToolStripMenuItem("Tác vụ");
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("📋 Nhập tồn đầu kỳ", null, (s, e) => 
+                FormFactory.OpenUserControl("OpeningInventoryUserControl", pnlMain, "Nhập tồn đầu kỳ", UpdateStatusText)));
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("📦 Nhập kho vật tư", null, (s, e) => 
+                FormFactory.OpenUserControl("NhapKhoErpTaskUserControl", pnlMain, "Nhập kho vật tư", UpdateStatusText)));
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("📤 Xuất kho vật tư", null, (s, e) => 
+                FormFactory.OpenUserControl("XuatKhoErpTaskUserControl", pnlMain, "Xuất kho vật tư", UpdateStatusText)));
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("↩️ Hoàn ứng BGK", null, (s, e) => 
+                FormFactory.OpenUserControl("HoanUngBGKUserControl", pnlMain, "Hoàn ứng BGK", UpdateStatusText)));
+            
+            var baoCaoMenu = new ToolStripMenuItem("Báo cáo");
+            baoCaoMenu.DropDownItems.Add(new ToolStripMenuItem("📊 Báo cáo tồn kho", null, (s, e) => 
+                FormFactory.OpenUserControl("BaoCaoTonKhoUserControl", pnlMain, "Báo cáo tồn kho", UpdateStatusText)));
+            baoCaoMenu.DropDownItems.Add(new ToolStripMenuItem("📊 Báo cáo xuất nhập tồn", null, (s, e) => 
+                FormFactory.OpenUserControl("BaoCaoXuatNhapTonUserControl", pnlMain, "Báo cáo xuất nhập tồn", UpdateStatusText)));
+            
+            menuStrip.Items.Add(tacVuMenu);
+            menuStrip.Items.Add(baoCaoMenu);
+        }
+
+        private void UpdateStatusText(string text)
+        {
+            lblStatus.Text = text;
         }
 
         private void BuildMenuStrip(List<Menu> menus)
@@ -78,16 +127,41 @@ namespace QLVT.GUI
 
         private ToolStripMenuItem CreateMenuItem(Menu menu)
         {
-            var menuItem = new ToolStripMenuItem(menu.MenuName)
+            var menuItem = new ToolStripMenuItem($"{menu.MenuIcon} {menu.MenuName}")
             {
                 Tag = menu,
                 Name = $"menu_{menu.MenuID}"
             };
 
-            // Add event handler for menu click
+            // Add event handler for menu click if it has FormName
             if (!string.IsNullOrEmpty(menu.FormName))
             {
-                menuItem.Click += MenuItem_Click;
+                menuItem.Click += (sender, e) => 
+                {
+                    try
+                    {
+                        Debug.WriteLine($"Menu clicked: {menu.MenuName}");
+                        Debug.WriteLine($"FormName: {menu.FormName}");
+                        
+                        if (sender is ToolStripMenuItem item && item.Tag is Menu clickedMenu)
+                        {
+                            Debug.WriteLine($"Successfully cast Tag to Menu: {clickedMenu.MenuName}");
+                            FormFactory.OpenUserControl(clickedMenu.FormName, pnlMain, clickedMenu.MenuName, UpdateStatusText);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Failed to cast Tag to Menu, using direct menu reference");
+                            // Use the menu variable directly from closure
+                            FormFactory.OpenUserControl(menu.FormName, pnlMain, menu.MenuName, UpdateStatusText);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Exception in menu click: {ex.Message}");
+                        MessageBox.Show($"Lỗi khi mở menu {menu.MenuName}: {ex.Message}", "Lỗi", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
             }
 
             // Add sub-menus
@@ -100,100 +174,10 @@ namespace QLVT.GUI
             return menuItem;
         }
 
-        private void MenuItem_Click(object? sender, EventArgs e)
-        {
-            if (sender is ToolStripMenuItem menuItem && menuItem.Tag is Menu menu)
-            {
-                HandleMenuClick(menu);
-            }
-        }
+        // Removed old MenuItem_Click method - now using inline lambda in CreateMenuItem
+        // Removed old HandleMenuClick method - now using FormFactory directly
 
-        private void HandleMenuClick(Menu menu)
-        {
-            try
-            {
-                lblStatus.Text = $"Đang mở: {menu.MenuName}...";
-
-                // Check if user has permission
-                if (!menuBLL.HasMenuAccess(menu.MenuID))
-                {
-                    MessageBox.Show("Bạn không có quyền truy cập chức năng này!", "Thông báo", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    lblStatus.Text = "Không có quyền truy cập";
-                    return;
-                }
-
-                // Handle specific menu actions
-                switch (menu.FormName)
-                {
-                    case "UserProfileForm":
-                        ShowUserProfile();
-                        break;
-                    case "ChangePasswordForm":
-                        ShowChangePassword();
-                        break;
-                    case "UserManagementForm":
-                        ShowMessage("Chức năng quản lý người dùng sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "PermissionForm":
-                        ShowMessage("Chức năng phân quyền sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "LogoutAction":
-                        PerformLogout();
-                        break;
-                    case "MaterialManagementForm":
-                        ShowMessage("Chức năng quản lý vật tư sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "WarehouseManagementForm":
-                        ShowMessage("Chức năng quản lý kho sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "ImportForm":
-                        ShowMessage("Chức năng nhập kho sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "ExportForm":
-                        ShowMessage("Chức năng xuất kho sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "InventoryReportForm":
-                        ShowInventoryReportControl();
-                        break;
-                    case "TransactionReportForm":
-                        ShowTransactionReportControl();
-                        break;
-                    case "BackupForm":
-                        ShowMessage("Chức năng sao lưu dữ liệu sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "SettingsForm":
-                        ShowMessage("Chức năng cài đặt hệ thống sẽ được phát triển trong phiên bản tiếp theo.");
-                        break;
-                    case "UnitsForm":
-                        ShowUnitsControl();
-                        break;
-                    case "ManufacturersForm":
-                        ShowManufacturersControl();
-                        break;
-                    case "SuppliesForm":
-                        ShowSuppliesControl();
-                        break;
-                    case "DepartmentsForm":
-                        ShowDepartmentsControl();
-                        break;
-                    case "StaffsForm":
-                        ShowStaffsControl();
-                        break;
-                    default:
-                        ShowMessage($"Chức năng '{menu.MenuName}' chưa được triển khai.");
-                        break;
-                }
-
-                lblStatus.Text = "Sẵn sàng";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi mở chức năng: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
+        // Method HandleMenuClick đã được thay thế bằng FormFactory.OpenUserControl
 
         private void ShowUserProfile()
         {
@@ -227,115 +211,7 @@ namespace QLVT.GUI
             MessageBox.Show(message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void ShowUnitsControl()
-        {
-            try
-            {
-                // Clear existing controls
-                pnlMain.Controls.Clear();
-                
-                // Create and show Units UserControl
-                var unitsControl = new UnitsUserControl();
-                unitsControl.Dock = DockStyle.Fill;
-                pnlMain.Controls.Add(unitsControl);
-                
-                lblStatus.Text = "Đang hiển thị danh sách đơn vị tính";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị danh sách đơn vị tính: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
-
-        private void ShowManufacturersControl()
-        {
-            try
-            {
-                // Clear existing controls
-                pnlMain.Controls.Clear();
-                
-                // Create and show Manufacturers UserControl
-                var manufacturersControl = new ManufacturersUserControl();
-                manufacturersControl.Dock = DockStyle.Fill;
-                pnlMain.Controls.Add(manufacturersControl);
-                
-                lblStatus.Text = "Đang hiển thị danh sách nhà sản xuất";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị danh sách nhà sản xuất: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
-
-        private void ShowSuppliesControl()
-        {
-            try
-            {
-                // Clear existing controls
-                pnlMain.Controls.Clear();
-                
-                // Create and show Supplies UserControl
-                var suppliesControl = new SuppliesUserControl();
-                suppliesControl.Dock = DockStyle.Fill;
-                pnlMain.Controls.Add(suppliesControl);
-                
-                lblStatus.Text = "Đang hiển thị danh sách vật tư";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị danh sách vật tư: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
-
-        private void ShowDepartmentsControl()
-        {
-            try
-            {
-                // Clear existing controls
-                pnlMain.Controls.Clear();
-                
-                // Create and show Departments UserControl
-                var departmentsControl = new DepartmentsUserControl();
-                departmentsControl.Dock = DockStyle.Fill;
-                pnlMain.Controls.Add(departmentsControl);
-                
-                lblStatus.Text = "Đang hiển thị danh sách phòng ban";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị danh sách phòng ban: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
-
-        private void ShowStaffsControl()
-        {
-            try
-            {
-                // Clear existing controls
-                pnlMain.Controls.Clear();
-                
-                // Create and show Staffs UserControl
-                var staffsControl = new StaffsUserControl();
-                staffsControl.Dock = DockStyle.Fill;
-                pnlMain.Controls.Add(staffsControl);
-                
-                lblStatus.Text = "Đang hiển thị danh sách nhân viên";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị danh sách nhân viên: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi";
-            }
-        }
+        // Show...Control methods removed - FormFactory handles all control creation dynamically
 
         private void PerformLogout()
         {
@@ -373,64 +249,8 @@ namespace QLVT.GUI
             Application.OpenForms.OfType<LoginForm>().FirstOrDefault()?.Show();
         }
 
-        #region Menu Event Handlers
-
-        private void mnuNhapTonDauKy_Click(object sender, EventArgs e)
-        {
-            LoadUserControl(new OpeningInventoryUserControl(), "Nhập tồn đầu kỳ");
-        }
-
-        private void mnuNhapKho_Click(object sender, EventArgs e)
-        {
-            LoadUserControl(new ImportTaskUserControl(), "Nhập kho vật tư");
-        }
-
-        private void mnuXuatKho_Click(object sender, EventArgs e)
-        {
-            LoadUserControl(new ExportTaskUserControl(), "Xuất kho vật tư");
-        }
-
-        private void mnuTraKho_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Chức năng trả kho đang được phát triển!", "Thông báo", 
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void mnuHoanUng_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Chức năng hoàn ứng đang được phát triển!", "Thông báo", 
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void ShowInventoryReportControl()
-        {
-            var inventoryReportControl = new BaoCaoTonKhoUserControl();
-            LoadUserControl(inventoryReportControl, "Báo cáo tồn kho");
-        }
-
-        private void ShowTransactionReportControl()
-        {
-            var transactionReportControl = new BaoCaoXuatNhapTonUserControl();
-            LoadUserControl(transactionReportControl, "Báo cáo xuất nhập tồn");
-        }
-
-        private void mnuBaoCaoXuatNhapTonChiTiet_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                var baoCaoXuatNhapTonChiTietForm = new BaoCaoXuatNhapTonChiTietForm();
-                baoCaoXuatNhapTonChiTietForm.Show();
-                
-                lblStatus.Text = "Đã mở báo cáo xuất nhập tồn chi tiết";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi mở báo cáo xuất nhập tồn chi tiết: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                lblStatus.Text = "Lỗi khi mở báo cáo";
-            }
-        }
-
+        #region Menu Event Handlers - Removed
+        // All menu event handlers have been replaced with dynamic menu system using FormFactory
         #endregion
 
         #region UserControl Management

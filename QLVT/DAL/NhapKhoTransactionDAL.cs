@@ -1,10 +1,11 @@
 using Microsoft.Data.SqlClient;
 using QLVT.Models;
 using QLVT.Utils;
+using QLVT.ERP.Models;
 
 namespace QLVT.DAL
 {
-    public class ImportTransactionDAL
+    public class NhapKhoTransactionDAL
     {
         /// <summary>
         /// Tạo transaction nhập kho và cập nhật inventory
@@ -14,7 +15,7 @@ namespace QLVT.DAL
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên thực hiện</param>
         /// <returns>ID transaction vừa tạo</returns>
-        public int CreateImportTransaction(ERPImportOrder order, int maKho, string createdBy, string staffCode)
+        public int CreateNhapKhoErpTransaction(ERP_PhieuNhapKho order, int maKho, string createdBy, string staffCode)
         {
             int transactionId = 0;
             
@@ -26,7 +27,7 @@ namespace QLVT.DAL
                     try
                     {
                         // Tạo số phiếu
-                        string soPhieu = GenerateImportTransactionNumber();
+                        string soPhieu = GenerateNhapKhoTransactionNumber();
                         
                         // 1. Tạo transaction header theo schema mới
                         string insertTransactionSql = @"
@@ -71,7 +72,7 @@ namespace QLVT.DAL
                             }
 
                             // Cập nhật inventory theo schema mới
-                            UpdateInventory(connection, transaction, maKho, detail.MappedSupplyId!.Value, (int)detail.SoLuongNhapKho);
+                            CapNhatTonKho(connection, transaction, maKho, detail.MappedSupplyId!.Value, (int)detail.SoLuongNhapKho);
                         }
 
                         transaction.Commit();
@@ -90,7 +91,7 @@ namespace QLVT.DAL
         /// <summary>
         /// Cập nhật inventory (tồn kho) theo schema mới
         /// </summary>
-        private void UpdateInventory(SqlConnection connection, SqlTransaction transaction, int maKho, int erpId, int quantity)
+        private void CapNhatTonKho(SqlConnection connection, SqlTransaction transaction, int maKho, int erpId, int quantity)
         {
             string sql = @"
                 IF EXISTS (SELECT 1 FROM Inventory WHERE WarehouseId = @maKho AND SupplyErpId = @erpId)
@@ -118,9 +119,9 @@ namespace QLVT.DAL
         /// <summary>
         /// Tạo số phiếu cho transaction nhập kho
         /// </summary>
-        private string GenerateImportTransactionNumber()
+        private string GenerateNhapKhoTransactionNumber()
         {
-            string dateStr = DateTime.Now.ToString("yyyyMMdd");
+            string dateStr = DateTime.Now.ToString("yyMMdd");
             string prefix = "NK"; // Nhập Kho
             
             try
@@ -133,14 +134,14 @@ namespace QLVT.DAL
                         SELECT COUNT(*) FROM Transactions 
                         WHERE SoPhieu LIKE @pattern 
                         AND LoaiGiaoDich = 'NhapKho'
-                        AND CAST(NgayGiaoDich AS DATE) = CAST(GETDATE() AS DATE)";
+                        AND CAST(CreatedDate AS DATE) = CAST(GETDATE() AS DATE)";
                     
                     using (var command = new SqlCommand(countSql, connection))
                     {
                         command.Parameters.AddWithValue("@pattern", $"{prefix}{dateStr}%");
                         int count = Convert.ToInt32(command.ExecuteScalar()) + 1;
                         
-                        return $"{prefix}{dateStr}{count:D3}";
+                        return $"{prefix}{dateStr}-{count:D4}";
                     }
                 }
             }
@@ -152,14 +153,6 @@ namespace QLVT.DAL
             }
         }
 
-        /// <summary>
-        /// Tạo mã giao dịch tự động (legacy method - deprecated)
-        /// </summary>
-        [Obsolete("Sử dụng GenerateImportTransactionNumber() thay thế")]
-        private string GenerateTransactionCode()
-        {
-            return GenerateImportTransactionNumber();
-        }
 
         /// <summary>
         /// Tạo transaction tồn kho đầu kỳ

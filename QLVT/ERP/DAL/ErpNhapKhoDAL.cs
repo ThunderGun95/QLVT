@@ -1,10 +1,10 @@
 using Microsoft.Data.SqlClient;
-using QLVT.Models;
+using QLVT.ERP.Models;
 using QLVT.Utils;
 
-namespace QLVT.DAL
+namespace QLVT.ERP.DAL
 {
-    public class ERPImportDAL
+    public class ErpNhapKhoDAL
     {
         /// <summary>
         /// Lấy thông tin phiếu nhập từ ERP theo số phiếu và năm
@@ -12,9 +12,9 @@ namespace QLVT.DAL
         /// <param name="soPhieu">Số phiếu nhập</param>
         /// <param name="nam">Năm của phiếu</param>
         /// <returns>Thông tin phiếu nhập</returns>
-        public ERPImportOrder? GetImportOrderByNumber(string soPhieu, int nam)
+        public ERP_PhieuNhapKho? GetPhieuNhapKhoErp(string soPhieu, int nam)
         {
-            ERPImportOrder? order = null;
+            ERP_PhieuNhapKho? order = null;
             
             string sql = @"
                 SELECT MaPhieuNhapKhoVatTu, SoPhieuNhapKho, NAM, TenKho, MaKhoVatTu, 
@@ -39,7 +39,7 @@ namespace QLVT.DAL
                         {
                             if (reader.Read())
                             {
-                                order = new ERPImportOrder
+                                order = new ERP_PhieuNhapKho
                                 {
                                     MaPhieuNhapKhoVatTu = Convert.ToInt32(reader["MaPhieuNhapKhoVatTu"]),
                                     SoPhieuNhapKho = reader["SoPhieuNhapKho"].ToString() ?? string.Empty,
@@ -59,7 +59,7 @@ namespace QLVT.DAL
                 // Nếu tìm thấy phiếu, lấy chi tiết
                 if (order != null)
                 {
-                    order.ChiTiet = GetImportOrderDetails(order.MaPhieuNhapKhoVatTu);
+                    order.ChiTiet = GetPhieuNhapKhoErpChiTiet(order.MaPhieuNhapKhoVatTu);
                 }
             }
             catch (Exception ex)
@@ -75,9 +75,9 @@ namespace QLVT.DAL
         /// </summary>
         /// <param name="maPhieuNhapKhoVatTu">Mã phiếu nhập kho vật tư</param>
         /// <returns>Danh sách chi tiết</returns>
-        public List<ERPImportOrderDetail> GetImportOrderDetails(int maPhieuNhapKhoVatTu)
+        public List<ERP_PhieuNhapKhoChiTiet> GetPhieuNhapKhoErpChiTiet(int maPhieuNhapKhoVatTu)
         {
-            var details = new List<ERPImportOrderDetail>();
+            var details = new List<ERP_PhieuNhapKhoChiTiet>();
             
             string sql = @"
                 SELECT pnk.MaPhieuNhapKhoVatTu, nk.MaVatTuHangHoa, nk.TenVatTu, nk.DacTinhKyThuat, 
@@ -102,7 +102,7 @@ namespace QLVT.DAL
                         {
                             while (reader.Read())
                             {
-                                details.Add(new ERPImportOrderDetail
+                                details.Add(new ERP_PhieuNhapKhoChiTiet
                                 {
                                     MaPhieuNhapKhoVatTu = Convert.ToInt32(reader["MaPhieuNhapKhoVatTu"]),
                                     MaVatTuHangHoa = reader["MaVatTuHangHoa"].ToString() ?? string.Empty,
