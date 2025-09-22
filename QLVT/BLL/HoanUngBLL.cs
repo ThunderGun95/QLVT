@@ -1,8 +1,6 @@
 using QLVT.DAL;
-using QLVT.ERP.BLL;
 using QLVT.ERP.DAL;
 using QLVT.ERP.Models;
-using QLVT.Models;
 
 namespace QLVT.BLL
 {
@@ -60,16 +58,15 @@ namespace QLVT.BLL
             }
         }
 
-        public bool XacNhanHoanUng(string maDDK, string nguoiXacNhan)
+        public bool XacNhanHoanUng(string maddk)
         {
-            if (string.IsNullOrEmpty(maDDK))
+            var currentUser = AuthenticationBLL.GetCurrentUser();
+
+            if (string.IsNullOrEmpty(maddk))
                 throw new ArgumentException("Mã DDK không được rỗng");
 
-            if (string.IsNullOrEmpty(nguoiXacNhan))
-                throw new ArgumentException("Người xác nhận không được rỗng");
-
             // Thực hiện hoàn ứng - DAL sẽ throw exception nếu có lỗi
-            return hoanUngTransactionDAL.UpdateHoanUngDonDangKy(maDDK, nguoiXacNhan);
+            return hoanUngTransactionDAL.UpdateHoanUngDonDangKy(maddk, currentUser!.Username);
         }
 
         public List<DonDangKyModel> TimKiemHoSo(string? maDDK = null, string? tenKH = null,
@@ -85,7 +82,7 @@ namespace QLVT.BLL
             }
         }
 
-        public async Task<(int soLuongDon, int soLuongChiTiet, string thongBao)> TaiDuLieuERP()
+        public async Task<(int soLuongDon, int soLuongChiTiet, string thongBao)> TaiDuLieuMC4ERP()
         {
             try
             {
@@ -136,7 +133,6 @@ namespace QLVT.BLL
                 throw new Exception(thongBaoLoi, ex);
             }
         }
-
         #endregion
 
         public bool TestERPConnection()

@@ -91,8 +91,7 @@ namespace QLVT.GUI
             {
                 try
                 {
-                    string currentUser = Environment.UserName; // Hoặc lấy từ session
-                    hoanUngBLL.XacNhanHoanUng(hoSo.MADDK, currentUser);
+                    hoanUngBLL.XacNhanHoanUng(hoSo.MADDK);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.Close(); // Đóng form sau khi hoàn ứng thành công

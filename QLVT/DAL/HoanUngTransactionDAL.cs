@@ -224,15 +224,14 @@ namespace QLVT.DAL
                             {
                                 // Insert transaction detail
                                 string insertDetailSql = @"
-                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu)
-                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu)";
+                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong)
+                                    VALUES (@transactionId, @erpId, @soLuong)";
 
                                 using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                                 {
                                     command.Parameters.AddWithValue("@transactionId", transactionId);
                                     command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
-                                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng: {chiTiet.TenVT}");
 
                                     command.ExecuteNonQuery();
                                 }
@@ -245,7 +244,7 @@ namespace QLVT.DAL
                         transaction.Commit();
                         return true;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         transaction.Rollback();
                         throw; // Ném lại exception để BLL và GUI có thể hiển thị chi tiết lỗi

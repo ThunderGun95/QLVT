@@ -16,7 +16,7 @@ namespace QLVT.ERP.Models
         public string NhanVienXayLap { get; set; } = "";
         public DateTime? NgayHoanThanh { get; set; }
         public DateTime? NgayHoanUng { get; set; }
-        public bool DaHoanUng { get; set; } = false;
+        public bool? DaHoanUng { get; set; } = false;
         public DateTime? ThoiGianXacNhanHoanUng { get; set; }
         public string MaNVXacNhan { get; set; } = "";
         public DateTime CreatedDate { get; set; } = DateTime.Now;
@@ -30,6 +30,10 @@ namespace QLVT.ERP.Models
     {
         public int Id { get; set; }
         public string MADDK { get; set; } = "";
+        public string TenVT { get; set; } = "";
+        public string MaVT { get; set; } = "";
+        public string DVT { get; set; } = "";
+        public decimal TonKho { get; set; } = 0;
         public int MaVTErp { get; set; }
         public decimal SoLuongHoanUng { get; set; } = 0;
         public DateTime CreatedDate { get; set; } = DateTime.Now;
@@ -47,7 +51,7 @@ namespace QLVT.ERP.Models
         public string NhanVienXayLap { get; set; } = "";
         public DateTime? NgayHoanThanh { get; set; }
         public DateTime? NgayHoanUng { get; set; }
-        public bool DaHoanUng { get; set; } = false;
+        public bool? DaHoanUng { get; set; }
         public DateTime? ThoiGianXacNhanHoanUng { get; set; }
         public string MaNVXacNhan { get; set; } = "";
         public DateTime CreatedDate { get; set; } = DateTime.Now;
@@ -61,6 +65,10 @@ namespace QLVT.ERP.Models
     {
         public int Id { get; set; }
         public string MADON { get; set; } = "";
+        public string TenVT { get; set; } = "";
+        public string MaVT { get; set; } = "";
+        public string DVT { get; set; } = "";
+        public decimal TonKho { get; set; } = 0;
         public int MaVTErp { get; set; }
         public decimal SoLuongHoanUng { get; set; } = 0;
         public DateTime CreatedDate { get; set; } = DateTime.Now;

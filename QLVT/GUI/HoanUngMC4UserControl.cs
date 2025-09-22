@@ -212,9 +212,8 @@ namespace QLVT.GUI
             if (result == DialogResult.Yes)
             {
                 try
-                {
-                    string currentUser = Environment.UserName; // Hoặc lấy từ session
-                    hoanUngBLL.XacNhanHoanUng(hoSo.MADDK, currentUser);
+                { // Hoặc lấy từ session
+                    hoanUngBLL.XacNhanHoanUng(hoSo.MADDK);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadDanhSachHoSo(); // Reload dữ liệu
@@ -250,7 +249,7 @@ namespace QLVT.GUI
                 }
 
                 // Thực hiện tải dữ liệu
-                var (soLuongDon, soLuongChiTiet, thongBao) = await hoanUngBLL.TaiDuLieuERP();
+                var (soLuongDon, soLuongChiTiet, thongBao) = await hoanUngBLL.TaiDuLieuMC4ERP();
                 
                 // Hiển thị kết quả
                 MessageBox.Show(thongBao, "Kết quả tải dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
