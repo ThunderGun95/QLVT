@@ -100,6 +100,8 @@ namespace QLVT.GUI
                 FormFactory.OpenUserControl("XuatKhoErpTaskUserControl", pnlMain, "Xuất kho vật tư", UpdateStatusText)));
             tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("↩️ Hoàn ứng BGK", null, (s, e) => 
                 FormFactory.OpenUserControl("HoanUngBGKUserControl", pnlMain, "Hoàn ứng BGK", UpdateStatusText)));
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("🔄 Hoàn ứng MC4", null, (s, e) => 
+                FormFactory.OpenUserControl("HoanUngMC4UserControl", pnlMain, "Hoàn ứng Mạng cấp 4", UpdateStatusText)));
             
             var baoCaoMenu = new ToolStripMenuItem("Báo cáo");
             baoCaoMenu.DropDownItems.Add(new ToolStripMenuItem("📊 Báo cáo tồn kho", null, (s, e) => 

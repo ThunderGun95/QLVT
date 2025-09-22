@@ -21,15 +21,17 @@ namespace QLVT.ERP.DAL
         /// <summary>
         /// Test kết nối đến ERP Database
         /// </summary>
-        public async Task<bool> TestConnectionAsync()
+        public bool TestConnection()
         {
             try
             {
-                using var connection = ExternalDatabaseHelper.GetExternalConnection();
-                await connection.OpenAsync();
-                return true;
+                using (var connection = ExternalDatabaseHelper.GetExternalConnection())
+                {
+                    connection.Open();
+                    return true;
+                }
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -104,16 +106,17 @@ namespace QLVT.ERP.DAL
         {
             var sql = @"
                 SELECT mc4.MADDK, VT.Id as VatTuId, VT.Code as VatTuHangHoa, 
-                       VT.TenVatTu, VT.DonViTinh, ROUND(vthu.SOLUONG,2) as SoLuongHoanUng
+                       VT.TenVatTu, VT.DonViTinh, ROUND(SUM(vthu.SOLUONG),2) as SoLuongHoanUng
                 FROM ld.ViewMangCap4s mc4
                 INNER JOIN ld.HoanUngs h ON h.MADDK = mc4.MADDK
-                LEFT JOIN vt.HoanUngVatTus vthu on vthu.MaHoanUng = h.Id and vthu.MaPhieuXuatKhoVatTuCT is not null
+                LEFT JOIN vt.HoanUngVatTus vthu on vthu.MaHoanUng = h.Id and vthu.MaPhieuXuatKhoVatTuCT is not null and vthu.IsDeleted = 0
                 INNER JOIN vt.ViewVatTuHangHoas VT on vt.MaVatTuHangHoa = vthu.MaVatTuHangHoa
                 WHERE mc4.TTDK = 'DK_A' and mc4.TTCT = 'CT_A' and mc4.TTTC = 'TC_A'
                   AND CONVERT(DATE, h.ThoiGianHoanUng) > '2025/01/01'
                   AND YEAR(mc4.NgayTC) > 2024
                   AND mc4.IsHuy = 0
-                  AND mc4.MADDK = @MADDK";
+                  AND mc4.MADDK = @MADDK
+                GROUP BY mc4.MADDK, VT.Id, VT.Code, Vt.TenVatTu, VT.DonViTinh";
 
             var parameters = new[] { new SqlParameter("@MADDK", maddk) };
             var dataTable = await ExecuteQueryAsync(sql, parameters);
