@@ -51,7 +51,7 @@ namespace QLVT.ERP.Models
         public string NhanVienXayLap { get; set; } = "";
         public DateTime? NgayHoanThanh { get; set; }
         public DateTime? NgayHoanUng { get; set; }
-        public bool? DaHoanUng { get; set; }
+        public bool? DaHoanUng { get; set; } = false;
         public DateTime? ThoiGianXacNhanHoanUng { get; set; }
         public string MaNVXacNhan { get; set; } = "";
         public DateTime CreatedDate { get; set; } = DateTime.Now;

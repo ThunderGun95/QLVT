@@ -1,34 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 using QLVT.ERP.Models;
 using QLVT.BLL;
 
 namespace QLVT.GUI
 {
-    public partial class ChiTietVatTuMC4Form : Form
+    public partial class ChiTietVatTuDCForm : Form
     {
-        private DonDangKyModel hoSo;
-        private List<DonDangKyCTModel> chiTietList;
+        private SuaChuaModel hoSo;
+        private List<SuaChuaCTModel> chiTietList;
         private HoanUngBLL hoanUngBLL;
 
-        public ChiTietVatTuMC4Form(DonDangKyModel hoSo, List<DonDangKyCTModel> chiTietList)
+        public ChiTietVatTuDCForm(SuaChuaModel hoSo, List<SuaChuaCTModel> chiTietList)
         {
+            InitializeComponent();
             this.hoSo = hoSo;
             this.chiTietList = chiTietList;
             this.hoanUngBLL = new HoanUngBLL();
-            InitializeComponent();
             LoadData();
         }
 
         private void LoadData()
         {
             // Hiển thị thông tin hồ sơ
-            lblMaDDK.Text = hoSo.MADDK;
-            lblTenKH.Text = hoSo.TENKH;
-            lblDiaChi.Text = hoSo.DiaChi;
+            lblMaDon.Text = hoSo.MADON;
+            lblViTriDiemChay.Text = hoSo.ViTriDiemChay;
             lblNVTaiCong.Text = hoSo.NhanVienXayLap;
 
             // Load chi tiết vật tư
@@ -56,7 +50,7 @@ namespace QLVT.GUI
 
                 // Tô màu cảnh báo nếu số lượng > tồn kho
                 var row = dgvChiTiet.Rows[dgvChiTiet.Rows.Count - 1];
-                if (ct.SoLuongHoanUng > ct.TonKho)
+                if (ct.SoLuong > ct.TonKho)
                 {
                     row.DefaultCellStyle.BackColor = Color.LightPink;
                     row.DefaultCellStyle.ForeColor = Color.DarkRed;
@@ -79,8 +73,8 @@ namespace QLVT.GUI
 
             var result = MessageBox.Show(
                 $"Xác nhận hoàn ứng cho hồ sơ:\n\n" +
-                $"Mã đơn: {hoSo.MADDK}\n" +
-                $"Khách hàng: {hoSo.TENKH}\n" +
+                $"Mã đơn: {hoSo.MADON}\n" +
+                $"Vị trí: {hoSo.ViTriDiemChay}\n" +
                 $"NV Thi công: {hoSo.NhanVienXayLap}\n\n" +
                 $"Bạn có chắc chắn muốn thực hiện hoàn ứng?",
                 "Xác nhận hoàn ứng",
@@ -91,7 +85,7 @@ namespace QLVT.GUI
             {
                 try
                 {
-                    hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK);
+                    hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.Close(); // Đóng form sau khi hoàn ứng thành công

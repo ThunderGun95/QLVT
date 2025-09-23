@@ -1,5 +1,7 @@
 using Microsoft.Data.SqlClient;
+using QLVT.ERP.DAL;
 using QLVT.ERP.Models;
+using QLVT.Models;
 using QLVT.Utils;
 using System.Data;
 
@@ -8,7 +10,7 @@ namespace QLVT.DAL
     public class HoanUngTransactionDAL
     {
         #region Mạng cấp 4
-        public List<DonDangKyModel> GetDanhSachDonDangKy()
+        public List<DonDangKyModel> MC4_GetDanhSachDonDangKy()
         {
             var result = new List<DonDangKyModel>();
 
@@ -50,97 +52,7 @@ namespace QLVT.DAL
 
             return result;
         }
-
-        public DonDangKyModel? GetDonDangKyByMa(string maddk)
-        {
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                connection.Open();
-
-                string sql = @"
-                    SELECT Id, MADDK, TENKH, DiaChi, NhanVienKyThuat, 
-                           MaNhanVienXayLap, NhanVienXayLap, NgayHoanThanh, 
-                           NgayHoanUng, DaHoanUng, ThoiGianXacNhanHoanUng, 
-                           MaNVXacNhan, CreatedDate, UpdatedDate
-                    FROM ct.DonDangKy 
-                    WHERE MADDK = @maDDK";
-
-                using (var command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@maDDK", maddk);
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            return new DonDangKyModel
-                            {
-                                Id = reader.GetInt32("Id"),
-                                MADDK = reader.GetString("MADDK"),
-                                TENKH = reader.GetString("TENKH"),
-                                DiaChi = reader.GetString("DiaChi"),
-                                NhanVienKyThuat = reader.GetString("NhanVienKyThuat"),
-                                MaNhanVienXayLap = reader.GetString("MaNhanVienXayLap"),
-                                NhanVienXayLap = reader.GetString("NhanVienXayLap"),
-                                NgayHoanThanh = reader.IsDBNull("NgayHoanThanh") ? null : reader.GetDateTime("NgayHoanThanh"),
-                                NgayHoanUng = reader.IsDBNull("NgayHoanUng") ? null : reader.GetDateTime("NgayHoanUng"),
-                                DaHoanUng = reader.IsDBNull("DaHoanUng") ? null : reader.GetBoolean("DaHoanUng"),
-                                ThoiGianXacNhanHoanUng = reader.IsDBNull("ThoiGianXacNhanHoanUng") ? null : reader.GetDateTime("ThoiGianXacNhanHoanUng"),
-                                MaNVXacNhan = reader.GetString("MaNVXacNhan"),
-                                CreatedDate = reader.GetDateTime("CreatedDate"),
-                                UpdatedDate = reader.GetDateTime("UpdatedDate")
-                            };
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public List<DonDangKyCTModel> GetChiTietVatTuByMaDDK(string maddk)
-        {
-            var result = new List<DonDangKyCTModel>();
-
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                connection.Open();
-
-                string sql = @"
-                    SELECT ct.Id, ct.MADDK, ct.MaVTErp, ct.SoLuongHoanUng, ct.CreatedDate,
-                           s.SupplyName as TenVT, s.Unit as DVT
-                    FROM ct.DonDangKyCT ct
-                    LEFT JOIN Supplies s ON ct.MaVTErp = s.ErpId
-                    WHERE ct.MADDK = @maDDK
-                    ORDER BY ct.CreatedDate";
-
-                using (var command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@maDDK", maddk);
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            result.Add(new DonDangKyCTModel
-                            {
-                                Id = reader.GetInt32("Id"),
-                                MADDK = reader.GetString("MADDK"),
-                                MaVTErp = reader.GetInt32("MaVTErp"),
-                                SoLuongHoanUng = reader.GetDecimal("SoLuongHoanUng"),
-                                CreatedDate = reader.GetDateTime("CreatedDate"),
-                                TenVT = reader.IsDBNull("TenVT") ? "" : reader.GetString("TenVT"),
-                                DVT = reader.IsDBNull("DVT") ? "" : reader.GetString("DVT")
-                            });
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        public bool UpdateHoanUngDonDangKy(string maddk, string nguoiXacNhan)
+        public bool MC4_UpdateHoanUngDonDangKy(string maddk, string nguoiXacNhan)
         {
             using (var connection = DatabaseHelper.GetConnection())
             {
@@ -150,7 +62,7 @@ namespace QLVT.DAL
                     try
                     {
                         // Bước 0: Lấy thông tin đơn đăng ký để kiểm tra và lấy mã nhân viên xây lắp
-                        var donDangKy = GetDonDangKyByMa(maddk, connection, transaction);
+                        var donDangKy = MC4_GetDonDangKyByMa(maddk, connection, transaction);
                         if (donDangKy == null)
                         {
                             throw new Exception("Không tìm thấy hồ sơ");
@@ -217,7 +129,7 @@ namespace QLVT.DAL
                         }
 
                         // Bước 3: Tạo transaction chi tiết và cập nhật tồn kho
-                        var chiTietList = GetChiTietVatTuByMaDDK(maddk, connection, transaction);
+                        var chiTietList = MC4_GetChiTietVatTuByMaDDK(maddk, connection, transaction);
                         foreach (var chiTiet in chiTietList)
                         {
                             if (chiTiet.SoLuongHoanUng > 0)
@@ -252,11 +164,7 @@ namespace QLVT.DAL
                 }
             }
         }
-
-        /// <summary>
-        /// Lấy thông tin đơn đăng ký trong transaction
-        /// </summary>
-        private DonDangKyModel? GetDonDangKyByMa(string maddk, SqlConnection connection, SqlTransaction transaction)
+        private DonDangKyModel? MC4_GetDonDangKyByMa(string maddk, SqlConnection connection, SqlTransaction transaction)
         {
             string sql = @"
                 SELECT Id, MADDK, TENKH, DiaChi, NhanVienKyThuat, 
@@ -297,26 +205,7 @@ namespace QLVT.DAL
 
             return null;
         }
-
-        /// <summary>
-        /// Tìm warehouse ID dựa trên mã nhân viên xây lắp
-        /// </summary>
-        private int GetWarehouseIdByStaffCode(string maNhanVien, SqlConnection connection, SqlTransaction transaction)
-        {
-            string sql = @"
-                SELECT Id
-                FROM Warehouses
-                WHERE MaNV = @maNV";
-
-            using (var command = new SqlCommand(sql, connection, transaction))
-            {
-                command.Parameters.AddWithValue("@maNV", maNhanVien);
-
-                var result = command.ExecuteScalar();
-                return result != null ? Convert.ToInt32(result) : 0;
-            }
-        }
-        private List<DonDangKyCTModel> GetChiTietVatTuByMaDDK(string maddk, SqlConnection connection, SqlTransaction transaction)
+        private List<DonDangKyCTModel> MC4_GetChiTietVatTuByMaDDK(string maddk, SqlConnection connection, SqlTransaction transaction)
         {
             var result = new List<DonDangKyCTModel>();
 
@@ -347,161 +236,7 @@ namespace QLVT.DAL
 
             return result;
         }
-
-        /// <summary>
-        /// Cập nhật tồn kho khi hoàn ứng từ kho cụ thể
-        /// </summary>
-        private void CapNhatTonKhoHoanUng(SqlConnection connection, SqlTransaction transaction, int warehouseId, int erpId, decimal quantity)
-        {
-            // Kiểm tra tồn kho hiện tại tại kho này
-            string checkSql = @"
-                SELECT SoLuongTon 
-                FROM Inventory 
-                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
-
-            using (var command = new SqlCommand(checkSql, connection, transaction))
-            {
-                command.Parameters.AddWithValue("@warehouseId", warehouseId);
-                command.Parameters.AddWithValue("@erpId", erpId);
-
-                var result = command.ExecuteScalar();
-                int currentStock = result != null ? Convert.ToInt32(result) : 0;
-
-                if (currentStock < quantity)
-                {
-                    throw new Exception($"Không đủ tồn kho để hoàn ứng. Kho {warehouseId} - VT {erpId}: Tồn {currentStock}, Cần {quantity}");
-                }
-
-                // Trừ tồn kho
-                string updateSql = @"
-                    UPDATE Inventory 
-                    SET SoLuongTon = SoLuongTon - @quantity, LastUpdated = GETDATE()
-                    WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
-
-                using (var updateCommand = new SqlCommand(updateSql, connection, transaction))
-                {
-                    updateCommand.Parameters.AddWithValue("@warehouseId", warehouseId);
-                    updateCommand.Parameters.AddWithValue("@erpId", erpId);
-                    updateCommand.Parameters.AddWithValue("@quantity", quantity);
-
-                    int rowsAffected = updateCommand.ExecuteNonQuery();
-                    if (rowsAffected == 0)
-                    {
-                        throw new Exception($"Không thể cập nhật tồn kho cho kho {warehouseId} - VT {erpId}");
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Tạo số phiếu cho transaction hoàn ứng
-        /// </summary>
-        private string GenerateHoanUngTransactionNumber()
-        {
-            string dateStr = DateTime.Now.ToString("yyMMdd");
-            string prefix = "HU"; // Hoàn Ứng
-
-            try
-            {
-                using (var connection = DatabaseHelper.GetConnection())
-                {
-                    connection.Open();
-
-                    string sql = @"
-                        SELECT COUNT(*) 
-                        FROM Transactions 
-                        WHERE LoaiGiaoDich = 'HoanUng' 
-                        AND CONVERT(DATE, CreatedDate) = CONVERT(DATE, GETDATE())";
-
-                    using (var command = new SqlCommand(sql, connection))
-                    {
-                        int count = (int)command.ExecuteScalar();
-                        return $"{prefix}{dateStr}-{(count + 1):D4}";
-                    }
-                }
-            }
-            catch
-            {
-                // Fallback với timestamp
-                return $"{prefix}{dateStr}{DateTime.Now:HHmmss}";
-            }
-        }
-
-        public List<DonDangKyModel> TimKiemDonDangKy(string? maDDK = null, string? tenKH = null,
-            string? nhanVienXayLap = null, bool? trangThai = null)
-        {
-            var result = new List<DonDangKyModel>();
-            var conditions = new List<string>();
-            var parameters = new List<SqlParameter>();
-
-            // Xây dựng điều kiện WHERE
-            if (!string.IsNullOrEmpty(maDDK))
-            {
-                conditions.Add("MADDK LIKE @maDDK");
-                parameters.Add(new SqlParameter("@maDDK", $"%{maDDK}%"));
-            }
-
-            if (!string.IsNullOrEmpty(tenKH))
-            {
-                conditions.Add("TENKH LIKE @tenKH");
-                parameters.Add(new SqlParameter("@tenKH", $"%{tenKH}%"));
-            }
-
-            if (!string.IsNullOrEmpty(nhanVienXayLap))
-            {
-                conditions.Add("NhanVienXayLap LIKE @nhanVienXayLap");
-                parameters.Add(new SqlParameter("@nhanVienXayLap", $"%{nhanVienXayLap}%"));
-            }
-
-            string whereClause = conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : "";
-
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                connection.Open();
-
-                string sql = $@"
-                    SELECT Id, MADDK, TENKH, DiaChi, NhanVienKyThuat, 
-                           MaNhanVienXayLap, NhanVienXayLap, NgayHoanThanh, 
-                           NgayHoanUng, DaHoanUng, ThoiGianXacNhanHoanUng, 
-                           MaNVXacNhan, CreatedDate, UpdatedDate
-                    FROM ct.DonDangKy 
-                    {whereClause}
-                    ORDER BY CreatedDate DESC";
-
-                using (var command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddRange(parameters.ToArray());
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            result.Add(new DonDangKyModel
-                            {
-                                Id = reader.GetInt32("Id"),
-                                MADDK = reader.GetString("MADDK"),
-                                TENKH = reader.GetString("TENKH"),
-                                DiaChi = reader.GetString("DiaChi"),
-                                NhanVienKyThuat = reader.GetString("NhanVienKyThuat"),
-                                MaNhanVienXayLap = reader.GetString("MaNhanVienXayLap"),
-                                NhanVienXayLap = reader.GetString("NhanVienXayLap"),
-                                NgayHoanThanh = reader.IsDBNull("NgayHoanThanh") ? null : reader.GetDateTime("NgayHoanThanh"),
-                                NgayHoanUng = reader.IsDBNull("NgayHoanUng") ? null : reader.GetDateTime("NgayHoanUng"),
-                                DaHoanUng = reader.GetBoolean("DaHoanUng"),
-                                ThoiGianXacNhanHoanUng = reader.IsDBNull("ThoiGianXacNhanHoanUng") ? null : reader.GetDateTime("ThoiGianXacNhanHoanUng"),
-                                MaNVXacNhan = reader.GetString("MaNVXacNhan"),
-                                CreatedDate = reader.GetDateTime("CreatedDate"),
-                                UpdatedDate = reader.GetDateTime("UpdatedDate")
-                            });
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        public DateTime? GetMaxNgayHoanUng()
+        public DateTime? MC4_GetMaxNgayHoanUngMC4()
         {
             using (var connection = DatabaseHelper.GetConnection())
             {
@@ -516,8 +251,7 @@ namespace QLVT.DAL
                 }
             }
         }
-
-        public List<DonDangKyCTModel> GetChiTietVatTuWithTonKho(string maddk)
+        public List<DonDangKyCTModel> MC4_GetChiTietVatTuWithTonKho(string maddk)
         {
             var result = new List<DonDangKyCTModel>();
 
@@ -563,8 +297,7 @@ namespace QLVT.DAL
 
             return result;
         }
-
-        public bool IsDonDangKyExists(string maDDK)
+        public bool MC4_IsDonDangKyExists(string maDDK)
         {
             using (var connection = DatabaseHelper.GetConnection())
             {
@@ -580,8 +313,7 @@ namespace QLVT.DAL
                 }
             }
         }
-
-        public bool InsertDonDangKyWithChiTiet(DonDangKyModel don, List<DonDangKyCTModel> chiTietList)
+        public bool MC4_InsertDonDangKyWithChiTiet(DonDangKyModel don, List<DonDangKyCTModel> chiTietList)
         {
             using (var connection = DatabaseHelper.GetConnection())
             {
@@ -655,5 +387,508 @@ namespace QLVT.DAL
             }
         }
         #endregion
+
+        #region Điểm chảy
+        public List<SuaChuaModel> DC_GetDanhSachDonSuaChua()
+        {
+            var result = new List<SuaChuaModel>();
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+
+                string sql = @"
+                    SELECT Id, MADON, ViTriDiemChay, 
+                            MaNhanVienXayLap, NhanVienXayLap,
+                            NgayHoanThanh, NgayHoanUng, DaHoanUng, ThoiGianXacNhanHoanUng, 
+                            MaNVXacNhan, CreatedDate, UpdatedDate
+                    FROM ct.SuaChua
+                    WHERE DaHoanUng is null OR DaHoanUng = 0
+                    ORDER BY NgayHoanUng DESC";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new SuaChuaModel
+                            {
+                                Id = Convert.ToInt32(reader["Id"]),
+                                MADON = reader["MADON"].ToString() ?? string.Empty,
+                                ViTriDiemChay = reader["ViTriDiemChay"].ToString() ?? string.Empty,
+                                MaNhanVienXayLap = reader["MaNhanVienXayLap"].ToString() ?? string.Empty,
+                                NhanVienXayLap = reader["NhanVienXayLap"].ToString() ?? string.Empty,
+                                NgayHoanThanh = reader["NgayHoanThanh"] != DBNull.Value ? Convert.ToDateTime(reader["NgayHoanThanh"]) : null,
+                                NgayHoanUng = reader["NgayHoanUng"] != DBNull.Value ? Convert.ToDateTime(reader["NgayHoanUng"]) : null
+                            });
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+        public bool DC_UpdateHoanUngSuaChua(string maDon, string nguoiXacNhan)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Bước 0: Lấy thông tin đơn đăng ký để kiểm tra và lấy mã nhân viên xây lắp
+                            var suaChua = DC_GetDonSuaChuaByMa(maDon, connection, transaction);
+                            if (suaChua == null)
+                            {
+                                throw new Exception("Không tìm thấy hồ sơ");
+                            }
+
+                            // Kiểm tra hồ sơ đã hoàn ứng chưa
+                            if (suaChua.DaHoanUng == true)
+                            {
+                                throw new Exception("Hồ sơ đã được hoàn ứng trước đó");
+                            }
+
+                            // Bước 0.1: Tìm kho dựa trên mã nhân viên xây lắp
+                            int warehouseId = GetWarehouseIdByStaffCode(suaChua.MaNhanVienXayLap, connection, transaction);
+                            if (warehouseId == 0)
+                            {
+                                throw new Exception($"Không tìm thấy kho cho nhân viên: {suaChua.MaNhanVienXayLap}");
+                            }
+
+                            // Bước 1: Cập nhật trạng thái hoàn ứng trong bảng ct.SuaChua
+                            string sqlUpdateSuaChua = @"
+                                UPDATE ct.SuaChua 
+                                SET DaHoanUng = 1,
+                                    MaNVXacNhan = @nguoiXacNhan,
+                                    ThoiGianXacNhanHoanUng = @thoiGianXacNhan,
+                                    UpdatedDate = @updateDate
+                                WHERE MADON = @maDon AND (DaHoanUng IS NULL OR DaHoanUng = 0)";
+
+                            using (var command = new SqlCommand(sqlUpdateSuaChua, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@maDon", maDon);
+                                command.Parameters.AddWithValue("@nguoiXacNhan", nguoiXacNhan);
+                                command.Parameters.AddWithValue("@thoiGianXacNhan", DateTime.Now);
+                                command.Parameters.AddWithValue("@updateDate", DateTime.Now);
+
+
+                                int rows = command.ExecuteNonQuery();
+                                if (rows == 0)
+                                {
+                                    throw new Exception("Không tìm thấy đơn sửa chữa để cập nhật");
+                                }
+                            }
+
+                            // Bước 2: Lấy chi tiết vật tư để tạo transaction
+                            var chiTietList = DC_GetChiTietSuaChuaByMaDon(maDon, connection, transaction);
+                            if (chiTietList.Count == 0)
+                            {
+                                throw new Exception("Không tìm thấy chi tiết vật tư cho đơn sửa chữa");
+                            }
+
+                            // Bước 3: Tạo transaction hoàn ứng
+                            int transactionId = CreateHoanUngTransaction(maDon, "SuaChua", nguoiXacNhan, suaChua.NgayHoanUng.GetValueOrDefault(), suaChua.MaNhanVienXayLap, warehouseId, connection, transaction);
+                            // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho
+                            foreach (var chiTiet in chiTietList)
+                            {
+                                // Tạo chi tiết transaction
+                                CreateHoanUngTransactionDetail(transactionId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng, connection, transaction);
+
+                                // Cập nhật tồn kho
+                                CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                            }
+
+                            transaction.Commit();
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            throw new Exception($"Lỗi thực hiện hoàn ứng sửa chữa: {ex.Message}", ex);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi kết nối database khi hoàn ứng sửa chữa: {ex.Message}", ex);
+            }
+        }
+        private SuaChuaModel? DC_GetDonSuaChuaByMa(string maDon, SqlConnection connection, SqlTransaction transaction)
+        {
+
+            string sql = @"
+                SELECT Id, MADON, ViTriDiemChay, MaNhanVienXayLap, 
+                        NhanVienXayLap, NgayHoanThanh, NgayHoanUng, 
+                        DaHoanUng, ThoiGianXacNhanHoanUng, MaNVXacNhan, CreatedDate, UpdatedDate
+                FROM ct.SuaChua 
+                WHERE MADON = @madon";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+
+                command.Parameters.AddWithValue("@madon", maDon);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new SuaChuaModel
+                        {
+                            Id = Convert.ToInt32(reader["Id"]),
+                            MADON = reader["MADON"].ToString() ?? string.Empty,
+                            ViTriDiemChay = reader["ViTriDiemChay"].ToString() ?? string.Empty,
+                            MaNhanVienXayLap = reader["MaNhanVienXayLap"].ToString() ?? string.Empty,
+                            NhanVienXayLap = reader["NhanVienXayLap"].ToString() ?? string.Empty,
+                            NgayHoanThanh = reader["NgayHoanThanh"] != DBNull.Value ? Convert.ToDateTime(reader["NgayHoanThanh"]) : null,
+                            NgayHoanUng = reader["NgayHoanUng"] != DBNull.Value ? Convert.ToDateTime(reader["NgayHoanUng"]) : null,
+                            DaHoanUng = reader["DaHoanUng"] != DBNull.Value ? Convert.ToBoolean(reader["DaHoanUng"]) : null,
+                            ThoiGianXacNhanHoanUng = reader["ThoiGianXacNhanHoanUng"] != DBNull.Value ? Convert.ToDateTime(reader["ThoiGianXacNhanHoanUng"]) : null,
+                            MaNVXacNhan = reader["MaNVXacNhan"].ToString() ?? string.Empty,
+                            CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
+                            UpdatedDate = Convert.ToDateTime(reader["UpdatedDate"])
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        private List<SuaChuaCTModel> DC_GetChiTietSuaChuaByMaDon(string maDon, SqlConnection connection, SqlTransaction transaction)
+        {
+            var result = new List<SuaChuaCTModel>();
+
+            string sql = @"
+                SELECT s.ErpId, s.TenVatTu, sc.SoLuongHoanUng
+                FROM ct.SuaChuaCT sc
+                    INNER JOIN Supplies s ON sc.MaVTErp = s.ErpId
+                WHERE sc.MADON = @maDon";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@maDon", maDon);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new SuaChuaCTModel
+                        {
+                            MaVTErp = reader.GetInt32("ErpId"),
+                            TenVT = reader.GetString("TenVatTu"),
+                            SoLuongHoanUng = reader.GetDecimal("SoLuongHoanUng")
+                        });
+                    }
+                }
+            }
+
+            return result;
+        }
+        public DateTime? DC_GetMaxNgayHoanUng()
+        {
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+
+                string sql = "SELECT MAX(NgayHoanUng) FROM ct.SuaChua WHERE NgayHoanUng IS NOT NULL";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    var result = command.ExecuteScalar();
+                    return result != DBNull.Value ? Convert.ToDateTime(result) : null;
+                }
+            }
+        }
+        public List<SuaChuaCTModel> DC_GetChiTietVatTuWithTonKho(string maDon)
+        {
+            var result = new List<SuaChuaCTModel>();
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+
+                string sql = @"
+                    SELECT ct.Id, ct.MADON, ct.MaVTErp, ct.SoLuongHoanUng, vt.TenVatTu, vt.DVT, vt.Code as MaVT,
+                            ISNULL(tk.TonKho, 0) as TonKho
+                    FROM ct.SuaChua sc
+                        INNER JOIN ct.SuaChuaCT ct ON sc.MADON = ct.MADON
+                        INNER JOIN ViewVatTus vt ON vt.ErpId = ct.MaVTErp
+                        LEFT JOIN Warehouses w ON w.MaNV = sc.MaNhanVienXayLap
+                        LEFT JOIN ViewTonKhoVatTu tk ON tk.WarehouseId = w.Id and tk.SupplyErpId = ct.MaVTErp
+                    WHERE ct.MADON = @madon";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@madon", maDon);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var chiTiet = new SuaChuaCTModel
+                            {
+                                Id = Convert.ToInt32(reader["Id"]),
+                                MADON = reader["MADON"].ToString() ?? string.Empty,
+                                MaVTErp = reader.GetInt32("MaVTErp"),
+                                TenVT = reader["TenVatTu"].ToString() ?? string.Empty,
+                                MaVT = reader["MaVT"].ToString() ?? string.Empty,
+                                DVT = reader["DVT"].ToString() ?? string.Empty,
+                                SoLuongHoanUng = reader["SoLuongHoanUng"] != DBNull.Value ? Convert.ToDecimal(reader["SoLuongHoanUng"]) : 0,
+                                TonKho = reader["TonKho"] != DBNull.Value ? Convert.ToDecimal(reader["TonKho"]) : 0
+                            };
+
+                            result.Add(chiTiet);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+        public bool DC_IsDonSuaChuaExists(string maDon)
+        {
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+
+                string sql = "SELECT COUNT(*) FROM ct.SuaChua WHERE MADON = @madon";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@madon", maDon);
+                    int count = (int)command.ExecuteScalar();
+                    return count > 0;
+                }
+            }
+        }
+        public bool DC_InsertDonSuaChuaWithChiTiet(SuaChuaModel don, List<SuaChuaCTModel> chiTietList)
+        {
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Bước 1: Thêm đơn sửa chữa
+                        string sqlDon = @"
+                            INSERT INTO ct.SuaChua (MADON, NGAYLAP, TENKH, DiaChi, VITRI_DIEM_CHAY, ViTriDiemChay, 
+                                                  MaNhanVienXayLap, NhanVienXayLap, NVTAICONG, NhanVienKyThuat, TONGTIEN,
+                                                  NgayHoanThanh, NgayHoanUng, DaHoanUng, CreatedDate, UpdatedDate)
+                            VALUES (@madon, @ngaylap, @tenkh, @diachi, @vitridiem, @vitri, @manvxl, @nvxl, @nvtaicong, @nvkt, @tongtien,
+                                    @ngayht, @ngayhu, @dahoanung, @created, @updated)";
+
+                        using (var commandDon = new SqlCommand(sqlDon, connection, transaction))
+                        {
+                            commandDon.Parameters.AddWithValue("@madon", don.MADON);
+                            commandDon.Parameters.AddWithValue("@ngaylap", don.NGAYLAP ?? (object)DBNull.Value);
+                            commandDon.Parameters.AddWithValue("@tenkh", don.TENKH ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@diachi", don.DiaChi ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@vitridiem", don.VITRI_DIEM_CHAY ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@vitri", don.ViTriDiemChay ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@manvxl", don.MaNhanVienXayLap ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@nvxl", don.NhanVienXayLap ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@nvtaicong", don.NVTAICONG ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@nvkt", don.NhanVienKyThuat ?? string.Empty);
+                            commandDon.Parameters.AddWithValue("@tongtien", don.TONGTIEN);
+                            commandDon.Parameters.AddWithValue("@ngayht", don.NgayHoanThanh ?? (object)DBNull.Value);
+                            commandDon.Parameters.AddWithValue("@ngayhu", don.NgayHoanUng ?? (object)DBNull.Value);
+                            commandDon.Parameters.AddWithValue("@dahoanung", don.DaHoanUng ?? (object)DBNull.Value);
+                            commandDon.Parameters.AddWithValue("@created", don.CreatedDate);
+                            commandDon.Parameters.AddWithValue("@updated", don.UpdatedDate);
+
+                            int donResult = commandDon.ExecuteNonQuery();
+                            if (donResult <= 0)
+                            {
+                                transaction.Rollback();
+                                return false;
+                            }
+                        }
+
+                        // Bước 2: Thêm chi tiết vật tư
+                        if (chiTietList != null && chiTietList.Count > 0)
+                        {
+                            string sqlChiTiet = @"
+                                INSERT INTO ct.SuaChuaCT (MADON, TenVT, MaVT, DVT, SoLuong, DonGia, ThanhTien, TonKho, CreatedDate, UpdatedDate)
+                                VALUES (@madon, @tenvt, @mavt, @dvt, @soluong, @dongia, @thanhtien, @tonkho, @created, @updated)";
+
+                            foreach (var chiTiet in chiTietList)
+                            {
+                                using (var commandChiTiet = new SqlCommand(sqlChiTiet, connection, transaction))
+                                {
+                                    commandChiTiet.Parameters.AddWithValue("@madon", chiTiet.MADON);
+                                    commandChiTiet.Parameters.AddWithValue("@tenvt", chiTiet.TenVT ?? string.Empty);
+                                    commandChiTiet.Parameters.AddWithValue("@mavt", chiTiet.MaVT ?? string.Empty);
+                                    commandChiTiet.Parameters.AddWithValue("@dvt", chiTiet.DVT ?? string.Empty);
+                                    commandChiTiet.Parameters.AddWithValue("@soluong", chiTiet.SoLuong);
+                                    commandChiTiet.Parameters.AddWithValue("@dongia", chiTiet.DonGia);
+                                    commandChiTiet.Parameters.AddWithValue("@thanhtien", chiTiet.ThanhTien);
+                                    commandChiTiet.Parameters.AddWithValue("@tonkho", chiTiet.TonKho);
+                                    commandChiTiet.Parameters.AddWithValue("@created", chiTiet.CreatedDate);
+                                    commandChiTiet.Parameters.AddWithValue("@updated", chiTiet.UpdatedDate);
+
+                                    int chiTietResult = commandChiTiet.ExecuteNonQuery();
+                                    if (chiTietResult <= 0)
+                                    {
+                                        transaction.Rollback();
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Commit transaction nếu tất cả thành công
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                        return false;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region Dùng chung
+        private string GenerateHoanUngTransactionNumber()
+        {
+            string dateStr = DateTime.Now.ToString("yyMMdd");
+            string prefix = "HU"; // Hoàn Ứng
+
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+
+                    string sql = @"
+                        SELECT COUNT(*) 
+                        FROM Transactions 
+                        WHERE LoaiGiaoDich = 'HoanUng' 
+                        AND CONVERT(DATE, CreatedDate) = CONVERT(DATE, GETDATE())";
+
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        int count = (int)command.ExecuteScalar();
+                        return $"{prefix}{dateStr}-{(count + 1):D4}";
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback với timestamp
+                return $"{prefix}{dateStr}{DateTime.Now:HHmmss}";
+            }
+        }
+        private int CreateHoanUngTransaction(string maDon, string loaiDon, string nguoiXacNhan,
+            DateTime ngayHoanUng, string manvXayLap, int maKho, SqlConnection connection, SqlTransaction transaction)
+        {
+            string insertTransactionSql = @"INSERT INTO Transactions 
+                            (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaNV, MaKhoNguon, GhiChu, CreatedBy, EntityHoanUng)
+                            VALUES 
+                            (@soPhieu, @ngayGiaoDich, 'HoanUng', @maNV, @maKhoNguon, @ghiChu, @createdBy, @entityHoanUng);
+                            SELECT SCOPE_IDENTITY();";
+
+            string soPhieu = GenerateHoanUngTransactionNumber();
+
+            using (var command = new SqlCommand(insertTransactionSql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@soPhieu", soPhieu);
+                command.Parameters.AddWithValue("@ngayGiaoDich", ngayHoanUng);
+                command.Parameters.AddWithValue("@maNV", manvXayLap);
+                command.Parameters.AddWithValue("@maKhoNguon", maKho); // Kho của nhân viên xây lắp
+                if (loaiDon == "MangCap4")
+                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư cho đơn MC4: {maDon}");
+                else
+                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư cho đơn sửa chữa: {maDon}");
+                command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
+                command.Parameters.AddWithValue("@entityHoanUng", maDon);
+
+                return Convert.ToInt32(command.ExecuteScalar());
+            }
+        }
+        private void CreateHoanUngTransactionDetail(int transactionId, int maVTErp, decimal soLuong,
+            SqlConnection connection, SqlTransaction transaction)
+        {
+            string insertDetailSql = @"INSERT INTO TransactionDetails 
+                                        (TransactionId, ErpId, SoLuong)
+                                        VALUES (@transactionId, @erpId, @soLuong)";
+
+
+            using (var command = new SqlCommand(insertDetailSql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@TransactionId", transactionId);
+                command.Parameters.AddWithValue("@erpId", maVTErp);
+                command.Parameters.AddWithValue("@soLuong", soLuong);
+
+                command.ExecuteNonQuery();
+            }
+        }
+        private void CapNhatTonKhoHoanUng(SqlConnection connection, SqlTransaction transaction, int warehouseId, int erpId, decimal quantity)
+        {
+            // Kiểm tra tồn kho hiện tại tại kho này
+            string checkSql = @"
+                SELECT SoLuongTon 
+                FROM Inventory 
+                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
+
+            using (var command = new SqlCommand(checkSql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@warehouseId", warehouseId);
+                command.Parameters.AddWithValue("@erpId", erpId);
+
+                var result = command.ExecuteScalar();
+                int currentStock = result != null ? Convert.ToInt32(result) : 0;
+
+                if (currentStock < quantity)
+                {
+                    throw new Exception($"Không đủ tồn kho để hoàn ứng. Kho {warehouseId} - VT {erpId}: Tồn {currentStock}, Cần {quantity}");
+                }
+
+                // Trừ tồn kho
+                string updateSql = @"
+                    UPDATE Inventory 
+                    SET SoLuongTon = SoLuongTon - @quantity, LastUpdated = GETDATE()
+                    WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
+
+                using (var updateCommand = new SqlCommand(updateSql, connection, transaction))
+                {
+                    updateCommand.Parameters.AddWithValue("@warehouseId", warehouseId);
+                    updateCommand.Parameters.AddWithValue("@erpId", erpId);
+                    updateCommand.Parameters.AddWithValue("@quantity", quantity);
+
+                    int rowsAffected = updateCommand.ExecuteNonQuery();
+                    if (rowsAffected == 0)
+                    {
+                        throw new Exception($"Không thể cập nhật tồn kho cho kho {warehouseId} - VT {erpId}");
+                    }
+                }
+            }
+        }
+
+        private int GetWarehouseIdByStaffCode(string maNhanVien, SqlConnection connection, SqlTransaction transaction)
+        {
+            string sql = @"
+                SELECT Id
+                FROM Warehouses
+                WHERE MaNV = @maNV";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@maNV", maNhanVien);
+
+                var result = command.ExecuteScalar();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+        }
+        #endregion
+
     }
 }

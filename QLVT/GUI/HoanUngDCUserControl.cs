@@ -1,26 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.ERP.Models;
-using QLVT.ERP.BLL;
 
 namespace QLVT.GUI
 {
-    public partial class HoanUngMC4UserControl : UserControl
+    public partial class HoanUngDCUserControl : UserControl
     {
-        private readonly HoanUngBLL hoanUngBLL;
-        private List<DonDangKyModel> danhSachHoSo = new();
-        private List<DonDangKyModel> danhSachHoSoGoc = new(); // Danh sách gốc để tìm kiếm
-        private DonDangKyModel? selectedHoSo;
+        private readonly HoanUngBLL _hoanUngBLL;
+        private List<SuaChuaModel> danhSachHoSo = new();
+        private List<SuaChuaModel> danhSachHoSoGoc = new(); // Danh sách gốc để tìm kiếm
+        private SuaChuaModel? selectedHoSo;
 
-        public HoanUngMC4UserControl()
+        public HoanUngDCUserControl()
         {
             InitializeComponent();
-            hoanUngBLL = new HoanUngBLL();
+            _hoanUngBLL = new HoanUngBLL();
             SetupDataGridView();
             LoadDanhSachHoSo();
             CheckERPConnection();
@@ -30,7 +23,7 @@ namespace QLVT.GUI
         {
             try
             {
-                bool connected = hoanUngBLL.TestERPConnection();
+                bool connected = Utils.ExternalDatabaseHelper.TestExternalConnection();
                 lblConnectionStatus.Text = connected ? "✅ Kết nối ERP thành công" : "❌ Không thể kết nối ERP";
                 lblConnectionStatus.ForeColor = connected ? Color.Green : Color.Red;
                 btnTaiDuLieuERP.Enabled = connected;
@@ -46,21 +39,20 @@ namespace QLVT.GUI
 
         private void SetupDataGridView()
         {
-            dgvHoSoMC4.AllowUserToAddRows = false;
-            dgvHoSoMC4.AllowUserToDeleteRows = false;
-            dgvHoSoMC4.ReadOnly = true;
-            dgvHoSoMC4.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvHoSoMC4.MultiSelect = false;
-            dgvHoSoMC4.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvHoSoMC4.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-            dgvHoSoMC4.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvHoSoDC.AllowUserToAddRows = false;
+            dgvHoSoDC.AllowUserToDeleteRows = false;
+            dgvHoSoDC.ReadOnly = true;
+            dgvHoSoDC.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvHoSoDC.MultiSelect = false;
+            dgvHoSoDC.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvHoSoDC.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvHoSoDC.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             // Thêm các cột
-            dgvHoSoMC4.Columns.Add("MADDK", "Mã DDK");
-            dgvHoSoMC4.Columns.Add("TENKH", "Tên khách hàng");
-            dgvHoSoMC4.Columns.Add("DiaChi", "Địa chỉ");
-            dgvHoSoMC4.Columns.Add("NhanVienXayLap", "NV Thi công");
-            dgvHoSoMC4.Columns.Add("NgayHoanUng", "Ngày hoàn ứng");
+            dgvHoSoDC.Columns.Add("MADON", "Mã đơn");
+            dgvHoSoDC.Columns.Add("ViTriDiemChay", "Vị trí điểm chảy");
+            dgvHoSoDC.Columns.Add("NhanVienXayLap", "NV Thi công");
+            dgvHoSoDC.Columns.Add("NgayHoanUng", "Ngày hoàn ứng");
 
             // Thêm cột nút chức năng
             DataGridViewButtonColumn colXemChiTiet = new DataGridViewButtonColumn();
@@ -69,7 +61,7 @@ namespace QLVT.GUI
             colXemChiTiet.Text = "Xem chi tiết";
             colXemChiTiet.UseColumnTextForButtonValue = true;
             colXemChiTiet.Width = 80;
-            dgvHoSoMC4.Columns.Add(colXemChiTiet);
+            dgvHoSoDC.Columns.Add(colXemChiTiet);
 
             DataGridViewButtonColumn colXacNhanHoanUng = new DataGridViewButtonColumn();
             colXacNhanHoanUng.Name = "btnXacNhanHoanUng";
@@ -77,28 +69,26 @@ namespace QLVT.GUI
             colXacNhanHoanUng.Text = "Hoàn ứng";
             colXacNhanHoanUng.UseColumnTextForButtonValue = true;
             colXacNhanHoanUng.Width = 80;
-            dgvHoSoMC4.Columns.Add(colXacNhanHoanUng);
+            dgvHoSoDC.Columns.Add(colXacNhanHoanUng);
 
             // Set column widths
-            dgvHoSoMC4.Columns["MADDK"].Width = 100;
-            dgvHoSoMC4.Columns["TENKH"].Width = 170;
-            dgvHoSoMC4.Columns["DiaChi"].Width = 350;
-            dgvHoSoMC4.Columns["NhanVienXayLap"].Width = 150;
-            dgvHoSoMC4.Columns["NgayHoanUng"].Width = 120;
+            dgvHoSoDC.Columns["MADON"].Width = 100;
+            dgvHoSoDC.Columns["ViTriDiemChay"].Width = 500;
+            dgvHoSoDC.Columns["NhanVienXayLap"].Width = 150;
+            dgvHoSoDC.Columns["NgayHoanUng"].Width = 120;
 
-            dgvHoSoMC4.Columns["DiaChi"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            dgvHoSoMC4.Columns["TENKH"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvHoSoDC.Columns["ViTriDiemChay"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
 
-            dgvHoSoMC4.CellClick += DgvHoSoMC4_CellClick;
-            dgvHoSoMC4.SelectionChanged += DgvHoSoMC4_SelectionChanged;
+            dgvHoSoDC.CellClick += DgvHoSoDC_CellClick;
+            dgvHoSoDC.SelectionChanged += DgvHoSoDC_SelectionChanged;
         }
 
         private void LoadDanhSachHoSo()
         {
             try
             {
-                danhSachHoSoGoc = hoanUngBLL.MC4_GetDanhSachChoHoanUng();
-                danhSachHoSo = new List<DonDangKyModel>(danhSachHoSoGoc); // Copy danh sách
+                danhSachHoSoGoc = _hoanUngBLL.DC_GetDanhSachChoHoanUng();
+                danhSachHoSo = new List<SuaChuaModel>(danhSachHoSoGoc); // Copy danh sách
                 DisplayHoSoList();
                 UpdateStatusCounts();
             }
@@ -110,20 +100,19 @@ namespace QLVT.GUI
 
         private void DisplayHoSoList()
         {
-            dgvHoSoMC4.Rows.Clear();
+            dgvHoSoDC.Rows.Clear();
             
             foreach (var hoSo in danhSachHoSo)
             {                
-                dgvHoSoMC4.Rows.Add(
-                    hoSo.MADDK,
-                    hoSo.TENKH,
-                    hoSo.DiaChi,
+                dgvHoSoDC.Rows.Add(
+                    hoSo.MADON,
+                    hoSo.ViTriDiemChay,
                     hoSo.NhanVienXayLap,
                     hoSo.NgayHoanUng?.ToString("dd/MM/yyyy") ?? ""
                 );
 
                 // Đổi màu cho hàng theo trạng thái
-                var row = dgvHoSoMC4.Rows[dgvHoSoMC4.Rows.Count - 1];
+                var row = dgvHoSoDC.Rows[dgvHoSoDC.Rows.Count - 1];
 
                 row.DefaultCellStyle.BackColor = Color.LightYellow;
                 row.DefaultCellStyle.ForeColor = Color.DarkBlue;
@@ -145,11 +134,11 @@ namespace QLVT.GUI
             }
         }
 
-        private void DgvHoSoMC4_SelectionChanged(object sender, EventArgs e)
+        private void DgvHoSoDC_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvHoSoMC4.SelectedRows.Count > 0)
+            if (dgvHoSoDC.SelectedRows.Count > 0)
             {
-                int index = dgvHoSoMC4.SelectedRows[0].Index;
+                int index = dgvHoSoDC.SelectedRows[0].Index;
                 if (index >= 0 && index < danhSachHoSo.Count)
                 {
                     selectedHoSo = danhSachHoSo[index];
@@ -157,30 +146,30 @@ namespace QLVT.GUI
             }
         }
 
-        private void DgvHoSoMC4_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void DgvHoSoDC_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0 && e.RowIndex < danhSachHoSo.Count)
             {
                 var hoSo = danhSachHoSo[e.RowIndex];
 
-                if (e.ColumnIndex == dgvHoSoMC4.Columns["btnXemChiTiet"].Index)
+                if (e.ColumnIndex == dgvHoSoDC.Columns["btnXemChiTiet"].Index)
                 {
                     XemChiTietVatTu(hoSo);
                 }
-                else if (e.ColumnIndex == dgvHoSoMC4.Columns["btnXacNhanHoanUng"].Index)
+                else if (e.ColumnIndex == dgvHoSoDC.Columns["btnXacNhanHoanUng"].Index)
                 {
                     XacNhanHoanUng(hoSo);
                 }
             }
         }
 
-        private void XemChiTietVatTu(DonDangKyModel hoSo)
+        private void XemChiTietVatTu(SuaChuaModel hoSo)
         {
             try
             {
-                var chiTietListWithTonKho = hoanUngBLL.MC4_GetChiTietVatTuWithTonKho(hoSo.MADDK);
+                var chiTietListWithTonKho = _hoanUngBLL.DC_GetChiTietVatTuWithTonKho(hoSo.MADON);
                 
-                using (var formChiTiet = new ChiTietVatTuMC4Form(hoSo, chiTietListWithTonKho))
+                using (var formChiTiet = new ChiTietVatTuDCForm(hoSo, chiTietListWithTonKho))
                 {
                     formChiTiet.ShowDialog();
                 }
@@ -191,7 +180,7 @@ namespace QLVT.GUI
             }
         }
 
-        private void XacNhanHoanUng(DonDangKyModel hoSo)
+        private void XacNhanHoanUng(SuaChuaModel hoSo)
         {
             if (hoSo.DaHoanUng == true)
             {
@@ -201,8 +190,8 @@ namespace QLVT.GUI
 
             var result = MessageBox.Show(
                 $"Xác nhận hoàn ứng cho hồ sơ:\n\n" +
-                $"Mã đơn: {hoSo.MADDK}\n" +
-                $"Khách hàng: {hoSo.TENKH}\n" +
+                $"Mã đơn: {hoSo.MADON}\n" +
+                $"Vị trí: {hoSo.ViTriDiemChay}\n" +
                 $"NV Thi công: {hoSo.NhanVienXayLap}\n\n" +
                 $"Bạn có chắc chắn muốn thực hiện hoàn ứng?",
                 "Xác nhận hoàn ứng",
@@ -212,8 +201,8 @@ namespace QLVT.GUI
             if (result == DialogResult.Yes)
             {
                 try
-                { // Hoặc lấy từ session
-                    hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK);
+                {
+                    _hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadDanhSachHoSo(); // Reload dữ liệu
@@ -238,7 +227,7 @@ namespace QLVT.GUI
                 // Xác nhận từ người dùng
                 var confirmResult = MessageBox.Show(
                     "Bạn có chắc chắn muốn tải dữ liệu mới từ ERP?\n\n" +
-                    "Quá trình này có thể mất một lúc và sẽ tải tất cả đơn đăng ký mới.",
+                    "Quá trình này có thể mất một lúc và sẽ tải tất cả đơn sửa chữa mới.",
                     "Xác nhận tải dữ liệu ERP", 
                     MessageBoxButtons.YesNo, 
                     MessageBoxIcon.Question);
@@ -249,7 +238,7 @@ namespace QLVT.GUI
                 }
 
                 // Thực hiện tải dữ liệu
-                var (soLuongDon, soLuongChiTiet, thongBao) = await hoanUngBLL.MC4_TaiDuLieuERP();
+                var (soLuongDon, soLuongChiTiet, thongBao) = await _hoanUngBLL.DC_TaiDuLieuERP();
                 
                 // Hiển thị kết quả
                 MessageBox.Show(thongBao, "Kết quả tải dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -287,7 +276,7 @@ namespace QLVT.GUI
         private void BtnXoaTimKiem_Click(object sender, EventArgs e)
         {
             txtTimKiem.Text = "";
-            danhSachHoSo = new List<DonDangKyModel>(danhSachHoSoGoc);
+            danhSachHoSo = new List<SuaChuaModel>(danhSachHoSoGoc);
             DisplayHoSoList();
             UpdateStatusCounts();
         }
@@ -310,14 +299,14 @@ namespace QLVT.GUI
                 if (string.IsNullOrEmpty(tuKhoa))
                 {
                     // Hiển thị tất cả nếu không có từ khóa
-                    danhSachHoSo = new List<DonDangKyModel>(danhSachHoSoGoc);
+                    danhSachHoSo = new List<SuaChuaModel>(danhSachHoSoGoc);
                 }
                 else
                 {
                     // Tìm kiếm theo mã đơn hoặc tên khách hàng
                     danhSachHoSo = danhSachHoSoGoc.Where(x => 
-                        (x.MADDK?.Contains(tuKhoa, StringComparison.OrdinalIgnoreCase) == true) ||
-                        (x.TENKH?.Contains(tuKhoa, StringComparison.OrdinalIgnoreCase) == true)
+                        (x.MADON?.Contains(tuKhoa, StringComparison.OrdinalIgnoreCase) == true) ||
+                        (x.ViTriDiemChay?.Contains(tuKhoa, StringComparison.OrdinalIgnoreCase) == true)
                     ).ToList();
                 }
 
