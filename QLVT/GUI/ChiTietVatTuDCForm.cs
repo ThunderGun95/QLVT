@@ -50,7 +50,7 @@ namespace QLVT.GUI
 
                 // Tô màu cảnh báo nếu số lượng > tồn kho
                 var row = dgvChiTiet.Rows[dgvChiTiet.Rows.Count - 1];
-                if (ct.SoLuong > ct.TonKho)
+                if (ct.SoLuongHoanUng > ct.TonKho)
                 {
                     row.DefaultCellStyle.BackColor = Color.LightPink;
                     row.DefaultCellStyle.ForeColor = Color.DarkRed;

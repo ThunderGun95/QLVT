@@ -677,30 +677,20 @@ namespace QLVT.DAL
                     {
                         // Bước 1: Thêm đơn sửa chữa
                         string sqlDon = @"
-                            INSERT INTO ct.SuaChua (MADON, NGAYLAP, TENKH, DiaChi, VITRI_DIEM_CHAY, ViTriDiemChay, 
-                                                  MaNhanVienXayLap, NhanVienXayLap, NVTAICONG, NhanVienKyThuat, TONGTIEN,
-                                                  NgayHoanThanh, NgayHoanUng, DaHoanUng, CreatedDate, UpdatedDate)
-                            VALUES (@madon, @ngaylap, @tenkh, @diachi, @vitridiem, @vitri, @manvxl, @nvxl, @nvtaicong, @nvkt, @tongtien,
-                                    @ngayht, @ngayhu, @dahoanung, @created, @updated)";
+                            INSERT INTO ct.SuaChua (MADON, ViTriDiemChay, MaNhanVienXayLap, NhanVienXayLap, 
+                                                    NgayHoanThanh, NgayHoanUng, CreatedDate)
+                            VALUES (@madon, @vitri, @manvxl, @nvxl, 
+                                    @ngayht, @ngayhu, @created)";
 
                         using (var commandDon = new SqlCommand(sqlDon, connection, transaction))
                         {
                             commandDon.Parameters.AddWithValue("@madon", don.MADON);
-                            commandDon.Parameters.AddWithValue("@ngaylap", don.NGAYLAP ?? (object)DBNull.Value);
-                            commandDon.Parameters.AddWithValue("@tenkh", don.TENKH ?? string.Empty);
-                            commandDon.Parameters.AddWithValue("@diachi", don.DiaChi ?? string.Empty);
-                            commandDon.Parameters.AddWithValue("@vitridiem", don.VITRI_DIEM_CHAY ?? string.Empty);
                             commandDon.Parameters.AddWithValue("@vitri", don.ViTriDiemChay ?? string.Empty);
                             commandDon.Parameters.AddWithValue("@manvxl", don.MaNhanVienXayLap ?? string.Empty);
                             commandDon.Parameters.AddWithValue("@nvxl", don.NhanVienXayLap ?? string.Empty);
-                            commandDon.Parameters.AddWithValue("@nvtaicong", don.NVTAICONG ?? string.Empty);
-                            commandDon.Parameters.AddWithValue("@nvkt", don.NhanVienKyThuat ?? string.Empty);
-                            commandDon.Parameters.AddWithValue("@tongtien", don.TONGTIEN);
                             commandDon.Parameters.AddWithValue("@ngayht", don.NgayHoanThanh ?? (object)DBNull.Value);
                             commandDon.Parameters.AddWithValue("@ngayhu", don.NgayHoanUng ?? (object)DBNull.Value);
-                            commandDon.Parameters.AddWithValue("@dahoanung", don.DaHoanUng ?? (object)DBNull.Value);
                             commandDon.Parameters.AddWithValue("@created", don.CreatedDate);
-                            commandDon.Parameters.AddWithValue("@updated", don.UpdatedDate);
 
                             int donResult = commandDon.ExecuteNonQuery();
                             if (donResult <= 0)
@@ -714,23 +704,16 @@ namespace QLVT.DAL
                         if (chiTietList != null && chiTietList.Count > 0)
                         {
                             string sqlChiTiet = @"
-                                INSERT INTO ct.SuaChuaCT (MADON, TenVT, MaVT, DVT, SoLuong, DonGia, ThanhTien, TonKho, CreatedDate, UpdatedDate)
-                                VALUES (@madon, @tenvt, @mavt, @dvt, @soluong, @dongia, @thanhtien, @tonkho, @created, @updated)";
+                                INSERT INTO ct.SuaChuaCT (MADON, MaVTErp, SoLuongHoanUng, CreatedDate)
+                                VALUES (@madon, @mavt, @soluong, GETDATE())";
 
                             foreach (var chiTiet in chiTietList)
                             {
                                 using (var commandChiTiet = new SqlCommand(sqlChiTiet, connection, transaction))
                                 {
                                     commandChiTiet.Parameters.AddWithValue("@madon", chiTiet.MADON);
-                                    commandChiTiet.Parameters.AddWithValue("@tenvt", chiTiet.TenVT ?? string.Empty);
-                                    commandChiTiet.Parameters.AddWithValue("@mavt", chiTiet.MaVT ?? string.Empty);
-                                    commandChiTiet.Parameters.AddWithValue("@dvt", chiTiet.DVT ?? string.Empty);
-                                    commandChiTiet.Parameters.AddWithValue("@soluong", chiTiet.SoLuong);
-                                    commandChiTiet.Parameters.AddWithValue("@dongia", chiTiet.DonGia);
-                                    commandChiTiet.Parameters.AddWithValue("@thanhtien", chiTiet.ThanhTien);
-                                    commandChiTiet.Parameters.AddWithValue("@tonkho", chiTiet.TonKho);
-                                    commandChiTiet.Parameters.AddWithValue("@created", chiTiet.CreatedDate);
-                                    commandChiTiet.Parameters.AddWithValue("@updated", chiTiet.UpdatedDate);
+                                    commandChiTiet.Parameters.AddWithValue("@mavt", chiTiet.MaVTErp);
+                                    commandChiTiet.Parameters.AddWithValue("@soluong", chiTiet.SoLuongHoanUng);
 
                                     int chiTietResult = commandChiTiet.ExecuteNonQuery();
                                     if (chiTietResult <= 0)
