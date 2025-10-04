@@ -221,7 +221,7 @@ namespace QLVT.GUI
         {
             try
             {
-                var warehouses = warehouseDAL.GetWarehouses();
+                var warehouses = warehouseDAL.GetAllWarehouses();
                 
                 cboWarehouse.DisplayMember = "TenKho";
                 cboWarehouse.ValueMember = "MaKho";

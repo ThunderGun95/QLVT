@@ -95,7 +95,7 @@ namespace QLVT.GUI
             grpTimKiem.Controls.Add(btnTimPhieu);
             grpTimKiem.Controls.Add(btnRefresh);
             grpTimKiem.Controls.Add(lblConnectionStatus);
-            grpTimKiem.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            grpTimKiem.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
             grpTimKiem.Location = new Point(20, 50);
             grpTimKiem.Name = "grpTimKiem";
             grpTimKiem.Size = new Size(1160, 80);
@@ -191,7 +191,7 @@ namespace QLVT.GUI
             grpPhieuInfo.Controls.Add(lblNguoiTao);
             grpPhieuInfo.Controls.Add(lblTrangThaiLabel);
             grpPhieuInfo.Controls.Add(lblTrangThai);
-            grpPhieuInfo.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            grpPhieuInfo.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
             grpPhieuInfo.Location = new Point(20, 140);
             grpPhieuInfo.Name = "grpPhieuInfo";
             grpPhieuInfo.Size = new Size(719, 120);
@@ -305,7 +305,7 @@ namespace QLVT.GUI
             grpChiTiet.Controls.Add(lblMappingStatus);
             grpChiTiet.Controls.Add(dgvChiTiet);
             grpChiTiet.Controls.Add(btnMapping);
-            grpChiTiet.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            grpChiTiet.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
             grpChiTiet.Location = new Point(20, 270);
             grpChiTiet.Name = "grpChiTiet";
             grpChiTiet.Size = new Size(1160, 350);

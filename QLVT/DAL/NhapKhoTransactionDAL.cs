@@ -13,9 +13,8 @@ namespace QLVT.DAL
         /// <param name="order">Phiếu nhập từ ERP</param>
         /// <param name="maKho">Mã kho đích</param>
         /// <param name="createdBy">Người tạo</param>
-        /// <param name="staffCode">Mã nhân viên thực hiện</param>
         /// <returns>ID transaction vừa tạo</returns>
-        public int CreateNhapKhoErpTransaction(ERP_PhieuNhapKho order, int maKho, string createdBy, string staffCode)
+        public int CreateNhapKhoErpTransaction(ERP_PhieuNhapKho order, int maKho, string createdBy)
         {
             int transactionId = 0;
             
@@ -32,11 +31,9 @@ namespace QLVT.DAL
                         // 1. Tạo transaction header theo schema mới
                         string insertTransactionSql = @"
                             INSERT INTO Transactions 
-                            (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNhan, MaNV, 
-                             GhiChu, CreatedBy, EntityNhapKho)
+                            (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNhan, GhiChu, CreatedBy, EntityNhapKho)
                             VALUES 
-                            (@soPhieu, @ngayGiaoDich, 'NhapKho', @maKhoNhan, @maNV, 
-                             @ghiChu, @createdBy, @entityNhapKho);
+                            (@soPhieu, @ngayGiaoDich, 'NhapKho', @maKhoNhan, @ghiChu, @createdBy, @entityNhapKho);
                             SELECT SCOPE_IDENTITY();";
 
                         
@@ -45,7 +42,6 @@ namespace QLVT.DAL
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
                             command.Parameters.AddWithValue("@ngayGiaoDich", order.ThoiGianHoanThanhNhapKho);
                             command.Parameters.AddWithValue("@maKhoNhan", maKho);
-                            command.Parameters.AddWithValue("@maNV", staffCode);
                             command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieuNhapKho}-{order.NAM} - {order.TenKho}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
                             command.Parameters.AddWithValue("@entityNhapKho", $"{order.SoPhieuNhapKho}-{order.NAM}");
@@ -58,8 +54,8 @@ namespace QLVT.DAL
                         {
                             // Insert transaction detail theo schema mới
                             string insertDetailSql = @"
-                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu)
-                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu)";
+                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, CreatedBy, CreatedDate)
+                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @createdBy, GETDATE())";
 
                             using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                             {
@@ -67,12 +63,13 @@ namespace QLVT.DAL
                                 command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongNhapKho);
                                 command.Parameters.AddWithValue("@ghiChu", $"Nhập từ ERP: {detail.MaVatTuHangHoa}");
-                                
+                                command.Parameters.AddWithValue("@createdBy", createdBy);
+
                                 command.ExecuteNonQuery();
                             }
 
                             // Cập nhật inventory theo schema mới
-                            CapNhatTonKho(connection, transaction, maKho, detail.MappedSupplyId!.Value, (int)detail.SoLuongNhapKho);
+                            CapNhatTonKho(connection, transaction, maKho, detail.MappedSupplyId!.Value, detail.SoLuongNhapKho);
                         }
 
                         transaction.Commit();
@@ -91,7 +88,7 @@ namespace QLVT.DAL
         /// <summary>
         /// Cập nhật inventory (tồn kho) theo schema mới
         /// </summary>
-        private void CapNhatTonKho(SqlConnection connection, SqlTransaction transaction, int maKho, int erpId, int quantity)
+        private void CapNhatTonKho(SqlConnection connection, SqlTransaction transaction, int maKho, int erpId, decimal quantity)
         {
             string sql = @"
                 IF EXISTS (SELECT 1 FROM Inventory WHERE WarehouseId = @maKho AND SupplyErpId = @erpId)
@@ -149,7 +146,88 @@ namespace QLVT.DAL
             {
                 // Fallback nếu có lỗi
                 Random random = new Random();
-                return $"{prefix}{dateStr}{random.Next(100, 999)}";
+                return $"{prefix}{dateStr}-{random.Next(1000, 9999)}";
+            }
+        }
+
+
+        /// <summary>
+        /// Tạo transaction nhập kho không qua ERP
+        /// </summary>
+        public int CreateNhapKhoManualTransaction(PhieuNhapKho transaction, List<PhieuNhapKhoChiTiet> details, string createdBy, int warehouseId = 1)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var dbTransaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 1. Tạo số phiếu
+                            string soPhieu = GenerateNhapKhoTransactionNumber();
+
+                            // 2. Tạo transaction header
+                            var insertTransactionSql = @"
+                                INSERT INTO Transactions 
+                                (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNhan, GhiChu, CreatedBy, CreatedDate)
+                                VALUES 
+                                (@soPhieu, @ngayGiaoDich, @loaiGiaoDich, @maKhoNhan, @ghiChu, @createdBy, @createdDate);
+                                SELECT SCOPE_IDENTITY();";
+
+                            int transactionId;
+                            using (var command = new SqlCommand(insertTransactionSql, connection, dbTransaction))
+                            {
+                                command.Parameters.AddWithValue("@soPhieu", soPhieu);
+                                command.Parameters.AddWithValue("@ngayGiaoDich", transaction.NgayGiaoDich);
+                                command.Parameters.AddWithValue("@loaiGiaoDich", "NhapKho");
+                                command.Parameters.AddWithValue("@maKhoNhan", warehouseId);
+                                command.Parameters.AddWithValue("@ghiChu", transaction.GhiChu ?? "");
+                                command.Parameters.AddWithValue("@createdBy", createdBy);
+                                command.Parameters.AddWithValue("@createdDate", DateTime.Now);
+
+                                transactionId = Convert.ToInt32(command.ExecuteScalar());
+                            }
+
+                            // 3. Tạo transaction details và cập nhật inventory
+                            foreach (var detail in details)
+                            {
+                                // Insert transaction detail
+                                string insertDetailSql = @"
+                                    INSERT INTO TransactionDetails 
+                                    (TransactionId, ErpId, SoLuong, GhiChu, CreatedBy, CreatedDate)
+                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @createdBy, GETDATE())";
+
+                                using (var detailCommand = new SqlCommand(insertDetailSql, connection, dbTransaction))
+                                {
+                                    detailCommand.Parameters.AddWithValue("@transactionId", transactionId);
+                                    detailCommand.Parameters.AddWithValue("@erpId", detail.ErpId);
+                                    detailCommand.Parameters.AddWithValue("@soLuong", detail.SoLuong);
+                                    detailCommand.Parameters.AddWithValue("@ghiChu", detail.GhiChu ?? "");
+                                    detailCommand.Parameters.AddWithValue("@createdBy", createdBy);
+
+                                    detailCommand.ExecuteNonQuery();
+                                }
+
+                                // Cập nhật tồn kho
+                                CapNhatTonKho(connection, dbTransaction, warehouseId, detail.ErpId, detail.SoLuong);
+                            }
+
+                            dbTransaction.Commit();
+                            return transactionId;
+                        }
+                        catch
+                        {
+                            dbTransaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi tạo transaction nhập kho manual: {ex.Message}", ex);
             }
         }
 
@@ -206,8 +284,8 @@ namespace QLVT.DAL
                             {
                                 string insertDetailSql = @"
                                     INSERT INTO TransactionDetails 
-                                    (TransactionId, ErpId, SoLuong, GhiChu)
-                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu)";
+                                    (TransactionId, ErpId, SoLuong, GhiChu, CreatedBy)
+                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @createdBy)";
 
                                 using (var detailCommand = new SqlCommand(insertDetailSql, connection, transaction))
                                 {
@@ -215,6 +293,7 @@ namespace QLVT.DAL
                                     detailCommand.Parameters.AddWithValue("@erpId", item.SupplyId!.Value);
                                     detailCommand.Parameters.AddWithValue("@soLuong", item.SoLuong);
                                     detailCommand.Parameters.AddWithValue("@ghiChu", item.GhiChu ?? "Tồn đầu kỳ");
+                                    detailCommand.Parameters.AddWithValue("@createdBy", nguoiTao);
 
                                     detailCommand.ExecuteNonQuery();
                                 }

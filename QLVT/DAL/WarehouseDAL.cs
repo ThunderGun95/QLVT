@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using QLVT.Models;
 using QLVT.Utils;
+using System.Data;
 
 namespace QLVT.DAL
 {
@@ -9,54 +10,47 @@ namespace QLVT.DAL
         /// <summary>
         /// Lấy danh sách kho
         /// </summary>
-        /// <returns>Danh sách kho</returns>
-        public List<Warehouse> GetWarehouses()
+        public List<Warehouse> GetAllWarehouses()
         {
             var warehouses = new List<Warehouse>();
-            
-            string sql = @"
-                SELECT w.Id, w.MaKho, w.TenKho, w.LoaiKho, w.MaNV, 
-                       s.TenNV, w.DiaChi, w.GhiChu, w.IsActive
-                FROM Warehouses w
-                LEFT JOIN Staffs s ON w.MaNV = s.MaNV
-                WHERE w.IsActive = 1
-                ORDER BY w.LoaiKho, w.TenKho";
-
             try
             {
                 using (var connection = DatabaseHelper.GetConnection())
                 {
                     connection.Open();
-                    using (var command = new SqlCommand(sql, connection))
+                    var query = @"
+                        SELECT Id, MaKho, TenKho, LoaiKho, MaNV, DiaChi, GhiChu, IsActive, CreatedDate
+                        FROM Warehouses 
+                        WHERE IsActive = 1
+                        ORDER BY MaKho";
+
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            warehouses.Add(new Warehouse
                             {
-                                warehouses.Add(new Warehouse
-                                {
-                                    Id = Convert.ToInt32(reader["Id"]),
-                                    MaKho = reader["MaKho"].ToString() ?? string.Empty,
-                                    TenKho = reader["TenKho"].ToString() ?? string.Empty,
-                                    LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
-                                    MaNV = reader["MaNV"].ToString(),
-                                    TenNV = reader["TenNV"].ToString(),
-                                    DiaChi = reader["DiaChi"].ToString(),
-                                    GhiChu = reader["GhiChu"].ToString(),
-                                    IsActive = Convert.ToBoolean(reader["IsActive"])
-                                });
-                            }
+                                Id = reader.GetInt32("Id"),
+                                MaKho = reader.GetString("MaKho"),
+                                TenKho = reader.GetString("TenKho"),
+                                LoaiKho = reader.GetString("LoaiKho"),
+                                MaNV = reader.IsDBNull("MaNV") ? null : reader.GetString("MaNV"),
+                                DiaChi = reader.IsDBNull("DiaChi") ? null : reader.GetString("DiaChi"),
+                                GhiChu = reader.IsDBNull("GhiChu") ? null : reader.GetString("GhiChu"),
+                                IsActive = reader.GetBoolean("IsActive")
+                            });
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi khi lấy danh sách kho: {ex.Message}");
+                throw new Exception($"Lỗi lấy danh sách kho: {ex.Message}");
             }
-
             return warehouses;
         }
+
 
         /// <summary>
         /// Lấy kho theo ID
@@ -94,7 +88,6 @@ namespace QLVT.DAL
                                     TenKho = reader["TenKho"].ToString() ?? string.Empty,
                                     LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
                                     MaNV = reader["MaNV"].ToString(),
-                                    TenNV = reader["TenNV"].ToString(),
                                     DiaChi = reader["DiaChi"].ToString(),
                                     GhiChu = reader["GhiChu"].ToString(),
                                     IsActive = Convert.ToBoolean(reader["IsActive"])
@@ -151,7 +144,6 @@ namespace QLVT.DAL
                                     TenKho = reader["TenKho"].ToString() ?? string.Empty,
                                     LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
                                     MaNV = reader["MaNV"].ToString(),
-                                    TenNV = reader["TenNV"].ToString(),
                                     DiaChi = reader["DiaChi"].ToString(),
                                     GhiChu = reader["GhiChu"].ToString(),
                                     IsActive = Convert.ToBoolean(reader["IsActive"])
@@ -168,5 +160,7 @@ namespace QLVT.DAL
 
             return warehouse;
         }
+
+        
     }
 }

@@ -90,9 +90,6 @@ namespace QLVT.ERP.Models
         public int? SoNghiemThu { get; set; }
         public int? NamNghiemThu { get; set; }
         public DateTime? NgayNghiemThu { get; set; }
-        public string DonViThau { get; set; } = "";
-        public string GoiThau { get; set; } = "";
-        public decimal? TongGiaTri { get; set; }
         public string GhiChu { get; set; } = "";
         public DateTime? NgayHoanUng { get; set; }
         public bool? DaHoanUng { get; set; } = false;
@@ -207,16 +204,4 @@ namespace QLVT.ERP.Models
         public bool IsMapped => MappedSupplyId.HasValue;
     }
     #endregion
-
-    /// <summary>
-    /// Model kết quả đồng bộ dữ liệu
-    /// </summary>
-    public class ERPSyncResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = "";
-        public int RecordsAffected { get; set; }
-        public Exception? Exception { get; set; }
-        public DateTime SyncTime { get; set; } = DateTime.Now;
-    }
 }

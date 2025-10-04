@@ -32,9 +32,6 @@ namespace QLVT.BLL
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(soPhieu))
-                    throw new ArgumentException("Số phiếu không được để trống");
-
                 // Kiểm tra phiếu đã được xử lý chưa
                 if (erpXuatKhoErpDAL.IsExportOrderProcessed(soPhieu, nam))
                     throw new Exception($"Phiếu xuất {soPhieu}-{nam} đã được xử lý rồi");
@@ -94,7 +91,7 @@ namespace QLVT.BLL
                         else
                         {
                             // Fallback: tìm trực tiếp theo MaKho (để hỗ trợ các kho khác)
-                            var warehouse = warehouseDAL.GetWarehouses()
+                            var warehouse = warehouseDAL.GetAllWarehouses()
                                 .FirstOrDefault(w => w.MaKho == detail.MaKhoXuat);
                             if (warehouse != null)
                             {
@@ -131,22 +128,6 @@ namespace QLVT.BLL
             catch (Exception ex)
             {
                 throw new Exception($"Lỗi BLL - Tìm kiếm vật tư: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Lấy danh sách kho nhân viên (kho đích để chuyển vật tư)
-        /// </summary>
-        /// <returns>Danh sách kho</returns>
-        public List<Warehouse> GetEmployeeWarehouses()
-        {
-            try
-            {
-                return warehouseDAL.GetWarehouses().Where(w => w.LoaiKho == "PERSONAL").ToList();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi BLL - Lấy danh sách kho nhân viên: {ex.Message}");
             }
         }
 
@@ -190,7 +171,7 @@ namespace QLVT.BLL
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên</param>
         /// <returns>ID transaction</returns>
-        public int ProcessExport(ERP_PhieuXuatKho order, int employeeWarehouseId, string createdBy, string staffCode)
+        public int ProcessExport(ERP_PhieuXuatKho order, int employeeWarehouseId, string createdBy)
         {
             try
             {
@@ -208,15 +189,13 @@ namespace QLVT.BLL
                 if (employeeWarehouseId <= 0)
                     throw new ArgumentException("Chưa chọn kho nhân viên đích");
 
-                if (string.IsNullOrWhiteSpace(staffCode))
-                    throw new ArgumentException("Chưa chọn nhân viên thực hiện");
 
                 // Kiểm tra lại phiếu đã xử lý chưa
                 if (erpXuatKhoErpDAL.IsExportOrderProcessed(order.SoPhieuXuatKho, order.NAM))
                     throw new Exception($"Phiếu {order.SoPhieuXuatKho}-{order.NAM} đã được xử lý rồi");
 
                 // Thực hiện xuất kho
-                return xuatKhoTransactionDAL.CreateXuatKhoErpTransaction(order, employeeWarehouseId, createdBy, staffCode);
+                return xuatKhoTransactionDAL.CreateXuatKhoErpTransaction(order, employeeWarehouseId, createdBy);
             }
             catch (Exception ex)
             {

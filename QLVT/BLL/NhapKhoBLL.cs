@@ -95,26 +95,6 @@ namespace QLVT.BLL
         }
 
         /// <summary>
-        /// Tìm kiếm vật tư cho mapping thủ công
-        /// </summary>
-        /// <param name="keyword">Từ khóa</param>
-        /// <returns>Danh sách vật tư</returns>
-        public List<Supply> SearchSuppliesForMapping(string keyword)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(keyword))
-                    return new List<Supply>();
-
-                return supplyMappingDAL.SearchSupplies(keyword);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi BLL - Tìm kiếm vật tư: {ex.Message}");
-            }
-        }
-
-        /// <summary>
         /// Lấy danh sách kho
         /// </summary>
         /// <returns>Danh sách kho</returns>
@@ -122,30 +102,11 @@ namespace QLVT.BLL
         {
             try
             {
-                return warehouseDAL.GetWarehouses();
+                return warehouseDAL.GetAllWarehouses();
             }
             catch (Exception ex)
             {
                 throw new Exception($"Lỗi BLL - Lấy danh sách kho: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Lấy ID kho đích cho Import dựa trên mã kho ERP
-        /// Áp dụng mapping rule: kho ERP (1,3,4,34) -> kho công ty (ID=6)
-        /// </summary>
-        /// <param name="erpWarehouseCode">Mã kho từ ERP</param>
-        /// <returns>ID kho đích trong hệ thống nội bộ</returns>
-        public int? GetTargetWarehouseIdForImport(string erpWarehouseCode)
-        {
-            try
-            {
-                var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(erpWarehouseCode);
-                return internalWarehouse?.Id;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi BLL - Lấy kho đích cho Import: {ex.Message}");
             }
         }
 
@@ -171,7 +132,7 @@ namespace QLVT.BLL
         /// <param name="createdBy">Người tạo</param>
         /// <param name="staffCode">Mã nhân viên</param>
         /// <returns>ID transaction</returns>
-        public int ProcessNhapKhoErp(ERP_PhieuNhapKho order, int maKho, string createdBy, string staffCode)
+        public int ProcessNhapKhoErp(ERP_PhieuNhapKho order, string maKho, string createdBy)
         {
             try
             {
@@ -183,18 +144,18 @@ namespace QLVT.BLL
                 if (unmapped > 0)
                     throw new Exception($"Còn {unmapped} vật tư chưa được mapping");
 
-                if (maKho == 0)
-                    throw new ArgumentException("Chưa chọn kho");
-
-                if (string.IsNullOrWhiteSpace(staffCode))
-                    throw new ArgumentException("Chưa chọn nhân viên thực hiện");
-
                 // Kiểm tra lại phiếu đã xử lý chưa
                 if (erpNhapKhoDAL.IsImportOrderProcessed(order.SoPhieuNhapKho, order.NAM))
                     throw new Exception($"Phiếu {order.SoPhieuNhapKho}-{order.NAM} đã được xử lý rồi");
 
+                var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(maKho);
                 // Thực hiện nhập kho
-                return nhapKhoTransactionDAL.CreateNhapKhoErpTransaction(order, maKho, createdBy, staffCode);
+                int maKhoNhap = 0;
+                if (internalWarehouse != null)
+                {
+                    maKhoNhap = internalWarehouse.Id;
+                }
+                return nhapKhoTransactionDAL.CreateNhapKhoErpTransaction(order, maKhoNhap, createdBy);
             }
             catch (Exception ex)
             {

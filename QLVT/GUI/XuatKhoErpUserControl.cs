@@ -122,6 +122,8 @@ namespace QLVT.GUI
                     grid.RowHeadersWidth, e.RowBounds.Height);
                 e.Graphics.DrawString(rowIdx, grid.Font, SystemBrushes.ControlText, headerBounds, centerFormat);
             };
+
+            dgvChiTiet.Columns["TenVatTu"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
 
         private void btnTimPhieu_Click(object sender, EventArgs e)
@@ -180,7 +182,6 @@ namespace QLVT.GUI
 
             // Load thông tin phiếu
             lblSoPhieu.Text = currentOrder.SoPhieuDayDu;
-            lblNgayTao.Text = currentOrder.ThoiGianHoanThanhXuatKho.ToString("dd/MM/yyyy HH:mm");
             
             // Hiển thị thông tin kho xuất (có thể nhiều kho)
             var uniqueWarehouses = currentOrder.ChiTiet
@@ -288,6 +289,8 @@ namespace QLVT.GUI
                     return;
                 }
 
+                var currentUser = AuthenticationBLL.GetCurrentUser();
+
                 // Kiểm tra mapping
                 var (_, _, unmappedItems, missingWarehouses) = exportBLL.GetMappingStatus(currentOrder);
                 if (unmappedItems > 0)
@@ -322,8 +325,6 @@ namespace QLVT.GUI
                 }
                 selectedEmployeeWarehouseId = employeeWarehouse.Id;
                 
-                // Sử dụng mã nhân viên từ phiếu xuất
-                string staffCode = currentOrder.MaNhanVien;
 
                 var confirmResult = MessageBox.Show(
                     $"Xác nhận xuất kho phiếu {currentOrder.SoPhieuDayDu}?\n" +
@@ -340,8 +341,8 @@ namespace QLVT.GUI
                     Application.DoEvents();
 
                     int transactionId = exportBLL.ProcessExport(
-                        currentOrder, selectedEmployeeWarehouseId, 
-                        Environment.UserName, staffCode);
+                        currentOrder, selectedEmployeeWarehouseId,
+                        currentUser!.Username);
 
                     lblTrangThai.Text = "✅ Đã xuất kho";
                     lblTrangThai.ForeColor = Color.Green;
@@ -386,7 +387,6 @@ namespace QLVT.GUI
         private void ResetOrderDisplay()
         {
             lblSoPhieu.Text = "-";
-            lblNgayTao.Text = "-";
             lblKhoXuat.Text = "-";
             lblNguoiTao.Text = "-";
             lblTrangThai.Text = "-";

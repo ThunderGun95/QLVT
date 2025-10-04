@@ -10,6 +10,8 @@ namespace QLVT.Models
         public int TransactionID { get; set; }
         public string LoaiGiaoDich { get; set; } = string.Empty; // 'NhapKho', 'XuatKho', 'TraKho', 'HoanUng'
         public DateTime NgayGiaoDich { get; set; }
+        public int? MaKhoNguon { get; set; }
+        public int? MaKhoNhan { get; set; }
         public string NguoiThucHien { get; set; } = string.Empty;
         public string? TenNguoiThucHien { get; set; }
         public string? EntityHoanUng { get; set; } // Lý do hoàn ứng
@@ -17,6 +19,7 @@ namespace QLVT.Models
         public string TrangThai { get; set; } = "DangXuLy"; // 'DangXuLy', 'HoanThanh', 'DaHuy'
         public DateTime NgayTao { get; set; }
         public DateTime? NgayCapNhat { get; set; }
+        public List<TransactionDetail> ChiTiet { get; set; } = new List<TransactionDetail>();
     }
 
     /// <summary>
@@ -26,14 +29,8 @@ namespace QLVT.Models
     {
         public int TransactionDetailID { get; set; }
         public int TransactionID { get; set; }
-        public int VatTuID { get; set; }
-        public string MaVatTu { get; set; } = string.Empty;
-        public string TenVatTu { get; set; } = string.Empty;
-        public string DonViTinh { get; set; } = string.Empty;
+        public int ErpID { get; set; }
         public decimal SoLuong { get; set; }
-        public decimal DonGia { get; set; }
-        public decimal ThanhTien { get; set; }
         public string? GhiChu { get; set; }
-        public DateTime NgayTao { get; set; }
     }
 }

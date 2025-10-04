@@ -54,10 +54,6 @@ namespace QLVT.ERP.DAL
                                     NoiDung = reader["NoiDung"]?.ToString() ?? "",
                                     NgayNghiemThu = reader["NgayNghiemThu"] != DBNull.Value ? 
                                         Convert.ToDateTime(reader["NgayNghiemThu"]) : null,
-                                    DonViThau = reader["DonViThau"]?.ToString() ?? "",
-                                    GoiThau = reader["GoiThau"]?.ToString() ?? "",
-                                    TongGiaTri = reader["TongGiaTri"] != DBNull.Value ? 
-                                        Convert.ToDecimal(reader["TongGiaTri"]) : null,
                                     GhiChu = reader["GhiChu"]?.ToString() ?? "",
                                     NgayHoanUng = reader["NgayHoanUng"] != DBNull.Value ? 
                                         Convert.ToDateTime(reader["NgayHoanUng"]) : null,

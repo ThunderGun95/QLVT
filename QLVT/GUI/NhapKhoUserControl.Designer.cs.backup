@@ -1,0 +1,427 @@
+namespace QLVT.GUI
+{
+    partial class NhapKhoUserControl
+    {
+        private System.ComponentModel.IContainer components = null;
+        private Label lblTitle;
+        private GroupBox grpThongTinPhieu;
+        private Label lblKhoNhap;
+        private ComboBox cboKhoNhap;
+        private Label lblNguoiGiao;
+        private TextBox txtNguoiGiao;
+        private Label lblNgayGhiNhan;
+        private DateTimePicker dtpNgayGhiNhan;
+        private Label lblLyDoNhap;
+        private TextBox txtLyDoNhap;
+        private Label lblGhiChu;
+        private TextBox txtGhiChu;
+        private GroupBox grpChiTiet;
+        private DataGridView dgvChiTietPhieu;
+        private Button btnThemVatTu;
+        private Panel pnlButtons;
+        private Button btnTaoMoi;
+        private Button btnLuu;
+        private Button btnIn;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            lblTitle = new Label();
+            grpThongTinPhieu = new GroupBox();
+            txtGhiChu = new TextBox();
+            lblGhiChu = new Label();
+            txtLyDoNhap = new TextBox();
+            lblLyDoNhap = new Label();
+            dtpNgayGhiNhan = new DateTimePicker();
+            lblNgayGhiNhan = new Label();
+            txtNguoiGiao = new TextBox();
+            lblNguoiGiao = new Label();
+            cboKhoNhap = new ComboBox();
+            lblKhoNhap = new Label();
+            grpChiTiet = new GroupBox();
+            btnThemVatTu = new Button();
+            dgvChiTietPhieu = new DataGridView();
+            pnlButtons = new Panel();
+            btnTaoMoi = new Button();
+            btnLuu = new Button();
+            btnIn = new Button();
+
+            SuspendLayout();
+            grpThongTinPhieu.SuspendLayout();
+            grpChiTiet.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvChiTietPhieu).BeginInit();
+            pnlButtons.SuspendLayout();
+
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(0, 122, 204);
+            lblTitle.Location = new Point(20, 20);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(240, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "📦 Nhập Kho";
+
+            // 
+            // grpThongTinPhieu
+            // 
+            grpThongTinPhieu.Controls.Add(txtGhiChu);
+            grpThongTinPhieu.Controls.Add(lblGhiChu);
+            grpThongTinPhieu.Controls.Add(txtLyDoNhap);
+            grpThongTinPhieu.Controls.Add(lblLyDoNhap);
+            grpThongTinPhieu.Controls.Add(dtpNgayGhiNhan);
+            grpThongTinPhieu.Controls.Add(lblNgayGhiNhan);
+            grpThongTinPhieu.Controls.Add(txtNguoiGiao);
+            grpThongTinPhieu.Controls.Add(lblNguoiGiao);
+            grpThongTinPhieu.Controls.Add(cboKhoNhap);
+            grpThongTinPhieu.Controls.Add(lblKhoNhap);
+            grpThongTinPhieu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpThongTinPhieu.Location = new Point(20, 50);
+            grpThongTinPhieu.Name = "grpThongTinPhieu";
+            grpThongTinPhieu.Size = new Size(1160, 180);
+            grpThongTinPhieu.TabIndex = 1;
+            grpThongTinPhieu.TabStop = false;
+            grpThongTinPhieu.Text = "📋 Thông tin phiếu nhập";
+
+            // 
+            // lblKhoNhap
+            // 
+            lblKhoNhap.Font = new Font("Segoe UI", 9F);
+            lblKhoNhap.ForeColor = Color.Black;
+            lblKhoNhap.Location = new Point(20, 35);
+            lblKhoNhap.Name = "lblKhoNhap";
+            lblKhoNhap.Size = new Size(100, 23);
+            lblKhoNhap.TabIndex = 0;
+            lblKhoNhap.Text = "Kho nhập:";
+            lblKhoNhap.TextAlign = ContentAlignment.MiddleLeft;
+
+            // 
+            // txtMaPhieu
+            // 
+            txtMaPhieu.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            txtMaPhieu.ForeColor = Color.Blue;
+            txtMaPhieu.Location = new Point(100, 22);
+            txtMaPhieu.Name = "txtMaPhieu";
+            txtMaPhieu.ReadOnly = true;
+            txtMaPhieu.Size = new Size(150, 21);
+            txtMaPhieu.TabIndex = 1;
+
+            // 
+            // lblNgayNhapLabel
+            // 
+            lblNgayNhapLabel.AutoSize = true;
+            lblNgayNhapLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblNgayNhapLabel.Location = new Point(300, 25);
+            lblNgayNhapLabel.Name = "lblNgayNhapLabel";
+            lblNgayNhapLabel.Size = new Size(73, 15);
+            lblNgayNhapLabel.TabIndex = 2;
+            lblNgayNhapLabel.Text = "Ngày nhập:";
+
+            // 
+            // dtpNgayNhap
+            // 
+            dtpNgayNhap.Font = new Font("Microsoft Sans Serif", 9F);
+            dtpNgayNhap.Format = DateTimePickerFormat.Short;
+            dtpNgayNhap.Location = new Point(380, 22);
+            dtpNgayNhap.Name = "dtpNgayNhap";
+            dtpNgayNhap.Size = new Size(180, 21);
+            dtpNgayNhap.TabIndex = 3;
+
+            // 
+            // lblNguoiGiaoLabel
+            // 
+            lblNguoiGiaoLabel.AutoSize = true;
+            lblNguoiGiaoLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblNguoiGiaoLabel.Location = new Point(15, 55);
+            lblNguoiGiaoLabel.Name = "lblNguoiGiaoLabel";
+            lblNguoiGiaoLabel.Size = new Size(74, 15);
+            lblNguoiGiaoLabel.TabIndex = 4;
+            lblNguoiGiaoLabel.Text = "Người giao:";
+
+            // 
+            // txtNguoiGiao
+            // 
+            txtNguoiGiao.Font = new Font("Microsoft Sans Serif", 9F);
+            txtNguoiGiao.Location = new Point(100, 52);
+            txtNguoiGiao.Name = "txtNguoiGiao";
+            txtNguoiGiao.Size = new Size(200, 21);
+            txtNguoiGiao.TabIndex = 5;
+
+            // 
+            // lblNguoiNhanLabel
+            // 
+            lblNguoiNhanLabel.AutoSize = true;
+            lblNguoiNhanLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblNguoiNhanLabel.Location = new Point(320, 55);
+            lblNguoiNhanLabel.Name = "lblNguoiNhanLabel";
+            lblNguoiNhanLabel.Size = new Size(78, 15);
+            lblNguoiNhanLabel.TabIndex = 6;
+            lblNguoiNhanLabel.Text = "Người nhận:";
+
+            // 
+            // txtNguoiNhan
+            // 
+            txtNguoiNhan.Font = new Font("Microsoft Sans Serif", 9F);
+            txtNguoiNhan.Location = new Point(405, 52);
+            txtNguoiNhan.Name = "txtNguoiNhan";
+            txtNguoiNhan.Size = new Size(155, 21);
+            txtNguoiNhan.TabIndex = 7;
+
+            // 
+            // lblGhiChuLabel
+            // 
+            lblGhiChuLabel.AutoSize = true;
+            lblGhiChuLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblGhiChuLabel.Location = new Point(15, 85);
+            lblGhiChuLabel.Name = "lblGhiChuLabel";
+            lblGhiChuLabel.Size = new Size(56, 15);
+            lblGhiChuLabel.TabIndex = 8;
+            lblGhiChuLabel.Text = "Ghi chú:";
+
+            // 
+            // txtGhiChu
+            // 
+            txtGhiChu.Font = new Font("Microsoft Sans Serif", 9F);
+            txtGhiChu.Location = new Point(100, 82);
+            txtGhiChu.Multiline = true;
+            txtGhiChu.Name = "txtGhiChu";
+            txtGhiChu.Size = new Size(460, 60);
+            txtGhiChu.TabIndex = 9;
+
+            // 
+            // grpTimKiem
+            // 
+            grpTimKiem.Controls.Add(lblTimKiemLabel);
+            grpTimKiem.Controls.Add(txtTimKiem);
+            grpTimKiem.Controls.Add(btnTimKiem);
+            grpTimKiem.Controls.Add(dgvVatTu);
+            grpTimKiem.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            grpTimKiem.Location = new Point(600, 10);
+            grpTimKiem.Name = "grpTimKiem";
+            grpTimKiem.Size = new Size(590, 160);
+            grpTimKiem.TabIndex = 1;
+            grpTimKiem.TabStop = false;
+            grpTimKiem.Text = "Tìm kiếm vật tư";
+
+            // 
+            // lblTimKiemLabel
+            // 
+            lblTimKiemLabel.AutoSize = true;
+            lblTimKiemLabel.Font = new Font("Microsoft Sans Serif", 9F);
+            lblTimKiemLabel.Location = new Point(15, 25);
+            lblTimKiemLabel.Name = "lblTimKiemLabel";
+            lblTimKiemLabel.Size = new Size(108, 15);
+            lblTimKiemLabel.TabIndex = 0;
+            lblTimKiemLabel.Text = "Từ khóa tìm kiếm:";
+
+            // 
+            // txtTimKiem
+            // 
+            txtTimKiem.Font = new Font("Microsoft Sans Serif", 9F);
+            txtTimKiem.Location = new Point(130, 22);
+            txtTimKiem.Name = "txtTimKiem";
+            txtTimKiem.Size = new Size(350, 21);
+            txtTimKiem.TabIndex = 1;
+
+            // 
+            // btnTimKiem
+            // 
+            btnTimKiem.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            btnTimKiem.Location = new Point(490, 20);
+            btnTimKiem.Name = "btnTimKiem";
+            btnTimKiem.Size = new Size(80, 25);
+            btnTimKiem.TabIndex = 2;
+            btnTimKiem.Text = "Tìm kiếm";
+            btnTimKiem.UseVisualStyleBackColor = true;
+
+            // 
+            // dgvVatTu
+            // 
+            dgvVatTu.AllowUserToAddRows = false;
+            dgvVatTu.AllowUserToDeleteRows = false;
+            dgvVatTu.BackgroundColor = Color.White;
+            dgvVatTu.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvVatTu.Location = new Point(15, 50);
+            dgvVatTu.MultiSelect = false;
+            dgvVatTu.Name = "dgvVatTu";
+            dgvVatTu.ReadOnly = true;
+            dgvVatTu.RowHeadersWidth = 25;
+            dgvVatTu.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvVatTu.Size = new Size(555, 95);
+            dgvVatTu.TabIndex = 3;
+
+            // 
+            // pnlCenter
+            // 
+            pnlCenter.Controls.Add(grpChiTietPhieu);
+            pnlCenter.Dock = DockStyle.Fill;
+            pnlCenter.Location = new Point(0, 180);
+            pnlCenter.Name = "pnlCenter";
+            pnlCenter.Size = new Size(1200, 350);
+            pnlCenter.TabIndex = 1;
+
+            // 
+            // grpChiTietPhieu
+            // 
+            grpChiTietPhieu.Controls.Add(dgvChiTietPhieu);
+            grpChiTietPhieu.Dock = DockStyle.Fill;
+            grpChiTietPhieu.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            grpChiTietPhieu.Location = new Point(0, 0);
+            grpChiTietPhieu.Name = "grpChiTietPhieu";
+            grpChiTietPhieu.Padding = new Padding(10);
+            grpChiTietPhieu.Size = new Size(1200, 350);
+            grpChiTietPhieu.TabIndex = 0;
+            grpChiTietPhieu.TabStop = false;
+            grpChiTietPhieu.Text = "Chi tiết phiếu nhập (Double-click để sửa, Delete để xóa)";
+
+            // 
+            // dgvChiTietPhieu
+            // 
+            dgvChiTietPhieu.AllowUserToAddRows = false;
+            dgvChiTietPhieu.AllowUserToDeleteRows = false;
+            dgvChiTietPhieu.BackgroundColor = Color.White;
+            dgvChiTietPhieu.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvChiTietPhieu.Dock = DockStyle.Fill;
+            dgvChiTietPhieu.Location = new Point(10, 25);
+            dgvChiTietPhieu.MultiSelect = false;
+            dgvChiTietPhieu.Name = "dgvChiTietPhieu";
+            dgvChiTietPhieu.RowHeadersWidth = 25;
+            dgvChiTietPhieu.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvChiTietPhieu.Size = new Size(1180, 315);
+            dgvChiTietPhieu.TabIndex = 0;
+
+            // 
+            // pnlBottom
+            // 
+            pnlBottom.Controls.Add(pnlButtons);
+            pnlBottom.Controls.Add(lblTongTienLabel);
+            pnlBottom.Controls.Add(lblTongTien);
+            pnlBottom.Dock = DockStyle.Bottom;
+            pnlBottom.Location = new Point(0, 530);
+            pnlBottom.Name = "pnlBottom";
+            pnlBottom.Size = new Size(1200, 60);
+            pnlBottom.TabIndex = 2;
+
+            // 
+            // pnlButtons
+            // 
+            pnlButtons.Controls.Add(btnTaoPhieuMoi);
+            pnlButtons.Controls.Add(btnLuuPhieu);
+            pnlButtons.Controls.Add(btnXoaVatTu);
+            pnlButtons.Controls.Add(btnInPhieu);
+            pnlButtons.Dock = DockStyle.Right;
+            pnlButtons.Location = new Point(600, 0);
+            pnlButtons.Name = "pnlButtons";
+            pnlButtons.Size = new Size(600, 60);
+            pnlButtons.TabIndex = 2;
+
+            // 
+            // btnTaoPhieuMoi
+            // 
+            btnTaoPhieuMoi.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnTaoPhieuMoi.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            btnTaoPhieuMoi.ImageAlign = ContentAlignment.MiddleLeft;
+            btnTaoPhieuMoi.Location = new Point(50, 10);
+            btnTaoPhieuMoi.Name = "btnTaoPhieuMoi";
+            btnTaoPhieuMoi.Size = new Size(120, 40);
+            btnTaoPhieuMoi.TabIndex = 0;
+            btnTaoPhieuMoi.Text = "Tạo mới";
+            btnTaoPhieuMoi.TextAlign = ContentAlignment.MiddleRight;
+            btnTaoPhieuMoi.UseVisualStyleBackColor = true;
+
+            // 
+            // btnLuu
+            // 
+            btnLuu.BackColor = Color.FromArgb(40, 167, 69);
+            btnLuu.FlatAppearance.BorderSize = 0;
+            btnLuu.FlatStyle = FlatStyle.Flat;
+            btnLuu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLuu.ForeColor = Color.White;
+            btnLuu.Location = new Point(20, 20);
+            btnLuu.Name = "btnLuu";
+            btnLuu.Size = new Size(120, 40);
+            btnLuu.TabIndex = 0;
+            btnLuu.Text = "💾 Lưu phiếu";
+            btnLuu.UseVisualStyleBackColor = false;
+
+            // 
+            // btnTaoMoi
+            // 
+            btnTaoMoi.BackColor = Color.FromArgb(220, 53, 69);
+            btnTaoMoi.FlatAppearance.BorderSize = 0;
+            btnTaoMoi.FlatStyle = FlatStyle.Flat;
+            btnTaoMoi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTaoMoi.ForeColor = Color.White;
+            btnTaoMoi.Location = new Point(160, 20);
+            btnTaoMoi.Name = "btnTaoMoi";
+            btnTaoMoi.Size = new Size(120, 40);
+            btnTaoMoi.TabIndex = 1;
+            btnTaoMoi.Text = "📝 Tạo mới";
+            btnTaoMoi.UseVisualStyleBackColor = false;
+
+            // 
+            // btnInPhieu
+            // 
+            btnInPhieu.BackColor = Color.FromArgb(0, 123, 255);
+            btnInPhieu.FlatAppearance.BorderSize = 0;
+            btnInPhieu.FlatStyle = FlatStyle.Flat;
+            btnInPhieu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnInPhieu.ForeColor = Color.White;
+            btnInPhieu.Location = new Point(300, 20);
+            btnInPhieu.Name = "btnInPhieu";
+            btnInPhieu.Size = new Size(120, 40);
+            btnInPhieu.TabIndex = 2;
+            btnInPhieu.Text = "🖨️ In phiếu";
+            btnInPhieu.UseVisualStyleBackColor = false;
+
+            // 
+            // lblTongTien
+            // 
+            lblTongTien.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblTongTien.BackColor = Color.FromArgb(248, 249, 250);
+            lblTongTien.BorderStyle = BorderStyle.FixedSingle;
+            lblTongTien.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblTongTien.ForeColor = Color.FromArgb(220, 53, 69);
+            lblTongTien.Location = new Point(950, 20);
+            lblTongTien.Name = "lblTongTien";
+            lblTongTien.Size = new Size(200, 40);
+            lblTongTien.TabIndex = 3;
+            lblTongTien.Text = "💰 0 VNĐ";
+            lblTongTien.TextAlign = ContentAlignment.MiddleCenter;
+
+            // 
+            // NhapKhoUserControl
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.White;
+            Controls.Add(lblTitle);
+            Controls.Add(grpThongTinPhieu);
+            Controls.Add(grpTimKiem);
+            Controls.Add(dgvVatTu);
+            Controls.Add(grpChiTietPhieu);
+            Controls.Add(pnlButtons);
+            Name = "NhapKhoUserControl";
+            Size = new Size(1200, 590);
+            grpThongTinPhieu.ResumeLayout(false);
+            grpThongTinPhieu.PerformLayout();
+            grpTimKiem.ResumeLayout(false);
+            grpTimKiem.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvVatTu).EndInit();
+            grpChiTietPhieu.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvChiTietPhieu).EndInit();
+            pnlButtons.ResumeLayout(false);
+            ResumeLayout(false);
+        }
+    }
+}

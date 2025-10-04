@@ -343,6 +343,13 @@ BEGIN
         EntityXuatKho NVARCHAR(100) NULL, -- Lý do xuất (dự án, công việc)
         EntityTraKho NVARCHAR(100) NULL, -- Lý do trả
         EntityHoanUng NVARCHAR(100) NULL, -- Lý do hoàn ứng
+
+        IsDeleted BIT DEFAULT 0,
+        DeletedBy NVARCHAR(50),
+        DeletedDate DATETIME DEFAULT GETDATE(),
+
+        ModifiedBy NVARCHAR(50),
+        LastModifiedDate DATETIME DEFAULT GETDATE(),
         
         FOREIGN KEY (MaKhoNguon) REFERENCES Warehouses(Id), -- Sửa FK reference
         FOREIGN KEY (MaKhoNhan) REFERENCES Warehouses(Id)   -- Sửa FK reference
@@ -369,6 +376,17 @@ BEGIN
         SoLuong INT NOT NULL,
         GhiChu NVARCHAR(255) NULL,
         SourceWarehouseId INT NULL, -- Kho nguồn (cho phiếu xuất)
+
+        CreatedBy NVARCHAR(50) NOT NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+
+        IsDeleted BIT DEFAULT 0,
+        DeletedBy NVARCHAR(50),
+        DeletedDate DATETIME DEFAULT GETDATE(),
+
+        ModifiedBy NVARCHAR(50),
+        LastModifiedDate DATETIME DEFAULT GETDATE(),
+
         
         FOREIGN KEY (TransactionId) REFERENCES Transactions(Id) ON DELETE CASCADE,
         FOREIGN KEY (SourceWarehouseId) REFERENCES Warehouses(Id)
@@ -417,6 +435,266 @@ BEGIN
     PRINT N'⚠️ Dữ liệu mẫu Warehouses đã tồn tại';
 END
 GO
+
+-- ========================================
+-- ERP Integration Tables (CT Schema)
+-- ========================================
+
+-- Create CT schema if not exists
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'ct')
+BEGIN
+    EXEC('CREATE SCHEMA ct');
+    PRINT N'✅ Đã tạo schema ct';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Schema ct đã tồn tại';
+END
+GO
+
+-- 1. Bảng ct.DonDangKy
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DonDangKy' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.DonDangKy (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MADDK NVARCHAR(15) NOT NULL,
+        TENKH NVARCHAR(500) NULL,
+        DiaChi NVARCHAR(500) NULL,
+        NhanVienKyThuat NVARCHAR(200) NULL,
+        MaNhanVienXayLap NVARCHAR(20) NULL,
+        NhanVienXayLap NVARCHAR(200) NULL,
+        NgayHoanThanh DATETIME NULL,
+        NgayHoanUng DATETIME NULL,
+        DaHoanUng BIT DEFAULT 0,
+        ThoiGianXacNhanHoanUng DATETIME NULL,
+        MaNVXacNhan NVARCHAR(20) NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        UpdatedDate DATETIME DEFAULT GETDATE()
+    );
+    
+    CREATE INDEX IX_DonDangKy_MADDK ON ct.DonDangKy(MADDK);
+    CREATE INDEX IX_DonDangKy_NgayHoanUng ON ct.DonDangKy(NgayHoanUng);
+    PRINT N'✅ Đã tạo bảng ct.DonDangKy';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.DonDangKy đã tồn tại';
+END
+GO
+
+-- 2. Bảng ct.DonDangKyCT
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DonDangKyCT' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.DonDangKyCT (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MADDK NVARCHAR(15) NOT NULL,
+        MaVTErp INT NOT NULL,
+        SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        
+        FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)
+    );
+    
+    CREATE INDEX IX_DonDangKyCT_MADDK ON ct.DonDangKyCT(MADDK);
+    CREATE INDEX IX_DonDangKyCT_MaVTErp ON ct.DonDangKyCT(MaVTErp);
+    PRINT N'✅ Đã tạo bảng ct.DonDangKyCT';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.DonDangKyCT đã tồn tại';
+END
+GO
+
+-- 3. Bảng ct.SuaChua
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SuaChua' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.SuaChua (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MADON NVARCHAR(15) NOT NULL,
+        ViTriDiemChay NVARCHAR(500) NULL,
+        MaNhanVienXayLap NVARCHAR(20) NULL,
+        NhanVienXayLap NVARCHAR(200) NULL,
+        NgayHoanThanh DATETIME NULL,
+        NgayHoanUng DATETIME NULL,
+        DaHoanUng BIT DEFAULT 0,
+        ThoiGianXacNhanHoanUng DATETIME NULL,
+        MaNVXacNhan NVARCHAR(20) NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        UpdatedDate DATETIME DEFAULT GETDATE()
+    );
+    
+    CREATE INDEX IX_SuaChua_MADON ON ct.SuaChua(MADON);
+    CREATE INDEX IX_SuaChua_NgayHoanUng ON ct.SuaChua(NgayHoanUng);
+    PRINT N'✅ Đã tạo bảng ct.SuaChua';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.SuaChua đã tồn tại';
+END
+GO
+
+-- 4. Bảng ct.SuaChuaCT
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SuaChuaCT' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.SuaChuaCT (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        MADON NVARCHAR(15) NOT NULL,
+        MaVTErp INT NOT NULL,
+        SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        
+        FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)
+    );
+    
+    CREATE INDEX IX_SuaChuaCT_MADON ON ct.SuaChuaCT(MADON);
+    CREATE INDEX IX_SuaChuaCT_MaVTErp ON ct.SuaChuaCT(MaVTErp);
+    PRINT N'✅ Đã tạo bảng ct.SuaChuaCT';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.SuaChuaCT đã tồn tại';
+END
+GO
+
+-- 5. Bảng ct.NghiemThuGiaoKhoan
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='NghiemThuGiaoKhoan' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.NghiemThuGiaoKhoan (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        SoBGK NVARCHAR(15) NOT NULL,
+        GiaoKhoanNghiemThuVatTuID BIGINT NOT NULL,
+        NhanVienKyThuat NVARCHAR(200) NULL,
+        MaNhanVienXayLap NVARCHAR(20) NULL,
+        NhanVienXayLap NVARCHAR(200) NULL,
+        NoiDung NVARCHAR(1000) NULL,
+        SoLanNghiemThu INT NULL,
+        SoNghiemThu INT NULL,
+        NamNghiemThu INT NULL,
+        NgayHoanUng DATETIME NULL,
+        DaHoanUng BIT DEFAULT 0,
+        ThoiGianXacNhanHoanUng DATETIME NULL,
+        MaNVXacNhan NVARCHAR(20) NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        UpdatedDate DATETIME DEFAULT GETDATE()
+    );
+    
+    CREATE INDEX IX_NghiemThuGiaoKhoan_SoBGK ON ct.NghiemThuGiaoKhoan(SoBGK);
+    CREATE INDEX IX_NghiemThuGiaoKhoan_GiaoKhoanID ON ct.NghiemThuGiaoKhoan(GiaoKhoanNghiemThuVatTuID);
+    CREATE INDEX IX_NghiemThuGiaoKhoan_SoNam ON ct.NghiemThuGiaoKhoan(SoNghiemThu, NamNghiemThu);
+    PRINT N'✅ Đã tạo bảng ct.NghiemThuGiaoKhoan';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.NghiemThuGiaoKhoan đã tồn tại';
+END
+GO
+
+-- 6. Bảng ct.NghiemThuGiaoKhoanCT
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='NghiemThuGiaoKhoanCT' AND xtype='U' AND uid = SCHEMA_ID('ct'))
+BEGIN
+    CREATE TABLE ct.NghiemThuGiaoKhoanCT (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        GiaoKhoanNghiemThuVatTuID BIGINT NOT NULL,
+        MaVTErp INT NOT NULL,
+        SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
+        NgayHoanUng DATETIME NULL,
+        DaHoanUng BIT DEFAULT 0,
+        ThoiGianXacNhanHoanUng DATETIME NULL,
+        CreatedDate DATETIME DEFAULT GETDATE(),
+        
+        FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)
+    );
+    
+    CREATE INDEX IX_NghiemThuGiaoKhoanCT_GiaoKhoanID ON ct.NghiemThuGiaoKhoanCT(GiaoKhoanNghiemThuVatTuID);
+    CREATE INDEX IX_NghiemThuGiaoKhoanCT_MaVTErp ON ct.NghiemThuGiaoKhoanCT(MaVTErp);
+    PRINT N'✅ Đã tạo bảng ct.NghiemThuGiaoKhoanCT';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng ct.NghiemThuGiaoKhoanCT đã tồn tại';
+END
+GO
+
+PRINT N'========================================';
+PRINT N'✅ Hoàn tất tạo 6 bảng ERP Integration';
+PRINT N'1. ct.DonDangKy - Đơn đăng ký';
+PRINT N'2. ct.DonDangKyCT - Chi tiết đơn đăng ký';
+PRINT N'3. ct.SuaChua - Sửa chữa';
+PRINT N'4. ct.SuaChuaCT - Chi tiết sửa chữa';
+PRINT N'5. ct.NghiemThuGiaoKhoan - Nghiệm thu giao khoán';
+PRINT N'6. ct.NghiemThuGiaoKhoanCT - Chi tiết nghiệm thu giao khoán';
+PRINT N'========================================';
+
+-- ========================================
+-- Menu System Tables
+-- ========================================
+
+-- Menus Table (Menu hệ thống)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Menus' AND xtype='U')
+BEGIN
+    CREATE TABLE Menus (
+        MenuID INT IDENTITY(1,1) PRIMARY KEY,
+        MenuName NVARCHAR(100) NOT NULL,
+        ParentID INT NULL,
+        FormName NVARCHAR(100) NULL,
+        SortOrder INT NOT NULL DEFAULT 0,
+        MenuIcon NVARCHAR(50) NULL,
+        IsActive BIT NOT NULL DEFAULT 1,
+        CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+        FOREIGN KEY (ParentID) REFERENCES Menus(MenuID)
+    );
+    
+    PRINT N'✅ Đã tạo bảng Menus';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Bảng Menus đã tồn tại';
+END
+GO
+
+-- Insert sample menu data
+IF NOT EXISTS (SELECT * FROM Menus WHERE MenuID = 1)
+BEGIN
+    INSERT INTO Menus (MenuName, ParentID, FormName, SortOrder, MenuIcon) VALUES
+    -- Main menus
+    (N'Tác vụ', NULL, NULL, 1, '🔧'),
+    (N'Báo cáo', NULL, NULL, 2, '📊'),
+    (N'Danh mục', NULL, NULL, 3, '📝'),
+    (N'ERP', NULL, NULL, 4, '🔄'),
+    
+    -- Tác vụ sub-menus
+    (N'Nhập tồn đầu kỳ', 1, 'OpeningInventoryUserControl', 1, '📋'),
+    (N'Nhập kho vật tư', 1, 'ImportTaskUserControl', 2, '📦'),
+    (N'Xuất kho vật tư', 1, 'ExportTaskUserControl', 3, '📤'),
+    (N'Trả kho vật tư', 1, 'TraKhoForm', 4, '🔄'),
+    (N'Hoàn ứng mạng cấp 4', 1, 'HoanUngMC4Form', 5, '↩️'),
+    (N'Hoàn ứng điểm chảy', 1, 'HoanUngDCForm', 6, '↩️'),
+    (N'Hoàn ứng BGK', 1, 'HoanUngBGKUserControl', 7, '↩️'),
+    (N'Hoàn ứng (ngoài ERP)', 1, 'HoanUngForm', 8, '↩️'),
+    
+    -- Báo cáo sub-menus
+    (N'Báo cáo tồn kho', 2, 'BaoCaoTonKhoUserControl', 1, '📊'),
+    (N'Báo cáo xuất nhập tồn', 2, 'BaoCaoXuatNhapTonUserControl', 2, '📊'),
+    (N'Báo cáo xuất nhập tồn chi tiết', 2, 'BaoCaoXuatNhapTonChiTietForm', 3, '📊'),
+    
+    -- Danh mục sub-menus
+    (N'Đơn vị tính', 3, 'UnitsUserControl', 1, '📏'),
+    (N'Nhà sản xuất', 3, 'ManufacturersUserControl', 2, '🏭'),
+    (N'Vật tư', 3, 'SuppliesUserControl', 3, '📦'),
+    (N'Phòng ban', 3, 'DepartmentsUserControl', 4, '🏢'),
+    (N'Nhân viên', 3, 'StaffsUserControl', 5, '👥'),
+    
+    -- ERP sub-menus
+    (N'Đồng bộ ERP', 4, 'ERPSyncUserControl', 1, '🔄');
+    
+    PRINT N'✅ Đã thêm dữ liệu mẫu cho bảng Menus';
+END
+GO
+
+PRINT N'========================================';
+PRINT N'✅ Hoàn tất tạo hệ thống Menu';
+PRINT N'Bảng Menus đã được tạo với dữ liệu mẫu';
+PRINT N'========================================';
 
 PRINT 'Database and sample data created successfully!';
 PRINT 'Sample Login Accounts:';

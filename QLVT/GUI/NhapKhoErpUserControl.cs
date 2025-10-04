@@ -14,7 +14,7 @@ namespace QLVT.GUI
         private readonly NhapKhoBLL nhapKhoErpBLL;
         private ERP_PhieuNhapKho? currentOrder;
         private List<Warehouse> warehouses = new();
-        int IdKhoNhap = 0;
+        string MaKhoNhap = "";
 
         public NhapKhoErpUserControl()
         {
@@ -46,7 +46,6 @@ namespace QLVT.GUI
             try
             {
                 warehouses = nhapKhoErpBLL.GetWarehouses();
-                // Bỏ cmbKho - không cần dropdown kho nữa
             }
             catch (Exception ex)
             {
@@ -262,7 +261,7 @@ namespace QLVT.GUI
                     return "-";
 
                 var warehouse = warehouses.FirstOrDefault(w => w.MaKho == maKho);
-                IdKhoNhap = warehouse != null ? warehouse.Id : 0; 
+                MaKhoNhap = warehouse!.MaKho;
                 return warehouse != null ? warehouse.TenKho : maKho;
             }
             catch
@@ -308,18 +307,17 @@ namespace QLVT.GUI
                 lblStatus.ForeColor = Color.Blue;
                 btnXacNhan.Enabled = false;
 
-                string createdBy = "admin"; // TODO: Lấy từ session
-                string staffCode = "NV001"; // TODO: Lấy từ session hoặc chọn
+                var currentUser = AuthenticationBLL.GetCurrentUser();
 
-                int transactionId = nhapKhoErpBLL.ProcessNhapKhoErp(currentOrder!,IdKhoNhap, createdBy, staffCode);
+                int transactionId = nhapKhoErpBLL.ProcessNhapKhoErp(currentOrder!, MaKhoNhap, currentUser!.Username);
 
                 lblStatus.Text = "✅ Đã nhập kho thành công";
                 lblStatus.ForeColor = Color.Green;
 
                 MessageBox.Show($"Đã nhập kho thành công!\n" +
-                              $"Mã giao dịch: NK{DateTime.Now:yyyyMMddHHmmss}\n" +
+                              $"Mã giao dịch: NK{DateTime.Now:yyyyMMddHH}\n" +
                               $"Phiếu ERP: {currentOrder?.SoPhieuDayDu}", 
-                    "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                              "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // Clear form sau khi nhập thành công
                 txtSoPhieu.Text = "";

@@ -198,8 +198,6 @@ namespace QLVT.BLL
 
         #endregion
 
-
-
         public bool TestERPConnection()
         {
             return Utils.ExternalDatabaseHelper.TestExternalConnection();

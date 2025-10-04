@@ -7,8 +7,6 @@ namespace QLVT.GUI
         private GroupBox grpPhieuInfo;
         private Label lblSoPhieuLabel;
         private Label lblSoPhieu;
-        private Label lblNgayTaoLabel;
-        private Label lblNgayTao;
         private Label lblKhoXuatLabel;
         private Label lblKhoXuat;
         private Label lblNguoiTaoLabel;
@@ -53,8 +51,6 @@ namespace QLVT.GUI
             grpPhieuInfo = new GroupBox();
             lblSoPhieuLabel = new Label();
             lblSoPhieu = new Label();
-            lblNgayTaoLabel = new Label();
-            lblNgayTao = new Label();
             lblKhoXuatLabel = new Label();
             lblKhoXuat = new Label();
             lblNguoiTaoLabel = new Label();
@@ -75,10 +71,10 @@ namespace QLVT.GUI
             // 
             // lblTitle
             // 
-            lblTitle.BackColor = Color.FromArgb(220, 53, 69);
+            lblTitle.BackColor = Color.FromArgb(240, 244, 247);
             lblTitle.Dock = DockStyle.Top;
-            lblTitle.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.White;
+            lblTitle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(0, 122, 204);
             lblTitle.Location = new Point(0, 0);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(1200, 40);
@@ -95,10 +91,11 @@ namespace QLVT.GUI
             grpTimKiem.Controls.Add(btnTimPhieu);
             grpTimKiem.Controls.Add(btnRefresh);
             grpTimKiem.Controls.Add(lblConnectionStatus);
-            grpTimKiem.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpTimKiem.Location = new Point(20, 50);
+            grpTimKiem.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpTimKiem.ForeColor = Color.FromArgb(0, 122, 204);
+            grpTimKiem.Location = new Point(12, 50);
             grpTimKiem.Name = "grpTimKiem";
-            grpTimKiem.Size = new Size(1160, 80);
+            grpTimKiem.Size = new Size(1176, 80);
             grpTimKiem.TabIndex = 1;
             grpTimKiem.TabStop = false;
             grpTimKiem.Text = "Tìm kiếm phiếu xuất";
@@ -163,7 +160,7 @@ namespace QLVT.GUI
             btnRefresh.ForeColor = Color.White;
             btnRefresh.Location = new Point(365, 20);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(80, 27);
+            btnRefresh.Size = new Size(100, 27);
             btnRefresh.TabIndex = 5;
             btnRefresh.Text = "🔄 Làm mới";
             btnRefresh.UseVisualStyleBackColor = false;
@@ -183,18 +180,17 @@ namespace QLVT.GUI
             // 
             grpPhieuInfo.Controls.Add(lblSoPhieuLabel);
             grpPhieuInfo.Controls.Add(lblSoPhieu);
-            grpPhieuInfo.Controls.Add(lblNgayTaoLabel);
-            grpPhieuInfo.Controls.Add(lblNgayTao);
             grpPhieuInfo.Controls.Add(lblKhoXuatLabel);
             grpPhieuInfo.Controls.Add(lblKhoXuat);
             grpPhieuInfo.Controls.Add(lblNguoiTaoLabel);
             grpPhieuInfo.Controls.Add(lblNguoiTao);
             grpPhieuInfo.Controls.Add(lblTrangThaiLabel);
             grpPhieuInfo.Controls.Add(lblTrangThai);
-            grpPhieuInfo.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpPhieuInfo.Location = new Point(20, 140);
+            grpPhieuInfo.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpPhieuInfo.ForeColor = Color.FromArgb(0, 122, 204);
+            grpPhieuInfo.Location = new Point(12, 140);
             grpPhieuInfo.Name = "grpPhieuInfo";
-            grpPhieuInfo.Size = new Size(719, 120);
+            grpPhieuInfo.Size = new Size(736, 90);
             grpPhieuInfo.TabIndex = 2;
             grpPhieuInfo.TabStop = false;
             grpPhieuInfo.Text = "Thông tin phiếu xuất";
@@ -220,31 +216,11 @@ namespace QLVT.GUI
             lblSoPhieu.TabIndex = 1;
             lblSoPhieu.Text = "-";
             // 
-            // lblNgayTaoLabel
-            // 
-            lblNgayTaoLabel.AutoSize = true;
-            lblNgayTaoLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNgayTaoLabel.Location = new Point(15, 50);
-            lblNgayTaoLabel.Name = "lblNgayTaoLabel";
-            lblNgayTaoLabel.Size = new Size(58, 15);
-            lblNgayTaoLabel.TabIndex = 2;
-            lblNgayTaoLabel.Text = "Ngày tạo:";
-            // 
-            // lblNgayTao
-            // 
-            lblNgayTao.AutoSize = true;
-            lblNgayTao.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNgayTao.Location = new Point(100, 50);
-            lblNgayTao.Name = "lblNgayTao";
-            lblNgayTao.Size = new Size(11, 15);
-            lblNgayTao.TabIndex = 3;
-            lblNgayTao.Text = "-";
-            // 
             // lblKhoXuatLabel
             // 
             lblKhoXuatLabel.AutoSize = true;
             lblKhoXuatLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblKhoXuatLabel.Location = new Point(15, 75);
+            lblKhoXuatLabel.Location = new Point(15, 50);
             lblKhoXuatLabel.Name = "lblKhoXuatLabel";
             lblKhoXuatLabel.Size = new Size(58, 15);
             lblKhoXuatLabel.TabIndex = 4;
@@ -254,7 +230,7 @@ namespace QLVT.GUI
             // 
             lblKhoXuat.AutoSize = true;
             lblKhoXuat.Font = new Font("Microsoft Sans Serif", 9F);
-            lblKhoXuat.Location = new Point(100, 75);
+            lblKhoXuat.Location = new Point(100, 50);
             lblKhoXuat.Name = "lblKhoXuat";
             lblKhoXuat.Size = new Size(11, 15);
             lblKhoXuat.TabIndex = 5;
@@ -305,10 +281,11 @@ namespace QLVT.GUI
             grpChiTiet.Controls.Add(lblMappingStatus);
             grpChiTiet.Controls.Add(dgvChiTiet);
             grpChiTiet.Controls.Add(btnMapping);
-            grpChiTiet.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpChiTiet.Location = new Point(20, 270);
+            grpChiTiet.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            grpChiTiet.ForeColor = Color.FromArgb(0, 122, 204);
+            grpChiTiet.Location = new Point(12, 247);
             grpChiTiet.Name = "grpChiTiet";
-            grpChiTiet.Size = new Size(1160, 350);
+            grpChiTiet.Size = new Size(1176, 373);
             grpChiTiet.TabIndex = 4;
             grpChiTiet.TabStop = false;
             grpChiTiet.Text = "Chi tiết phiếu xuất";
@@ -331,7 +308,7 @@ namespace QLVT.GUI
             dgvChiTiet.Location = new Point(15, 50);
             dgvChiTiet.Name = "dgvChiTiet";
             dgvChiTiet.RowHeadersWidth = 30;
-            dgvChiTiet.Size = new Size(1130, 250);
+            dgvChiTiet.Size = new Size(1143, 272);
             dgvChiTiet.TabIndex = 1;
             // 
             // btnMapping
@@ -340,7 +317,7 @@ namespace QLVT.GUI
             btnMapping.FlatStyle = FlatStyle.Flat;
             btnMapping.Font = new Font("Microsoft Sans Serif", 9F);
             btnMapping.ForeColor = Color.Black;
-            btnMapping.Location = new Point(15, 310);
+            btnMapping.Location = new Point(15, 328);
             btnMapping.Name = "btnMapping";
             btnMapping.Size = new Size(120, 30);
             btnMapping.TabIndex = 2;
@@ -355,7 +332,7 @@ namespace QLVT.GUI
             btnXacNhan.FlatStyle = FlatStyle.Flat;
             btnXacNhan.Font = new Font("Microsoft Sans Serif", 11F, FontStyle.Bold);
             btnXacNhan.ForeColor = Color.White;
-            btnXacNhan.Location = new Point(769, 180);
+            btnXacNhan.Location = new Point(769, 167);
             btnXacNhan.Name = "btnXacNhan";
             btnXacNhan.Size = new Size(150, 50);
             btnXacNhan.TabIndex = 5;
@@ -373,18 +350,18 @@ namespace QLVT.GUI
             lblStatus.TabIndex = 6;
             lblStatus.Text = "Sẵn sàng...";
             // 
-            // ExportTaskUserControl
+            // XuatKhoErpUserControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.White;
+            BackColor = Color.FromArgb(240, 244, 247);
             Controls.Add(lblTitle);
             Controls.Add(grpTimKiem);
             Controls.Add(grpPhieuInfo);
             Controls.Add(grpChiTiet);
             Controls.Add(btnXacNhan);
             Controls.Add(lblStatus);
-            Name = "ExportTaskUserControl";
+            Name = "XuatKhoErpUserControl";
             Size = new Size(1200, 640);
             grpTimKiem.ResumeLayout(false);
             grpTimKiem.PerformLayout();
