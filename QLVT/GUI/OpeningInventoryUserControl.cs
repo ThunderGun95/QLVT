@@ -70,7 +70,7 @@ namespace QLVT.GUI
         {
             try
             {
-                var warehouses = warehouseDAL.GetWarehouses();
+                var warehouses = warehouseDAL.GetAllWarehouses();
                 
                 cboWarehouse.Items.Clear();
                 cboWarehouse.DisplayMember = "TenKho";
