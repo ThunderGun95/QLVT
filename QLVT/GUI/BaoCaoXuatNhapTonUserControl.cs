@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.Models;
-using System.IO;
-using System.Threading.Tasks;
+using QLVT.GUI.Components;
 
 namespace QLVT.GUI
 {
@@ -20,6 +19,9 @@ namespace QLVT.GUI
         private List<TransactionSummaryReportItem> _currentSummaryData;
         private List<Warehouse> _warehouses;
         private BaoCaoXuatNhapTonChiTietForm? _activeDetailForm; // Track active detail window
+        private WarehouseComboBox warehouseComboBox;
+        private Label lblVatTu;
+        private VatTuTextBox vatTuTextBox;
 
         public BaoCaoXuatNhapTonUserControl()
         {
@@ -36,6 +38,8 @@ namespace QLVT.GUI
             try
             {
                 SetupDataGridView();
+                SetupWarehouseComboBox();
+                SetupVatTuTextBox();
                 await LoadWarehouses();
                 LoadDefaultFilter();
                 UpdateStatusLabel("Sẵn sàng tạo báo cáo");
@@ -88,26 +92,64 @@ namespace QLVT.GUI
             }
         }
 
-        private void SetupDetailColumns()
+        private void SetupWarehouseComboBox()
         {
-            // Columns for detail mode
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "STT", HeaderText = "STT", Width = 50, FillWeight = 5 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "NgayGiaoDichFormatted", HeaderText = "Ngày", Width = 80, FillWeight = 8 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "LoaiGiaoDich", HeaderText = "Loại GD", Width = 60, FillWeight = 6 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SoPhieu", HeaderText = "Số phiếu", Width = 100, FillWeight = 10 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "CodeVatTu", HeaderText = "Mã VT", Width = 80, FillWeight = 8 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "TenVatTu", HeaderText = "Tên vật tư", Width = 150, FillWeight = 20 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "DonViTinh", HeaderText = "ĐVT", Width = 50, FillWeight = 5 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "TenKho", HeaderText = "Kho", Width = 100, FillWeight = 10 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SoLuongNhap", HeaderText = "SL nhập", Width = 70, FillWeight = 7 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SoLuongXuat", HeaderText = "SL xuất", Width = 70, FillWeight = 7 });
-            dgvTransactionReport.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "TonCuoi", HeaderText = "Tồn cuối", Width = 70, FillWeight = 7 });
-
-            // Format columns
-            dgvTransactionReport.Columns["SoLuongNhap"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dgvTransactionReport.Columns["SoLuongXuat"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dgvTransactionReport.Columns["TonCuoi"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            // Create WarehouseComboBox component with constructor parameters (width, height, addAll)
+            warehouseComboBox = new WarehouseComboBox(160, 25, true)
+            {
+                Location = new Point(380, 45)  // Đặt dưới label "Kho:" ở (380, 25)
+            };
+            
+            // Add to filters group
+            grpFilters.Controls.Add(warehouseComboBox);
+            
+            // Setup event handlers
+            warehouseComboBox.WarehouseSelected += WarehouseComboBox_WarehouseSelected;
         }
+
+        private void SetupVatTuTextBox()
+        {
+            // Create label for VatTu - aligned with other filter labels
+            lblVatTu = new Label
+            {
+                Text = "Vật tư:",
+                Location = new Point(560, 25), // Align with other labels at Y=25
+                Size = new Size(50, 13),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0)
+            };
+            
+            // Create VatTuTextBox component - aligned with other controls at Y=45
+            vatTuTextBox = new VatTuTextBox(200, 20)
+            {
+                Location = new Point(560, 45), // Align with other controls at Y=45
+                PlaceholderText = "Nhập mã hoặc tên vật tư..."
+            };
+            
+            // Add to filters group
+            grpFilters.Controls.Add(lblVatTu);
+            grpFilters.Controls.Add(vatTuTextBox);
+            
+            // Setup event handlers
+            vatTuTextBox.TextChanged += VatTuTextBox_TextChanged;
+            vatTuTextBox.KeyPress += VatTuTextBox_KeyPress;
+        }
+
+        private void VatTuTextBox_TextChanged(object sender, EventArgs e)
+        {
+            // Handle text changed event if needed
+        }
+
+        private void VatTuTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                // Auto trigger search when Enter is pressed
+                e.Handled = true;
+                // You can add search logic here if needed
+            }
+        }
+
 
         private void DgvTransactionReport_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -190,67 +232,18 @@ namespace QLVT.GUI
             try
             {
                 _warehouses = await _summaryBll.GetWarehousesAsync();
-                
-                // Setup autocomplete for warehouse like in detail form
-                txtTenKho.TextChanged += TxtTenKho_TextChanged;
-                txtTenKho.Leave += TxtTenKho_Leave;
-                lstKho.Click += LstKho_Click;
-                
-                lstKho.Visible = false;
+                // WarehouseComboBox will load its own data using NhapKhoManualBLL
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải danh sách kho: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi tải danh sách kho: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void TxtTenKho_TextChanged(object sender, EventArgs e)
+        private void WarehouseComboBox_WarehouseSelected(object sender, WarehouseSelectedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtTenKho.Text))
-            {
-                lstKho.Visible = false;
-                return;
-            }
-
-            var searchTerm = txtTenKho.Text.ToLower();
-            var matchingWarehouses = _warehouses
-                .Where(w => w.TenKho.ToLower().Contains(searchTerm))
-                .Take(10)
-                .ToList();
-
-            if (matchingWarehouses.Any())
-            {
-                lstKho.DataSource = matchingWarehouses;
-                lstKho.DisplayMember = "TenKho";
-                lstKho.ValueMember = "Id";
-                lstKho.Visible = true;
-                lstKho.BringToFront();
-            }
-            else
-            {
-                lstKho.Visible = false;
-            }
-        }
-
-        private void TxtTenKho_Leave(object sender, EventArgs e)
-        {
-            // Delay hiding to allow click on listbox
-            Task.Delay(200).ContinueWith(_ => 
-            {
-                if (!lstKho.Focused)
-                {
-                    this.Invoke(() => lstKho.Visible = false);
-                }
-            });
-        }
-
-        private void LstKho_Click(object sender, EventArgs e)
-        {
-            if (lstKho.SelectedItem is Warehouse selectedWarehouse)
-            {
-                txtTenKho.Text = selectedWarehouse.TenKho;
-                lstKho.Visible = false;
-            }
+            // Warehouse selected from NhapKho-style component
+            UpdateStatusLabel($"Đã chọn kho: {e.SelectedWarehouse.TenKho}");
         }
 
         private void LoadDefaultFilter()
@@ -258,8 +251,8 @@ namespace QLVT.GUI
             // Tạo filter mặc định cho báo cáo tổng hợp
             dtpFromDate.Value = DateTime.Now.AddDays(-30);
             dtpToDate.Value = DateTime.Now;
-            txtTenKho.Text = "";
-            txtSupplyFilter.Text = "";
+            warehouseComboBox?.ClearSelection(); // Default to "All warehouses"
+            vatTuTextBox?.Clear(); // Sử dụng VatTuTextBox thay vì txtSupplyFilter
         }
 
         private async void btnCreateReport_Click(object sender, EventArgs e)
@@ -344,9 +337,9 @@ namespace QLVT.GUI
             };
 
             // Parse supply filter (can contain code or name)
-            if (!string.IsNullOrWhiteSpace(txtSupplyFilter.Text))
+            if (!string.IsNullOrWhiteSpace(vatTuTextBox.GetText()))
             {
-                var searchTerm = txtSupplyFilter.Text.Trim();
+                var searchTerm = vatTuTextBox.GetText().Trim();
                 // If it looks like a code (alphanumeric, no spaces), use as code filter
                 if (searchTerm.All(c => char.IsLetterOrDigit(c)))
                 {
@@ -358,15 +351,10 @@ namespace QLVT.GUI
                 }
             }
 
-            // Warehouse - find matching warehouse by name
-            if (!string.IsNullOrWhiteSpace(txtTenKho.Text))
+            // Warehouse - get from WarehouseComboBox component
+            if (warehouseComboBox.SelectedWarehouseId > 0)
             {
-                var selectedWarehouse = _warehouses.FirstOrDefault(w => 
-                    w.TenKho.Equals(txtTenKho.Text.Trim(), StringComparison.OrdinalIgnoreCase));
-                if (selectedWarehouse != null)
-                {
-                    filter.WarehouseId = selectedWarehouse.Id;
-                }
+                filter.WarehouseId = warehouseComboBox.SelectedWarehouseId;
             }
 
             return filter;

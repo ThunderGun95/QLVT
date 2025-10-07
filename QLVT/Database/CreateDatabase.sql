@@ -373,9 +373,10 @@ BEGIN
         Id INT IDENTITY(1,1) PRIMARY KEY,
         TransactionId INT NOT NULL,
         ErpId INT NOT NULL,
+        MaKhoXuat INT NULL, -- Kho xuất (null với nhập kho) - Thay đổi thành INT
+        MaKhoNhan INT NULL, -- Kho xuất (null với nhập kho) - Thay đổi thành INT
         SoLuong INT NOT NULL,
         GhiChu NVARCHAR(255) NULL,
-        SourceWarehouseId INT NULL, -- Kho nguồn (cho phiếu xuất)
 
         CreatedBy NVARCHAR(50) NOT NULL,
         CreatedDate DATETIME DEFAULT GETDATE(),

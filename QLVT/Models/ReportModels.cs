@@ -108,23 +108,23 @@ namespace QLVT.Models
         public string SoPhieu { get; set; } = string.Empty;
         
         [DisplayName("SL nhập")]
-        public double SoLuongNhap { get; set; }
+        public decimal SoLuongNhap { get; set; }
         
         [DisplayName("SL xuất")]
-        public double SoLuongXuat { get; set; }
+        public decimal SoLuongXuat { get; set; }
         
         [DisplayName("Tồn sau GD")]
-        public double TonSauGD { get; set; }
+        public decimal TonSauGD { get; set; }
         
         [DisplayName("Ghi chú")]
         public string GhiChu { get; set; } = string.Empty;
         
         // Thêm các properties mới cho báo cáo mở rộng
         [DisplayName("Số lượng")]
-        public double SoLuong { get; set; }
+        public decimal SoLuong { get; set; }
         
         [DisplayName("Tồn kho")]
-        public double TonKho { get; set; }
+        public decimal TonKho { get; set; }
         
         [DisplayName("Mã vật tư")]
         public string MaVatTu { get; set; } = string.Empty;
@@ -199,19 +199,13 @@ namespace QLVT.Models
         public string TenKho { get; set; } = string.Empty;
         
         [DisplayName("SL nhập")]
-        public int SoLuongNhap { get; set; }
+        public decimal SoLuongNhap { get; set; }
         
         [DisplayName("SL xuất")]
-        public int SoLuongXuat { get; set; }
+        public decimal SoLuongXuat { get; set; }
         
         [DisplayName("Tồn cuối")]
-        public int TonCuoi { get; set; }
-        
-        [DisplayName("Đơn giá")]
-        public decimal DonGia { get; set; }
-        
-        [DisplayName("Thành tiền")]
-        public decimal ThanhTien { get; set; }
+        public decimal TonCuoi { get; set; }
         
         [DisplayName("Ghi chú")]
         public string GhiChu { get; set; } = string.Empty;
@@ -254,7 +248,7 @@ namespace QLVT.Models
     public class InventoryReportSummary
     {
         public int TongSoMatHang { get; set; }
-        public int TongSoLuongTon { get; set; }
+        public decimal TongSoLuongTon { get; set; }
         public decimal TongGiaTriTon { get; set; }
         public int SoKhoCoTon { get; set; }
     }
@@ -265,10 +259,8 @@ namespace QLVT.Models
     public class TransactionReportSummary
     {
         public int TongSoGiaoDich { get; set; }
-        public int TongSoLuongNhap { get; set; }
-        public int TongSoLuongXuat { get; set; }
-        public decimal TongGiaTriNhap { get; set; }
-        public decimal TongGiaTriXuat { get; set; }
+        public decimal TongSoLuongNhap { get; set; }
+        public decimal TongSoLuongXuat { get; set; }
     }
 
     /// <summary>
@@ -301,22 +293,24 @@ namespace QLVT.Models
         public string TenKho { get; set; } = string.Empty;
         
         [DisplayName("SL nhập")]
-        public double SoLuongNhap { get; set; }
+        public decimal SoLuongNhap { get; set; }
         
         [DisplayName("SL xuất")]
-        public double SoLuongXuat { get; set; }
+        public decimal SoLuongXuat { get; set; }
         
         [DisplayName("Tồn sau GD")]
-        public double TonSauGD { get; set; }
+        public decimal TonSauGD { get; set; }
         
         [DisplayName("Ghi chú")]
         public string GhiChu { get; set; } = string.Empty;
         
         // Display formatted date
         [DisplayName("Ngày (F)")]
-        public string NgayGiaoDichFormatted => NgayGiaoDich.ToString("dd/MM/yyyy HH:mm");
+        public string NgayGiaoDichFormatted => NgayGiaoDich.ToString("dd/MM/yyyy");
         
-        // Internal properties
+        // Internal properties for editing
+        public int TransactionId { get; set; }
+        public int TransactionDetailId { get; set; }
         public int WarehouseId { get; set; }
         public int SupplyId { get; set; }
     }
@@ -364,19 +358,13 @@ namespace QLVT.Models
         public string TenKho { get; set; } = string.Empty;
         
         [DisplayName("SL nhập")]
-        public double SoLuongNhap { get; set; }
+        public decimal SoLuongNhap { get; set; }
         
         [DisplayName("SL xuất")]
-        public double SoLuongXuat { get; set; }
+        public decimal SoLuongXuat { get; set; }
         
         [DisplayName("Tồn sau GD")]
-        public double TonSauGD { get; set; }
-        
-        [DisplayName("Đơn giá")]
-        public decimal DonGia { get; set; }
-        
-        [DisplayName("Thành tiền")]
-        public decimal ThanhTien { get; set; }
+        public decimal TonSauGD { get; set; }
         
         [DisplayName("Ghi chú")]
         public string GhiChu { get; set; } = string.Empty;

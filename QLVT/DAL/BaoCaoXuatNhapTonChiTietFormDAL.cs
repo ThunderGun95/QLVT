@@ -37,40 +37,29 @@ namespace QLVT.DAL
                                 ELSE t.LoaiGiaoDich
                             END as LoaiGiaoDich,
                             t.SoPhieu,
-                            s.Code as MaVatTu,
-                            s.TenVatTu,
-                            u.TenDVT as DonViTinh,
+                            vt.Code as MaVatTu,
+                            vt.TenVatTu,
+                            vt.DVT as DonViTinh,
+                            w.TenKho,
                             CASE 
-                                WHEN t.LoaiGiaoDich = 'NhapKho' THEN w2.TenKho
-                                WHEN t.LoaiGiaoDich = 'XuatKho' THEN w1.TenKho
-                                WHEN t.LoaiGiaoDich = 'TraKho' THEN w2.TenKho
-                                WHEN t.LoaiGiaoDich = 'HoanUng' THEN w1.TenKho
-                                ELSE COALESCE(w1.TenKho, w2.TenKho)
-                            END as TenKho,
-                            CASE 
-                                WHEN t.LoaiGiaoDich IN ('NhapKho', 'TraKho') THEN CAST(td.SoLuong as float)
+                                WHEN td.MaKhoNhap = w.Id THEN CAST(td.SoLuong as float)
                                 ELSE 0.0
                             END as SoLuongNhap,
                             CASE 
-                                WHEN t.LoaiGiaoDich IN ('XuatKho', 'HoanUng') THEN CAST(td.SoLuong as float)
+                                WHEN td.MaKhoXuat = w.Id THEN CAST(td.SoLuong as float)
                                 ELSE 0.0
                             END as SoLuongXuat,
                             ISNULL(td.GhiChu, t.GhiChu) as GhiChu,
-                            CASE 
-                                WHEN t.LoaiGiaoDich = 'NhapKho' THEN t.MaKhoNhan
-                                WHEN t.LoaiGiaoDich = 'XuatKho' THEN td.SourceWarehouseId
-                                WHEN t.LoaiGiaoDich = 'TraKho' THEN t.MaKhoNhan
-                                WHEN t.LoaiGiaoDich = 'HoanUng' THEN td.SourceWarehouseId
-                                ELSE COALESCE(td.SourceWarehouseId, t.MaKhoNhan)
-                            END as WarehouseId,
-                            s.ErpId as SupplyId
+                            w.Id as WarehouseId,
+                            vt.ErpId as SupplyId
                         FROM Transactions t
-                        INNER JOIN TransactionDetails td ON t.Id = td.TransactionId
-                        INNER JOIN Supplies s ON td.ErpId = s.ErpId
-                        INNER JOIN Units u ON s.MaDVT = u.MaDVT
-                        LEFT JOIN Warehouses w1 ON t.MaKhoNguon = w1.Id
-                        LEFT JOIN Warehouses w2 ON t.MaKhoNhan = w2.Id
-                        WHERE t.NgayGiaoDich >= @TuNgay AND t.NgayGiaoDich <= @DenNgay
+                        INNER JOIN TransactionDetails td ON t.Id = td.TransactionId AND td.IsDeleted = 0
+                        INNER JOIN ViewVatTus vt ON td.ErpId = vt.ErpId
+                        INNER JOIN Warehouses w ON (td.MaKhoNhap = w.Id OR td.MaKhoXuat = w.Id)
+                        WHERE t.IsDeleted = 0 
+                          AND t.NgayGiaoDich >= @TuNgay 
+                          AND t.NgayGiaoDich <= @DenNgay
+                          AND (td.MaKhoNhap = w.Id OR td.MaKhoXuat = w.Id)
                     )
                     SELECT 
                         ROW_NUMBER() OVER (ORDER BY NgayGiaoDich, LoaiGiaoDich, SoPhieu) as STT,
@@ -88,7 +77,7 @@ namespace QLVT.DAL
                         WarehouseId,
                         SupplyId
                     FROM TransactionData
-                    WHERE 1=1";
+                    WHERE (SoLuongNhap > 0 OR SoLuongXuat > 0)";
 
                 var parameters = new List<SqlParameter>
                 {
@@ -96,8 +85,13 @@ namespace QLVT.DAL
                     new SqlParameter("@DenNgay", filter.DenNgay.Date.AddDays(1).AddSeconds(-1))
                 };
 
-                // Thêm filter theo kho
-                if (!string.IsNullOrEmpty(filter.TenKho))
+                // Thêm filter theo kho (có thể theo ID hoặc tên)
+                if (filter.WarehouseId.HasValue)
+                {
+                    sql += " AND WarehouseId = @WarehouseId";
+                    parameters.Add(new SqlParameter("@WarehouseId", filter.WarehouseId.Value));
+                }
+                else if (!string.IsNullOrEmpty(filter.TenKho))
                 {
                     sql += " AND TenKho LIKE @TenKho";
                     parameters.Add(new SqlParameter("@TenKho", $"%{filter.TenKho}%"));
@@ -106,7 +100,7 @@ namespace QLVT.DAL
                 // Thêm filter theo mã vật tư
                 if (!string.IsNullOrEmpty(filter.MaVatTu))
                 {
-                    sql += " AND MaVatTu LIKE @MaVatTu";
+                    sql += " AND (MaVatTu LIKE @MaVatTu OR TenVatTu LIKE @MaVatTu)";
                     parameters.Add(new SqlParameter("@MaVatTu", $"%{filter.MaVatTu}%"));
                 }
 
@@ -132,9 +126,9 @@ namespace QLVT.DAL
                                     TenVatTu = reader["TenVatTu"].ToString() ?? "",
                                     DonViTinh = reader["DonViTinh"].ToString() ?? "",
                                     TenKho = reader["TenKho"].ToString() ?? "",
-                                    SoLuongNhap = Convert.ToDouble(reader["SoLuongNhap"]),
-                                    SoLuongXuat = Convert.ToDouble(reader["SoLuongXuat"]),
-                                    TonSauGD = Convert.ToDouble(reader["TonSauGD"]),
+                                    SoLuongNhap = Convert.ToDecimal(reader["SoLuongNhap"]),
+                                    SoLuongXuat = Convert.ToDecimal(reader["SoLuongXuat"]),
+                                    TonSauGD = Convert.ToDecimal(reader["TonSauGD"]),
                                     GhiChu = reader["GhiChu"].ToString() ?? "",
                                     WarehouseId = Convert.ToInt32(reader["WarehouseId"]),
                                     SupplyId = Convert.ToInt32(reader["SupplyId"])
@@ -162,7 +156,7 @@ namespace QLVT.DAL
         /// </summary>
         private async Task CalculateTonSauGiaoDichAsync(List<BaoCaoXuatNhapTonChiTietItem> transactions)
         {
-            var tonKhoDict = new Dictionary<string, double>(); // Key: WarehouseId_SupplyId
+            var tonKhoDict = new Dictionary<string, decimal>(); // Key: WarehouseId_SupplyId
 
             foreach (var item in transactions.OrderBy(x => x.NgayGiaoDich).ThenBy(x => x.STT))
             {
@@ -181,30 +175,26 @@ namespace QLVT.DAL
         }
 
         /// <summary>
-        /// Lấy tồn đầu kỳ
+        /// Lấy tồn đầu kỳ (method public để BLL có thể gọi)
         /// </summary>
-        private async Task<double> GetTonDauKyAsync(int warehouseId, int supplyId, DateTime tuNgay)
+        public async Task<decimal> GetTonDauKyAsync(int warehouseId, int supplyId, DateTime tuNgay)
         {
             try
             {
                 string sql = @"
                     SELECT ISNULL(SUM(
                         CASE 
-                            WHEN t.LoaiGiaoDich IN ('NhapKho', 'TraKho') THEN td.SoLuong
-                            WHEN t.LoaiGiaoDich IN ('XuatKho', 'HoanUng') THEN -td.SoLuong
+                            WHEN td.MaKhoNhap = @WarehouseId THEN td.SoLuong
+                            WHEN td.MaKhoXuat = @WarehouseId THEN -td.SoLuong
                             ELSE 0
                         END), 0)
                     FROM Transactions t
-                    INNER JOIN TransactionDetails td ON t.Id = td.TransactionId
-                    INNER JOIN Supplies s ON td.ErpId = s.ErpId
-                    WHERE s.ErpId = @SupplyId 
+                    INNER JOIN TransactionDetails td ON t.Id = td.TransactionId AND td.IsDeleted = 0
+                    INNER JOIN ViewVatTus vt ON td.ErpId = vt.ErpId
+                    WHERE vt.ErpId = @SupplyId 
+                      AND t.IsDeleted = 0
                       AND t.NgayGiaoDich < @TuNgay
-                      AND (
-                          (t.LoaiGiaoDich = 'NhapKho' AND t.MaKhoNhan = @WarehouseId) OR
-                          (t.LoaiGiaoDich = 'XuatKho' AND td.SourceWarehouseId = @WarehouseId) OR
-                          (t.LoaiGiaoDich = 'TraKho' AND t.MaKhoNhan = @WarehouseId) OR
-                          (t.LoaiGiaoDich = 'HoanUng' AND td.SourceWarehouseId = @WarehouseId)
-                      )";
+                      AND (td.MaKhoNhap = @WarehouseId OR td.MaKhoXuat = @WarehouseId)";
 
                 using (var connection = DatabaseHelper.GetConnection())
                 {
@@ -219,7 +209,7 @@ namespace QLVT.DAL
                         });
 
                         var result = await command.ExecuteScalarAsync();
-                        return Convert.ToDouble(result ?? 0);
+                        return Convert.ToDecimal(result ?? 0);
                     }
                 }
             }

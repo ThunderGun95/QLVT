@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace QLVT.Models
 {
@@ -8,6 +9,7 @@ namespace QLVT.Models
     public class Transaction
     {
         public int TransactionID { get; set; }
+        public string SoPhieu { get; set; } = string.Empty; // Số phiếu
         public string LoaiGiaoDich { get; set; } = string.Empty; // 'NhapKho', 'XuatKho', 'TraKho', 'HoanUng'
         public DateTime NgayGiaoDich { get; set; }
         public int? MaKhoNguon { get; set; }

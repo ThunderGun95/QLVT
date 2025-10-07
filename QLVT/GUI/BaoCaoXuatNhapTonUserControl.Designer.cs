@@ -34,10 +34,6 @@ namespace QLVT.GUI
             lblToDate = new Label();
             dtpToDate = new DateTimePicker();
             lblWarehouse = new Label();
-            txtTenKho = new TextBox();
-            lstKho = new ListBox();
-            lblSupplyFilter = new Label();
-            txtSupplyFilter = new TextBox();
             grpActions = new GroupBox();
             flowLayoutPanel1 = new FlowLayoutPanel();
             btnCreateReport = new Button();
@@ -64,10 +60,6 @@ namespace QLVT.GUI
             grpFilters.Controls.Add(lblToDate);
             grpFilters.Controls.Add(dtpToDate);
             grpFilters.Controls.Add(lblWarehouse);
-            grpFilters.Controls.Add(txtTenKho);
-            grpFilters.Controls.Add(lstKho);
-            grpFilters.Controls.Add(lblSupplyFilter);
-            grpFilters.Controls.Add(txtSupplyFilter);
             grpFilters.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             grpFilters.Location = new Point(4, 3);
             grpFilters.Margin = new Padding(4, 3, 4, 3);
@@ -119,6 +111,9 @@ namespace QLVT.GUI
             dtpToDate.Name = "dtpToDate";
             dtpToDate.Size = new Size(150, 20);
             dtpToDate.TabIndex = 3;
+
+
+
             // 
             // lblWarehouse
             // 
@@ -130,48 +125,6 @@ namespace QLVT.GUI
             lblWarehouse.Size = new Size(29, 13);
             lblWarehouse.TabIndex = 4;
             lblWarehouse.Text = "Kho:";
-            // 
-            // txtTenKho
-            // 
-            txtTenKho.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtTenKho.Location = new Point(380, 45);
-            txtTenKho.Margin = new Padding(4, 3, 4, 3);
-            txtTenKho.Name = "txtTenKho";
-            txtTenKho.PlaceholderText = "Nhập tên kho...";
-            txtTenKho.Size = new Size(180, 20);
-            txtTenKho.TabIndex = 5;
-            // 
-            // lstKho
-            // 
-            lstKho.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lstKho.FormattingEnabled = true;
-            lstKho.Location = new Point(380, 70);
-            lstKho.Margin = new Padding(4, 3, 4, 3);
-            lstKho.Name = "lstKho";
-            lstKho.Size = new Size(180, 43);
-            lstKho.TabIndex = 6;
-            lstKho.Visible = false;
-            // 
-            // lblSupplyFilter
-            // 
-            lblSupplyFilter.AutoSize = true;
-            lblSupplyFilter.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblSupplyFilter.Location = new Point(580, 25);
-            lblSupplyFilter.Margin = new Padding(4, 0, 4, 0);
-            lblSupplyFilter.Name = "lblSupplyFilter";
-            lblSupplyFilter.Size = new Size(73, 13);
-            lblSupplyFilter.TabIndex = 8;
-            lblSupplyFilter.Text = "Mã/Tên vật tư:";
-            // 
-            // txtSupplyFilter
-            // 
-            txtSupplyFilter.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtSupplyFilter.Location = new Point(580, 45);
-            txtSupplyFilter.Margin = new Padding(4, 3, 4, 3);
-            txtSupplyFilter.Name = "txtSupplyFilter";
-            txtSupplyFilter.PlaceholderText = "Nhập mã hoặc tên vật tư...";
-            txtSupplyFilter.Size = new Size(200, 20);
-            txtSupplyFilter.TabIndex = 9;
             // 
             // grpActions
             // 
@@ -330,10 +283,6 @@ namespace QLVT.GUI
         private System.Windows.Forms.Label lblToDate;
         private System.Windows.Forms.DateTimePicker dtpToDate;
         private System.Windows.Forms.Label lblWarehouse;
-        private System.Windows.Forms.TextBox txtTenKho;
-        private System.Windows.Forms.ListBox lstKho;
-        private System.Windows.Forms.Label lblSupplyFilter;
-        private System.Windows.Forms.TextBox txtSupplyFilter;
         private System.Windows.Forms.GroupBox grpActions;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.Button btnCreateReport;

@@ -23,110 +23,58 @@ namespace QLVT.DAL
             try
             {
                 var sql = @"
-                    WITH PeriodTransactions AS (
-                        -- Lấy các giao dịch trong kỳ
-                        SELECT 
-                            s.ErpId as SupplyErpId,
-                            s.Code as CodeVatTu,
-                            s.TenVatTu,
-                            u.TenDVT as DonViTinh,
-                            CASE 
-                                WHEN t.LoaiGiaoDich = 'NhapKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN w_nhan.Id
-                                WHEN t.LoaiGiaoDich = 'XuatKho' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN td.SourceWarehouseId
-                                WHEN t.LoaiGiaoDich = 'TraKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN t.MaKhoNhan
-                                WHEN t.LoaiGiaoDich = 'HoanUng' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN td.SourceWarehouseId
-                                ELSE NULL
-                            END as WarehouseId,
-                            CASE 
-                                WHEN t.LoaiGiaoDich = 'NhapKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN w_nhan.TenKho
-                                WHEN t.LoaiGiaoDich = 'XuatKho' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN w_nguon.TenKho
-                                WHEN t.LoaiGiaoDich = 'TraKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN w_nhan.TenKho
-                                WHEN t.LoaiGiaoDich = 'HoanUng' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN w_nguon.TenKho
-                                ELSE N'Không xác định'
-                            END as TenKho,
-                            CASE 
-                                WHEN t.LoaiGiaoDich IN ('NhapKho', 'TraKho') THEN td.SoLuong
-                                ELSE 0
-                            END as SoNhap,
-                            CASE 
-                                WHEN t.LoaiGiaoDich IN ('XuatKho', 'HoanUng') THEN td.SoLuong
-                                ELSE 0
-                            END as SoXuat
-                        FROM Transactions t
-                        INNER JOIN TransactionDetails td ON t.Id = td.TransactionId
-                        INNER JOIN Supplies s ON td.ErpId = s.ErpId
-                        LEFT JOIN Units u ON s.MaDVT = u.MaDVT
-                        LEFT JOIN Warehouses w_nhan ON t.MaKhoNhan = w_nhan.Id
-                        LEFT JOIN Warehouses w_nguon ON td.SourceWarehouseId = w_nguon.Id
-                        WHERE t.NgayGiaoDich >= @TuNgay AND t.NgayGiaoDich <= @DenNgay
-                    ),
-                    BeforePeriodTransactions AS (
-                        -- Lấy các giao dịch trước kỳ để tính tồn đầu
-                        SELECT 
-                            s.ErpId as SupplyErpId,
-                            CASE 
-                                WHEN t.LoaiGiaoDich = 'NhapKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN t.MaKhoNhan
-                                WHEN t.LoaiGiaoDich = 'XuatKho' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN td.SourceWarehouseId
-                                WHEN t.LoaiGiaoDich = 'TraKho' AND t.MaKhoNhan IS NOT NULL 
-                                THEN t.MaKhoNhan
-                                WHEN t.LoaiGiaoDich = 'HoanUng' AND td.SourceWarehouseId IS NOT NULL 
-                                THEN td.SourceWarehouseId
-                                ELSE NULL
-                            END as WarehouseId,
-                            CASE 
-                                WHEN t.LoaiGiaoDich IN ('NhapKho', 'TraKho') THEN td.SoLuong
-                                ELSE 0
-                            END as SoNhap,
-                            CASE 
-                                WHEN t.LoaiGiaoDich IN ('XuatKho', 'HoanUng') THEN td.SoLuong
-                                ELSE 0
-                            END as SoXuat
-                        FROM Transactions t
-                        INNER JOIN TransactionDetails td ON t.Id = td.TransactionId
-                        INNER JOIN Supplies s ON td.ErpId = s.ErpId
-                        WHERE t.NgayGiaoDich < @TuNgay
-                    ),
+                    WITH PeriodTransactions AS
+                    -- Trong kỳ
+                    (SELECT 
+                        td.ErpId, w.Id as MaKho,
+                        SUM(CASE WHEN td.MaKhoNhap = w.Id THEN SoLuong ELSE 0 END) AS SoLuongNhap,
+                        SUM(CASE WHEN td.MaKhoXuat = w.Id THEN SoLuong ELSE 0 END) AS SoLuongXuat
+                    FROM Warehouses w
+                    INNER JOIN TransactionDetails td ON td.MaKhoXuat = w.Id OR td.MaKhoNhap = w.Id and td.IsDeleted = 0
+                    INNER JOIN Transactions t ON t.Id = td.TransactionId AND t.IsDeleted = 0
+                    WHERE t.NgayGiaoDich >= @TuNgay AND t.NgayGiaoDich <= @DenNgay
+                    GROUP BY td.ErpId, w.Id),
+
+                    BeforePeriodTransactions AS
+                    -- Trước kỳ
+                    (SELECT 
+                        td.ErpId, w.Id as MaKho,
+                        SUM(CASE WHEN td.MaKhoNhap = w.Id THEN SoLuong ELSE 0 END) AS SoLuongNhap,
+                        SUM(CASE WHEN td.MaKhoXuat = w.Id THEN SoLuong ELSE 0 END) AS SoLuongXuat
+                    FROM Warehouses w
+                    INNER JOIN TransactionDetails td ON td.MaKhoXuat = w.Id OR td.MaKhoNhap = w.Id and td.IsDeleted = 0
+                    INNER JOIN Transactions t ON t.Id = td.TransactionId AND t.IsDeleted = 0
+                    WHERE t.NgayGiaoDich < @TuNgay
+                    GROUP BY td.ErpId, w.Id),
+                    -- Tổng hợp
                     SummaryData AS (
-                        SELECT 
-                            pt.SupplyErpId,
-                            pt.CodeVatTu,
-                            pt.TenVatTu,
-                            pt.DonViTinh,
-                            pt.WarehouseId,
-                            pt.TenKho,
-                            ISNULL(SUM(bpt.SoNhap - bpt.SoXuat), 0) as TonDauKy,
-                            SUM(pt.SoNhap) as SoNhap,
-                            SUM(pt.SoXuat) as SoXuat
-                        FROM PeriodTransactions pt
-                        LEFT JOIN BeforePeriodTransactions bpt ON pt.SupplyErpId = bpt.SupplyErpId 
-                                                               AND pt.WarehouseId = bpt.WarehouseId
-                        WHERE pt.WarehouseId IS NOT NULL
-                        GROUP BY pt.SupplyErpId, pt.CodeVatTu, pt.TenVatTu, pt.DonViTinh, pt.WarehouseId, pt.TenKho
-                    )
                     SELECT 
-                        ROW_NUMBER() OVER (ORDER BY TenKho, CodeVatTu) as STT,
-                        SupplyErpId,
-                        CodeVatTu,
-                        TenVatTu,
-                        DonViTinh,
-                        WarehouseId,
-                        TenKho,
-                        TonDauKy,
-                        SoNhap,
-                        SoXuat,
-                        (TonDauKy + SoNhap - SoXuat) as TonCuoiKy
-                    FROM SummaryData
-                    WHERE 1=1";
+                        COALESCE(bpt.ErpId, pt.ErpId) as ErpId,
+                        COALESCE(bpt.MaKho, pt.MaKho) as MaKho,
+                        COALESCE(bpt.SoLuongNhap - bpt.SoLuongXuat, 0) as TonDauKy,
+                        COALESCE(pt.SoLuongNhap, 0) as SoNhap,
+                        COALESCE(pt.SoLuongXuat, 0) as SoXuat,
+                        COALESCE(bpt.SoLuongNhap - bpt.SoLuongXuat, 0) + COALESCE(pt.SoLuongNhap, 0) - COALESCE(pt.SoLuongXuat, 0) as CuoiKy
+                    FROM BeforePeriodTransactions bpt
+                    FULL OUTER JOIN PeriodTransactions pt ON pt.ErpId = bpt.ErpId  and pt.MaKho = bpt.MaKho
+                    )
+
+                    SELECT 
+                        ROW_NUMBER() OVER (ORDER BY W.Id, Code) as STT,
+                        VT.ErpId,
+                        VT.Code,
+                        VT.TenVatTu,
+                        VT.DVT,
+                        W.Id as MaKho,
+                        W.TenKho,
+                        S.TonDauKy,
+                        S.SoNhap,
+                        S.SoXuat,
+                        S.CuoiKy
+                    FROM SummaryData S
+                    INNER JOIN ViewVatTus VT ON VT.ErpId = S.ErpId
+                    INNER JOIN Warehouses W ON W.Id = S.MaKho
+                    Where 1=1";
 
                 var parameters = new List<SqlParameter>
                 {
@@ -137,25 +85,25 @@ namespace QLVT.DAL
                 // Thêm filter warehouse
                 if (filter.WarehouseId.HasValue)
                 {
-                    sql += " AND WarehouseId = @WarehouseId";
+                    sql += " AND S.MaKho = @WarehouseId";
                     parameters.Add(new SqlParameter("@WarehouseId", filter.WarehouseId.Value));
                 }
 
                 // Thêm filter mã vật tư
                 if (!string.IsNullOrEmpty(filter.CodeVatTu))
                 {
-                    sql += " AND CodeVatTu LIKE @CodeVatTu";
+                    sql += " AND (VT.Code LIKE @CodeVatTu OR VT.TenVatTu LIKE @CodeVatTu)";
                     parameters.Add(new SqlParameter("@CodeVatTu", $"%{filter.CodeVatTu}%"));
                 }
 
                 // Thêm filter tên vật tư
                 if (!string.IsNullOrEmpty(filter.TenVatTu))
                 {
-                    sql += " AND TenVatTu LIKE @TenVatTu";
+                    sql += " AND VT.TenVatTu LIKE @TenVatTu";
                     parameters.Add(new SqlParameter("@TenVatTu", $"%{filter.TenVatTu}%"));
                 }
 
-                sql += " ORDER BY TenKho, CodeVatTu";
+                sql += " ORDER BY W.Id, Code";
 
                 using (var connection = DatabaseHelper.GetConnection())
                 {
@@ -171,16 +119,16 @@ namespace QLVT.DAL
                                 result.Add(new TransactionSummaryReportItem
                                 {
                                     STT = Convert.ToInt32(reader["STT"]),
-                                    SupplyErpId = Convert.ToInt32(reader["SupplyErpId"]),
-                                    CodeVatTu = reader.GetString("CodeVatTu"),
+                                    SupplyErpId = Convert.ToInt32(reader["ErpId"]),
+                                    CodeVatTu = reader.GetString("Code"),
                                     TenVatTu = reader.GetString("TenVatTu"),
-                                    DonViTinh = reader.IsDBNull("DonViTinh") ? "" : reader.GetString("DonViTinh"),
-                                    WarehouseId = Convert.ToInt32(reader["WarehouseId"]),
+                                    DonViTinh = reader.IsDBNull("DVT") ? "" : reader.GetString("DVT"),
+                                    WarehouseId = Convert.ToInt32(reader["MaKho"]),
                                     TenKho = reader.GetString("TenKho"),
                                     TonDauKy = reader.GetDecimal("TonDauKy"),
                                     SoNhap = reader.GetDecimal("SoNhap"),
                                     SoXuat = reader.GetDecimal("SoXuat"),
-                                    TonCuoiKy = reader.GetDecimal("TonCuoiKy")
+                                    TonCuoiKy = reader.GetDecimal("CuoiKy")
                                 });
                             }
                         }

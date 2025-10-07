@@ -31,7 +31,21 @@ namespace QLVT.BLL
                     throw new ArgumentException("Từ ngày không được lớn hơn đến ngày!");
                 }
 
+                // Nếu có TenKho nhưng không có WarehouseId, thử tìm warehouse ID
+                if (!filter.WarehouseId.HasValue && !string.IsNullOrEmpty(filter.TenKho))
+                {
+                    var warehouseId = await GetWarehouseIdByNameAsync(filter.TenKho);
+                    if (warehouseId.HasValue)
+                    {
+                        filter.WarehouseId = warehouseId.Value;
+                    }
+                }
+
                 var result = await dal.GetBaoCaoXuatNhapTonChiTietAsync(filter);
+                
+                // Thêm dòng tồn đầu kỳ vào đầu grid
+                await AddTonDauKyRowAsync(result, filter);
+                
                 return result;
             }
             catch (Exception ex)
@@ -142,7 +156,7 @@ namespace QLVT.BLL
             {
                 "STT", "Ngày", "Loại GD", "Số phiếu", "Mã vật tư", 
                 "Tên vật tư", "ĐVT", "SL nhập", "SL xuất", 
-                "Tồn sau GD", "Ghi chú"
+                "Tồn kho", "Ghi chú"
             };
 
             for (int i = 0; i < headers.Length; i++)
@@ -185,7 +199,7 @@ namespace QLVT.BLL
                 // Định dạng số
                 worksheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00"; // SL nhập
                 worksheet.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00"; // SL xuất
-                worksheet.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00"; // Tồn sau GD
+                worksheet.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00"; // Tồn kho
             }
         }
 
@@ -267,6 +281,86 @@ namespace QLVT.BLL
         public async Task<List<WarehouseItem>> SearchWarehousesAsync(string searchText)
         {
             return await dal.SearchWarehousesAsync(searchText);
+        }
+
+        /// <summary>
+        /// Get warehouse ID by name (exact match)
+        /// </summary>
+        public async Task<int?> GetWarehouseIdByNameAsync(string warehouseName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(warehouseName))
+                    return null;
+
+                var warehouses = await dal.GetWarehousesAsync();
+                var warehouse = warehouses.FirstOrDefault(w => 
+                    string.Equals(w.Name, warehouseName, StringComparison.OrdinalIgnoreCase));
+                
+                return warehouse?.Id;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Thêm dòng tồn đầu kỳ vào đầu danh sách
+        /// </summary>
+        private async Task AddTonDauKyRowAsync(List<BaoCaoXuatNhapTonChiTietItem> data, BaoCaoXuatNhapTonChiTietFilter filter)
+        {
+            if (data == null || !data.Any())
+                return;
+
+            // Lấy danh sách các cặp kho-vật tư duy nhất
+            var uniquePairs = data
+                .GroupBy(x => new { x.WarehouseId, x.SupplyId, x.MaVatTu, x.TenVatTu, x.DonViTinh, x.TenKho })
+                .Select(g => g.Key)
+                .ToList();
+
+            var tonDauKyRows = new List<BaoCaoXuatNhapTonChiTietItem>();
+
+            foreach (var pair in uniquePairs)
+            {
+                // Lấy tồn đầu kỳ từ DAL
+                var tonDauKy = await dal.GetTonDauKyAsync(pair.WarehouseId, pair.SupplyId, filter.TuNgay);
+
+                if (tonDauKy > 0) // Chỉ hiển thị nếu có tồn đầu kỳ
+                {
+                    var tonDauKyRow = new BaoCaoXuatNhapTonChiTietItem
+                    {
+                        STT = 0, // Sẽ được cập nhật lại sau
+                        NgayGiaoDich = filter.TuNgay.Date,
+                        LoaiGiaoDich = "Tồn đầu kỳ",
+                        SoPhieu = "",
+                        MaVatTu = pair.MaVatTu,
+                        TenVatTu = pair.TenVatTu,
+                        DonViTinh = pair.DonViTinh,
+                        TenKho = pair.TenKho,
+                        SoLuongNhap = 0,
+                        SoLuongXuat = 0,
+                        TonSauGD = tonDauKy,
+                        GhiChu = "Số tồn trước kỳ báo cáo",
+                        WarehouseId = pair.WarehouseId,
+                        SupplyId = pair.SupplyId
+                    };
+
+                    tonDauKyRows.Add(tonDauKyRow);
+                }
+            }
+
+            // Chèn các dòng tồn đầu kỳ vào đầu danh sách
+            if (tonDauKyRows.Any())
+            {
+                data.InsertRange(0, tonDauKyRows);
+
+                // Cập nhật lại STT cho toàn bộ danh sách
+                for (int i = 0; i < data.Count; i++)
+                {
+                    data[i].STT = i + 1;
+                }
+            }
         }
     }
 }
