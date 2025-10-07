@@ -43,6 +43,10 @@ namespace QLVT.BLL
 
                 var result = await dal.GetBaoCaoXuatNhapTonChiTietAsync(filter);
                 
+                // Đảm bảo result không null
+                if (result == null)
+                    result = new List<BaoCaoXuatNhapTonChiTietItem>();
+                
                 // Thêm dòng tồn đầu kỳ vào đầu grid
                 await AddTonDauKyRowAsync(result, filter);
                 
@@ -57,7 +61,7 @@ namespace QLVT.BLL
         /// <summary>
         /// Xuất báo cáo ra Excel
         /// </summary>
-        public async Task<bool> ExportToExcelAsync(List<BaoCaoXuatNhapTonChiTietItem> data, BaoCaoXuatNhapTonChiTietFilter filter)
+        public bool ExportToExcel(List<BaoCaoXuatNhapTonChiTietItem> data, BaoCaoXuatNhapTonChiTietFilter filter)
         {
             try
             {
@@ -67,47 +71,42 @@ namespace QLVT.BLL
                 }
 
                 // Tạo SaveFileDialog
-                using var saveDialog = new SaveFileDialog
+                using (var saveDialog = new SaveFileDialog())
                 {
-                    Filter = "Excel Files|*.xlsx",
-                    Title = "Lưu báo cáo xuất nhập tồn chi tiết",
-                    FileName = $"BaoCaoXuatNhapTonChiTiet_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                    saveDialog.Filter = "Excel Files|*.xlsx";
+                    saveDialog.Title = "Lưu báo cáo xuất nhập tồn chi tiết";
+                    saveDialog.FileName = $"BaoCaoXuatNhapTonChiTiet_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+                    if (saveDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        using var workbook = new XLWorkbook();
+                        var worksheet = workbook.Worksheets.Add("Báo cáo xuất nhập tồn chi tiết");
+
+                        // Thiết lập header
+                        SetupWorksheetHeader(worksheet, filter);
+
+                        // Thiết lập cột tiêu đề
+                        SetupColumnHeaders(worksheet);
+
+                        // Ghi dữ liệu
+                        WriteDataToWorksheet(worksheet, data);
+
+                        // Định dạng worksheet
+                        FormatWorksheet(worksheet, data.Count);
+
+                        // Lưu file
+                        workbook.SaveAs(saveDialog.FileName);
+
+                        return true;
+                    };
                 };
-
-                if (saveDialog.ShowDialog() == DialogResult.OK)
-                {
-                    using var workbook = new XLWorkbook();
-                    var worksheet = workbook.Worksheets.Add("Báo cáo xuất nhập tồn chi tiết");
-
-                    // Thiết lập header
-                    SetupWorksheetHeader(worksheet, filter);
-
-                    // Thiết lập cột tiêu đề
-                    SetupColumnHeaders(worksheet);
-
-                    // Ghi dữ liệu
-                    WriteDataToWorksheet(worksheet, data);
-
-                    // Định dạng worksheet
-                    FormatWorksheet(worksheet, data.Count);
-
-                    // Lưu file
-                    workbook.SaveAs(saveDialog.FileName);
-
-                    MessageBox.Show($"Đã xuất báo cáo thành công!\nFile: {saveDialog.FileName}", 
-                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    return true;
-                }
-
-                return false;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                // Không hiển thị MessageBox ở đây, để Form xử lý
+                throw new Exception($"Lỗi khi xuất Excel: {ex.Message}", ex);
             }
+            return false;
         }
 
         /// <summary>
@@ -310,24 +309,26 @@ namespace QLVT.BLL
         /// </summary>
         private async Task AddTonDauKyRowAsync(List<BaoCaoXuatNhapTonChiTietItem> data, BaoCaoXuatNhapTonChiTietFilter filter)
         {
-            if (data == null || !data.Any())
-                return;
-
-            // Lấy danh sách các cặp kho-vật tư duy nhất
-            var uniquePairs = data
-                .GroupBy(x => new { x.WarehouseId, x.SupplyId, x.MaVatTu, x.TenVatTu, x.DonViTinh, x.TenKho })
-                .Select(g => g.Key)
-                .ToList();
+            if (data == null)
+                data = new List<BaoCaoXuatNhapTonChiTietItem>();
 
             var tonDauKyRows = new List<BaoCaoXuatNhapTonChiTietItem>();
 
-            foreach (var pair in uniquePairs)
+            // Trường hợp có dữ liệu giao dịch - lấy từ giao dịch có sẵn
+            if (data.Any())
             {
-                // Lấy tồn đầu kỳ từ DAL
-                var tonDauKy = await dal.GetTonDauKyAsync(pair.WarehouseId, pair.SupplyId, filter.TuNgay);
+                // Lấy danh sách các cặp kho-vật tư duy nhất từ giao dịch
+                var uniquePairs = data
+                    .GroupBy(x => new { x.WarehouseId, x.SupplyId, x.MaVatTu, x.TenVatTu, x.DonViTinh, x.TenKho })
+                    .Select(g => g.Key)
+                    .ToList();
 
-                if (tonDauKy > 0) // Chỉ hiển thị nếu có tồn đầu kỳ
+                foreach (var pair in uniquePairs)
                 {
+                    // Lấy tồn đầu kỳ từ DAL
+                    var tonDauKy = await dal.GetTonDauKyAsync(pair.WarehouseId, pair.SupplyId, filter.TuNgay);
+
+                    // Luôn tạo dòng tồn đầu kỳ, kể cả khi = 0
                     var tonDauKyRow = new BaoCaoXuatNhapTonChiTietItem
                     {
                         STT = 0, // Sẽ được cập nhật lại sau
@@ -349,6 +350,11 @@ namespace QLVT.BLL
                     tonDauKyRows.Add(tonDauKyRow);
                 }
             }
+            else
+            {
+                // Trường hợp không có giao dịch nào - tạo dòng tồn đầu kỳ từ filter
+                await CreateTonDauKyFromFilterAsync(tonDauKyRows, filter);
+            }
 
             // Chèn các dòng tồn đầu kỳ vào đầu danh sách
             if (tonDauKyRows.Any())
@@ -360,6 +366,79 @@ namespace QLVT.BLL
                 {
                     data[i].STT = i + 1;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Tạo dòng tồn đầu kỳ từ filter khi không có giao dịch
+        /// </summary>
+        private async Task CreateTonDauKyFromFilterAsync(List<BaoCaoXuatNhapTonChiTietItem> tonDauKyRows, BaoCaoXuatNhapTonChiTietFilter filter)
+        {
+            try
+            {
+                // Lấy thông tin kho
+                var warehouses = await dal.GetWarehousesAsync();
+                var selectedWarehouses = warehouses.AsEnumerable();
+
+                if (filter.WarehouseId.HasValue)
+                {
+                    selectedWarehouses = warehouses.Where(w => w.Id == filter.WarehouseId.Value);
+                }
+                else if (!string.IsNullOrEmpty(filter.TenKho))
+                {
+                    selectedWarehouses = warehouses.Where(w => w.Name.Contains(filter.TenKho, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Lấy thông tin vật tư
+                var supplies = await dal.SearchSuppliesAsync(filter.MaVatTu ?? "");
+                
+                if (!string.IsNullOrEmpty(filter.MaVatTu))
+                {
+                    supplies = supplies.Where(s => s.Code.Contains(filter.MaVatTu, StringComparison.OrdinalIgnoreCase) || 
+                                                  s.Name.Contains(filter.MaVatTu, StringComparison.OrdinalIgnoreCase)).ToList();
+                }
+
+                // Nếu có cả kho và vật tư được chỉ định
+                if (selectedWarehouses.Any() && supplies.Any())
+                {
+                    foreach (var warehouse in selectedWarehouses)
+                    {
+                        foreach (var supply in supplies)
+                        {
+                            // Tìm ErpId của vật tư
+                            var erpId = await dal.GetSupplyErpIdAsync(supply.Code);
+                            if (erpId.HasValue)
+                            {
+                                var tonDauKy = await dal.GetTonDauKyAsync(warehouse.Id, erpId.Value, filter.TuNgay);
+
+                                var tonDauKyRow = new BaoCaoXuatNhapTonChiTietItem
+                                {
+                                    STT = 0,
+                                    NgayGiaoDich = filter.TuNgay.Date,
+                                    LoaiGiaoDich = "Tồn đầu kỳ",
+                                    SoPhieu = "",
+                                    MaVatTu = supply.Code,
+                                    TenVatTu = supply.Name,
+                                    DonViTinh = "", // Sẽ lấy từ ViewVatTus nếu cần
+                                    TenKho = warehouse.Name,
+                                    SoLuongNhap = 0,
+                                    SoLuongXuat = 0,
+                                    TonSauGD = tonDauKy,
+                                    GhiChu = "Số tồn trước kỳ báo cáo",
+                                    WarehouseId = warehouse.Id,
+                                    SupplyId = erpId.Value
+                                };
+
+                                tonDauKyRows.Add(tonDauKyRow);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nhưng không throw để không ảnh hưởng đến báo cáo chính
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi tạo dòng tồn đầu kỳ từ filter: {ex.Message}");
             }
         }
     }

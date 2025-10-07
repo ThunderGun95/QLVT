@@ -36,6 +36,7 @@ namespace QLVT.GUI
         private string selectedWarehouseName = string.Empty;
 
         private bool isInitializing = true;
+        private bool isExporting = false;
 
         public BaoCaoXuatNhapTonChiTietForm()
         {
@@ -356,6 +357,8 @@ namespace QLVT.GUI
 
         private async void BtnExportExcel_Click(object sender, EventArgs e)
         {
+            if (isExporting) return; // Prevent double-click
+            
             try
             {
                 if (currentData == null || !currentData.Any())
@@ -365,8 +368,15 @@ namespace QLVT.GUI
                     return;
                 }
 
+                isExporting = true;
                 SetControlsEnabled(false);
-                await bll.ExportToExcelAsync(currentData, currentFilter);
+                bool success = bll.ExportToExcel(currentData, currentFilter);
+                
+                if (success)
+                {
+                    MessageBox.Show("Đã xuất báo cáo Excel thành công!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             catch (Exception ex)
             {
@@ -375,6 +385,7 @@ namespace QLVT.GUI
             }
             finally
             {
+                isExporting = false;
                 SetControlsEnabled(true);
             }
         }

@@ -358,5 +358,35 @@ namespace QLVT.DAL
             // Implementation placeholder - needs actual query
             return ("", "", "", "");
         }
+
+        /// <summary>
+        /// Lấy ErpId của vật tư theo mã vật tư
+        /// </summary>
+        public async Task<int?> GetSupplyErpIdAsync(string maVatTu)
+        {
+            try
+            {
+                string sql = @"
+                    SELECT TOP 1 ErpId 
+                    FROM ViewVatTus 
+                    WHERE Code = @MaVatTu";
+
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.Add(new SqlParameter("@MaVatTu", maVatTu));
+
+                        var result = await command.ExecuteScalarAsync();
+                        return result != null ? Convert.ToInt32(result) : null;
+                    }
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }
