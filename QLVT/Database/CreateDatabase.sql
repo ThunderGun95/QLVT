@@ -284,6 +284,7 @@ BEGIN
         TenKho NVARCHAR(100) NOT NULL,
         LoaiKho NVARCHAR(20) NOT NULL, -- 'COMPANY' hoặc 'PERSONAL'
         MaNV NVARCHAR(20) NULL, -- Chỉ có giá trị nếu LoaiKho = 'PERSONAL'
+        KhoUuTien BIT DEFAULT 0,
         DiaChi NVARCHAR(255) NULL,
         GhiChu NVARCHAR(255) NULL,
         IsActive BIT DEFAULT 1,

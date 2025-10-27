@@ -169,5 +169,102 @@ namespace QLVT.DAL
                 throw new Exception($"Lỗi kiểm tra số lượng tồn: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Lấy vật tư theo ErpId (async version)
+        /// </summary>
+        public async Task<Supply?> GetSupplyByErpIdAsync(long erpId)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    
+                    string sql = @"
+                        SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat, 
+                               s.MaDVT, u.TenDVT as DonViTinh
+                        FROM Supplies s
+                        LEFT JOIN Units u ON s.MaDVT = u.MaDVT
+                        WHERE s.ErpId = @erpId";
+
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@erpId", erpId);
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new Supply
+                                {
+                                    ErpId = reader.GetInt32("ErpId"),
+                                    Code = reader.GetString("Code"),
+                                    TenVatTu = reader.GetString("TenVatTu"),
+                                    DacTinhKyThuat = reader.IsDBNull("DacTinhKyThuat") ? null : reader.GetString("DacTinhKyThuat"),
+                                    MaDVT = reader.GetString("MaDVT"),
+                                    TenDVT = reader.IsDBNull("DonViTinh") ? null : reader.GetString("DonViTinh")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy vật tư ErpId {erpId}: {ex.Message}", ex);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Lấy tất cả vật tư (async version)
+        /// </summary>
+        public async Task<List<Supply>> GetAllSuppliesAsync()
+        {
+            var supplies = new List<Supply>();
+            
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    
+                    string sql = @"
+                        SELECT s.ErpId, s.Code, s.TenVatTu, s.DacTinhKyThuat, 
+                               s.MaDVT, u.TenDVT as DonViTinh
+                        FROM Supplies s
+                        LEFT JOIN Units u ON s.MaDVT = u.MaDVT
+                        ORDER BY s.Code";
+
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                supplies.Add(new Supply
+                                {
+                                    ErpId = reader.GetInt32("ErpId"),
+                                    Code = reader.GetString("Code"),
+                                    TenVatTu = reader.GetString("TenVatTu"),
+                                    DacTinhKyThuat = reader.IsDBNull("DacTinhKyThuat") ? null : reader.GetString("DacTinhKyThuat"),
+                                    MaDVT = reader.GetString("MaDVT"),
+                                    TenDVT = reader.IsDBNull("DonViTinh") ? null : reader.GetString("DonViTinh"),
+                                    DonViTinh = reader.IsDBNull("DonViTinh") ? null : reader.GetString("DonViTinh")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy danh sách vật tư: {ex.Message}", ex);
+            }
+
+            return supplies;
+        }
     }
 }

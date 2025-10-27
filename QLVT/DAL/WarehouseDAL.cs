@@ -161,6 +161,90 @@ namespace QLVT.DAL
             return warehouse;
         }
 
+        /// <summary>
+        /// Lấy danh sách kho (async version)
+        /// </summary>
+        public async Task<List<Warehouse>> GetAllWarehousesAsync()
+        {
+            var warehouses = new List<Warehouse>();
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    var query = @"
+                        SELECT Id, MaKho, TenKho, LoaiKho, MaNV, DiaChi, GhiChu, IsActive, CreatedDate
+                        FROM Warehouses 
+                        WHERE IsActive = 1
+                        ORDER BY MaKho";
+
+                    using (var command = new SqlCommand(query, connection))
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            warehouses.Add(new Warehouse
+                            {
+                                Id = reader.GetInt32("Id"),
+                                MaKho = reader.GetString("MaKho"),
+                                TenKho = reader.GetString("TenKho"),
+                                LoaiKho = reader.GetString("LoaiKho"),
+                                MaNV = reader.IsDBNull("MaNV") ? null : reader.GetString("MaNV"),
+                                DiaChi = reader.IsDBNull("DiaChi") ? null : reader.GetString("DiaChi"),
+                                GhiChu = reader.IsDBNull("GhiChu") ? null : reader.GetString("GhiChu"),
+                                IsActive = reader.GetBoolean("IsActive")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi lấy danh sách kho: {ex.Message}");
+            }
+            return warehouses;
+        }
+
+        /// <summary>
+        /// Lấy kho theo mã kho
+        /// </summary>
+        public async Task<Warehouse?> GetWarehouseByCodeAsync(long warehouseCode)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    var query = @"
+                        SELECT Id, MaKho, TenKho, DiaChi, GhiChu 
+                        FROM Warehouses 
+                        WHERE MaKho = @MaKho";
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaKho", warehouseCode);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new Warehouse
+                                {
+                                    Id = reader.GetInt32("Id"),
+                                    MaKho = reader.GetString("MaKho"),
+                                    TenKho = reader.GetString("TenKho")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi lấy thông tin kho {warehouseCode}: {ex.Message}");
+            }
+            return null;
+        }
         
     }
 }

@@ -1,11 +1,13 @@
+using QLVT.BLL;
+using QLVT.DAL;
+using QLVT.ERP.Models;
+using QLVT.Models;
+using QLVT.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using QLVT.BLL;
-using QLVT.Models;
-using QLVT.ERP.Models;
 
 namespace QLVT.GUI
 {
@@ -14,12 +16,14 @@ namespace QLVT.GUI
         private readonly NhapKhoBLL nhapKhoErpBLL;
         private ERP_PhieuNhapKho? currentOrder;
         private List<Warehouse> warehouses = new();
-        string MaKhoNhap = "";
+        private readonly WarehouseDAL warehouseDAL;
+        Warehouse? khoNhap = new Warehouse();
 
         public NhapKhoErpUserControl()
         {
             InitializeComponent();
             nhapKhoErpBLL = new NhapKhoBLL();
+            warehouseDAL = new WarehouseDAL();
             SetupDataGridView();
             LoadWarehouses();
             CheckERPConnection();
@@ -223,11 +227,16 @@ namespace QLVT.GUI
             }
         }
 
-        private void DisplayOrderInfo(ERP_PhieuNhapKho order)
+        private async Task DisplayOrderInfo(ERP_PhieuNhapKho order)
         {
             lblSoPhieu.Text = $"{order.SoPhieuNhapKho}-{order.NAM}"; // Hiển thị đầy đủ số-năm
             lblNgayTao.Text = order.ThoiGianHoanThanhNhapKho.ToString("dd/MM/yyyy HH:mm");
-            lblKhoNhap.Text = GetWarehouseName(order.MaKhoVatTu); // Hiển thị tên kho từ mã kho
+            
+            // Sử dụng warehouse mapping để hiển thị kho đích
+            string MaKhoNhap = ERPWarehouseMapping.MapERPToQLVT(order.MaKhoVatTu, order.ChiTiet);
+            khoNhap = await warehouseDAL.GetWarehouseByCodeAsync(MaKhoNhap);
+            lblKhoNhap.Text = $"{khoNhap!.TenKho} ({khoNhap.MaKho})";
+            
             lblNguoiTao.Text = order.NhanVienMua;
             lblTrangThai.Text = "Hoàn thành"; // Vì đã filter TrangThai = 'HoanThanh'
         }
@@ -248,46 +257,16 @@ namespace QLVT.GUI
             // Bỏ cmbKho.SelectedIndex = -1;
         }
 
-        /// <summary>
-        /// Lấy tên kho từ mã kho
-        /// </summary>
-        /// <param name="maKho">Mã kho từ ERP</param>
-        /// <returns>Tên kho hoặc mã kho nếu không tìm thấy</returns>
-        private string GetWarehouseName(string maKho)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(maKho))
-                    return "-";
-
-                var warehouse = warehouses.FirstOrDefault(w => w.MaKho == maKho);
-                MaKhoNhap = warehouse!.MaKho;
-                return warehouse != null ? warehouse.TenKho : maKho;
-            }
-            catch
-            {
-                return maKho;
-            }
-        }
-
         private void btnXacNhan_Click(object sender, EventArgs e)
         {
             if (currentOrder == null)
                 return;
 
-            // Sử dụng kho mặc định là "COMPANY" vì đã bỏ dropdown kho
-            var defaultWarehouse = warehouses.FirstOrDefault(w => w.MaKho == currentOrder.MaKhoVatTu);
-
-            if (defaultWarehouse == null)
-            {
-                MessageBox.Show("Không tìm thấy kho để nhập hàng!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
             var result = MessageBox.Show(
                 $"Xác nhận nhập kho?\n\n" +
                 $"Số phiếu: {currentOrder.SoPhieuDayDu}\n" +
-                $"Kho đích: {defaultWarehouse.TenKho}\n" +
+                $"Kho ERP: {currentOrder.MaKhoVatTu}\n" +
+                $"Kho QLVT: {khoNhap!.TenKho} ({khoNhap!.MaKho})\n" +
                 $"Số mặt hàng: {currentOrder.ChiTiet.Count(d => d.IsMapped)}",
                 "Xác nhận nhập kho",
                 MessageBoxButtons.YesNo,
@@ -295,7 +274,7 @@ namespace QLVT.GUI
 
             if (result == DialogResult.Yes)
             {
-                ProcessImportOrder(defaultWarehouse);
+                ProcessImportOrder(khoNhap);
             }
         }
 
@@ -309,7 +288,7 @@ namespace QLVT.GUI
 
                 var currentUser = AuthenticationBLL.GetCurrentUser();
 
-                int transactionId = nhapKhoErpBLL.ProcessNhapKhoErp(currentOrder!, MaKhoNhap, currentUser!.Username);
+                int transactionId = nhapKhoErpBLL.ProcessNhapKhoErp(currentOrder!, khoNhap!.MaKho, currentUser!.Username);
 
                 lblStatus.Text = "✅ Đã nhập kho thành công";
                 lblStatus.ForeColor = Color.Green;

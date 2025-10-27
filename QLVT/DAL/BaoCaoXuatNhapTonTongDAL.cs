@@ -85,7 +85,7 @@ namespace QLVT.DAL
                 // Thêm filter warehouse
                 if (filter.WarehouseId.HasValue)
                 {
-                    sql += " AND S.MaKho = @WarehouseId";
+                    sql += " AND W.Id = @WarehouseId";
                     parameters.Add(new SqlParameter("@WarehouseId", filter.WarehouseId.Value));
                 }
 

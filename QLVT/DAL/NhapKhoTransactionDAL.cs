@@ -54,15 +54,16 @@ namespace QLVT.DAL
                         {
                             // Insert transaction detail theo schema mới
                             string insertDetailSql = @"
-                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, CreatedBy, CreatedDate)
-                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @createdBy, GETDATE())";
+                                INSERT INTO TransactionDetails (TransactionId, ErpId, MaKhoNhap, SoLuong, GhiChu, CreatedBy, CreatedDate)
+                                VALUES (@transactionId, @erpId, @maKhoNhap, @soLuong, @ghiChu, @createdBy, GETDATE())";
 
                             using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@transactionId", transactionId);
+                                command.Parameters.AddWithValue("@maKhoNhap", maKho);
                                 command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongNhapKho);
-                                command.Parameters.AddWithValue("@ghiChu", $"Nhập từ ERP: {detail.MaVatTuHangHoa}");
+                                command.Parameters.AddWithValue("@ghiChu", $"Nhập ERP kho {order.TenKho}");
                                 command.Parameters.AddWithValue("@createdBy", createdBy);
 
                                 command.ExecuteNonQuery();

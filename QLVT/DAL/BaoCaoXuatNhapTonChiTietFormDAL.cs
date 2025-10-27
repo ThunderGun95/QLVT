@@ -353,10 +353,10 @@ namespace QLVT.DAL
         /// <summary>
         /// Get supply information
         /// </summary>
-        public async Task<(string CodeVatTu, string TenVatTu, string DonViTinh, string TenKho)> GetSupplyInfoAsync(int supplyErpId, int? warehouseId = null)
+        public Task<(string CodeVatTu, string TenVatTu, string DonViTinh, string TenKho)> GetSupplyInfoAsync(int supplyErpId, int? warehouseId = null)
         {
             // Implementation placeholder - needs actual query
-            return ("", "", "", "");
+            return Task.FromResult<(string CodeVatTu, string TenVatTu, string DonViTinh, string TenKho)>(("", "", "", ""));
         }
 
         /// <summary>

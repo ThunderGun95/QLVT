@@ -4,29 +4,35 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using QLVT.BLL;
 using QLVT.DAL;
 using QLVT.Models;
+using QLVT.Utils;
 using ClosedXML.Excel;
+using Microsoft.Data.SqlClient;
 
 namespace QLVT.GUI
 {
     public partial class OpeningInventoryUserControl : UserControl
     {
         private readonly OpeningInventoryBLL openingInventoryBLL;
-        private readonly NhapKhoTransactionDAL importTransactionDAL;
+        private readonly TransactionDAL transactionDAL;
         private readonly WarehouseDAL warehouseDAL;
-        private List<ExcelImportItem> currentExcelData = new();
+        private readonly SupplyDAL supplyDAL;
+        private readonly InventoryDAL inventoryDAL;
+        private OpeningInventoryImportData? currentImportData;
 
         public OpeningInventoryUserControl()
         {
             InitializeComponent();
             openingInventoryBLL = new OpeningInventoryBLL();
-            importTransactionDAL = new NhapKhoTransactionDAL();
+            transactionDAL = new TransactionDAL();
             warehouseDAL = new WarehouseDAL();
+            supplyDAL = new SupplyDAL();
+            inventoryDAL = new InventoryDAL();
             SetupDataGridView();
             LoadWarehouses();
-            // Không load tồn kho ban đầu theo yêu cầu
         }
 
         private void SetupDataGridView()
@@ -47,19 +53,35 @@ namespace QLVT.GUI
 
             dgvInput.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "ItemCode",
+                Name = "MaKho",
+                HeaderText = "Mã kho",
+                DataPropertyName = "MaKho",
+                Width = 100
+            });
+
+            dgvInput.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "MaVatTu",
                 HeaderText = "Mã vật tư",
-                DataPropertyName = "ItemCode",
+                DataPropertyName = "MaVatTu",
                 Width = 120
             });
 
             dgvInput.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "Quantity",
+                Name = "SoLuong",
                 HeaderText = "Số lượng",
-                DataPropertyName = "Quantity",
+                DataPropertyName = "SoLuong",
                 Width = 100,
-                DefaultCellStyle = new DataGridViewCellStyle { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
+            });
+
+            dgvInput.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "ValidationError",
+                HeaderText = "Lỗi",
+                DataPropertyName = "ValidationError",
+                Width = 200
             });
 
             dgvInput.RowsAdded += (s, e) => UpdateSTT();
@@ -98,55 +120,9 @@ namespace QLVT.GUI
             }
         }
 
-        private void PerformAutoMapping()
-        {
-            foreach (var item in currentExcelData)
-            {
-                try
-                {
-                    // Mapping chính xác theo mã ERP/Code
-                    var supply = openingInventoryBLL.FindSupplyByERPCode(item.ItemCode);
 
-                    // Cập nhật thông tin mapping
-                    if (supply != null)
-                    {
-                        item.SupplyId = supply.ErpId; // Sử dụng ErpId
-                        item.SupplyName = supply.TenVatTu;
-                        item.MappingStatus = "✅ Đã mapping";
-                    }
-                    else
-                    {
-                        item.SupplyId = null;
-                        item.SupplyName = "";
-                        item.MappingStatus = "❌ Không tìm thấy";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    item.SupplyId = null;
-                    item.SupplyName = "";
-                    item.MappingStatus = $"❌ Lỗi: {ex.Message}";
-                }
-            }
-        }
 
-        private void UpdateRowColors()
-        {
-            if (dgvInput.DataSource == null) return;
 
-            for (int i = 0; i < dgvInput.Rows.Count && i < currentExcelData.Count; i++)
-            {
-                var item = currentExcelData[i];
-                if (item.IsMapped)
-                {
-                    dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightGreen;
-                }
-                else
-                {
-                    dgvInput.Rows[i].DefaultCellStyle.BackColor = Color.LightPink;
-                }
-            }
-        }
 
         private void btnBrowseExcel_Click(object sender, EventArgs e)
         {
@@ -166,7 +142,7 @@ namespace QLVT.GUI
             }
         }
 
-        private void btnLoadExcel_Click(object sender, EventArgs e)
+        private async void btnLoadExcel_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtExcelFilePath.Text))
             {
@@ -180,40 +156,44 @@ namespace QLVT.GUI
                 lblStatus.Text = "Đang đọc file Excel...";
                 lblStatus.ForeColor = Color.Blue;
 
-                currentExcelData = LoadExcelData(txtExcelFilePath.Text);
-                if (currentExcelData?.Any() == true)
+                currentImportData = await LoadOpeningInventoryFromExcel(txtExcelFilePath.Text);
+                if (currentImportData != null && currentImportData.ValidItemsCount > 0)
                 {
-                    // Thực hiện mapping ngay sau khi load
-                    lblStatus.Text = "Đang mapping với dữ liệu vật tư...";
-                    lblStatus.ForeColor = Color.Blue;
-                    
-                    PerformAutoMapping();
-
                     // Hiển thị dữ liệu trong DataGridView
+                    var allItems = new List<OpeningInventoryExcelItem>();
+                    foreach (var warehouse in currentImportData.WarehouseGroups)
+                    {
+                        allItems.AddRange(warehouse.Items);
+                    }
+                    allItems.AddRange(currentImportData.InvalidItems);
+
                     dgvInput.DataSource = null;
-                    dgvInput.DataSource = currentExcelData;
+                    dgvInput.DataSource = allItems;
                     UpdateSTT();
 
-                    // Cập nhật màu sắc theo trạng thái mapping
+                    // Cập nhật màu sắc theo trạng thái validation
                     UpdateRowColors();
 
-                    var mappedCount = currentExcelData.Count(x => x.IsMapped);
-                    var totalCount = currentExcelData.Count;
-                    
-                    lblStatus.Text = $"✅ Đã tải {totalCount} dòng - Mapping thành công: {mappedCount}/{totalCount}";
-                    lblStatus.ForeColor = mappedCount == totalCount ? Color.Green : Color.Orange;
+                    lblStatus.Text = currentImportData.ImportSummary;
+                    lblStatus.ForeColor = currentImportData.InvalidItemsCount == 0 ? Color.Green : Color.Orange;
 
-                    var warningMessage = "";
-                    if (mappedCount < totalCount)
+                    var summary = $"Đã tải thành công file Excel!\n" +
+                                $"Tổng số dòng đọc được: {currentImportData.TotalItemsRead}\n" +
+                                $"Dòng hợp lệ: {currentImportData.ValidItemsCount}\n" +
+                                $"Dòng lỗi: {currentImportData.InvalidItemsCount}\n" +
+                                $"Số kho: {currentImportData.WarehouseGroups.Count}\n\n";
+
+                    if (currentImportData.InvalidItemsCount > 0)
                     {
-                        var unmappedCount = totalCount - mappedCount;
-                        warningMessage = $"\n\n⚠️ Có {unmappedCount} vật tư chưa mapping được!";
+                        summary += "⚠️ Có dữ liệu lỗi! Vui lòng kiểm tra cột 'Lỗi' và sửa file Excel.";
+                    }
+                    else
+                    {
+                        summary += "✅ Tất cả dữ liệu hợp lệ. Có thể tiến hành lưu!";
                     }
 
-                    MessageBox.Show($"Đã tải thành công {totalCount} dòng từ Excel!\n" +
-                                  $"Mapping thành công: {mappedCount}/{totalCount} vật tư{warningMessage}\n\n" +
-                                  $"Vui lòng chọn kho và xác nhận lưu.", 
-                        "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(summary, "Kết quả đọc Excel", MessageBoxButtons.OK, 
+                        currentImportData.InvalidItemsCount == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
                 }
                 else
                 {
@@ -229,9 +209,9 @@ namespace QLVT.GUI
             }
         }
 
-        private List<ExcelImportItem> LoadExcelData(string filePath)
+        private async Task<OpeningInventoryImportData> LoadOpeningInventoryFromExcel(string filePath)
         {
-            var excelData = new List<ExcelImportItem>();
+            var importData = new OpeningInventoryImportData();
 
             using (var workbook = new XLWorkbook(filePath))
             {
@@ -247,77 +227,193 @@ namespace QLVT.GUI
                     throw new Exception("File Excel phải có ít nhất 2 dòng (header + data)!");
                 }
 
+                var allItems = new List<OpeningInventoryExcelItem>();
+                
                 // Đọc từ dòng 2 (bỏ qua header)
                 for (int row = 2; row <= range.RowCount(); row++)
                 {
-                    var itemCodeCell = worksheet.Cell(row, 1);
-                    var quantityCell = worksheet.Cell(row, 2);
+                    var maKhoCell = worksheet.Cell(row, 1);
+                    var maVatTuCell = worksheet.Cell(row, 2);
+                    var soLuongCell = worksheet.Cell(row, 3);
                     
-                    var itemCode = itemCodeCell.GetString()?.Trim();
-                    var quantityText = quantityCell.GetString()?.Trim();
+                    var maKho = maKhoCell.GetString()?.Trim();
+                    var maVatTu = maVatTuCell.GetString()?.Trim();
+                    var soLuongText = soLuongCell.GetString()?.Trim();
 
-                    if (string.IsNullOrWhiteSpace(itemCode)) continue;
-
-                    if (int.TryParse(quantityText, out int quantity) && quantity > 0)
+                    var item = new OpeningInventoryExcelItem
                     {
-                        excelData.Add(new ExcelImportItem
+                        MaKho = maKho!,
+                        MaVatTu = long.Parse(maVatTu!),
+                        RowNumber = row
+                    };
+
+                    // Validation
+                    var errors = new List<string>();
+                    
+                    if (string.IsNullOrWhiteSpace(maKho))
+                        errors.Add("Mã kho trống");
+                        
+                    if (string.IsNullOrWhiteSpace(maVatTu))
+                        errors.Add("Mã vật tư trống");
+                        
+                    if (string.IsNullOrWhiteSpace(soLuongText))
+                    {
+                        errors.Add("Số lượng trống");
+                    }
+                    else if (!decimal.TryParse(soLuongText, out decimal soLuong))
+                    {
+                        errors.Add("Số lượng không hợp lệ");
+                    }
+                    else if (soLuong < 0)
+                    {
+                        errors.Add("Số lượng không được âm");
+                    }
+                    else
+                    {
+                        item.SoLuong = soLuong;
+                    }
+
+                    if (errors.Any())
+                    {
+                        item.ValidationError = string.Join("; ", errors);
+                        importData.InvalidItems.Add(item);
+                    }
+                    else
+                    {
+                        allItems.Add(item);
+                    }
+                    
+                    importData.TotalItemsRead++;
+                }
+
+                // Validate warehouses and supplies exist
+                await ValidateWarehousesAndSupplies(allItems);
+                
+                // Group by warehouse
+                var warehouseGroups = allItems.Where(x => x.IsValid)
+                                            .GroupBy(x => x.MaKho)
+                                            .ToList();
+
+                foreach (var group in warehouseGroups)
+                {
+                    var warehouseInventory = new WarehouseOpeningInventory
+                    {
+                        MaKho = group.Key,
+                        Items = group.ToList()
+                    };
+                    
+                    // Get warehouse name
+                    try
+                    {
+                        var warehouse = await warehouseDAL.GetWarehouseByCodeAsync(group.Key);
+                        warehouseInventory.TenKho = warehouse?.TenKho ?? "Không tìm thấy";
+                    }
+                    catch
+                    {
+                        warehouseInventory.TenKho = "Lỗi khi tải tên kho";
+                    }
+                    
+                    importData.WarehouseGroups.Add(warehouseInventory);
+                }
+
+                // Add validation errors to invalid items
+                importData.InvalidItems.AddRange(allItems.Where(x => !x.IsValid));
+
+                importData.ValidItemsCount = allItems.Count(x => x.IsValid);
+                importData.InvalidItemsCount = importData.InvalidItems.Count;
+                
+                importData.ImportSummary = $"✅ Đọc được {importData.TotalItemsRead} dòng - " +
+                                         $"Hợp lệ: {importData.ValidItemsCount}, Lỗi: {importData.InvalidItemsCount}, " +
+                                         $"Số kho: {importData.WarehouseGroups.Count}";
+            }
+
+            return importData;
+        }
+
+        private Task ValidateWarehousesAndSupplies(List<OpeningInventoryExcelItem> items)
+        {
+            try
+            {
+                // Get all warehouses and supplies for validation
+                var warehouses = warehouseDAL.GetAllWarehouses();
+                var warehouseCodes = warehouses.Select(w => w.Id).ToHashSet();
+                
+                foreach (var item in items)
+                {
+                    var errors = new List<string>();
+                    
+                    // Validate warehouse exists
+                    /*
+                    if (!warehouseCodes.Contains(item.MaKho))
+                    {
+                        errors.Add($"Kho '{item.MaKho}' không tồn tại");
+                    }
+                    */
+                    
+                    // Validate supply exists
+                    /*
+                    try
+                    {
+                        item.MaVatTu
+                        if (int.TryParse(item.MaVatTu, out int erpId))
                         {
-                            ItemCode = itemCode,
-                            Quantity = quantity
-                        });
+                            var supply = await supplyDAL.GetSupplyByErpIdAsync(item.MaVatTu);
+                            if (supply == null)
+                            {
+                                errors.Add($"Vật tư '{item.MaVatTu}' không tồn tại");
+                            }
+                        }
+                        else
+                        {
+                            errors.Add($"Mã vật tư '{item.MaVatTu}' không hợp lệ (phải là số)");
+                        }
+                    }
+                    catch
+                    {
+                        errors.Add($"Lỗi khi kiểm tra vật tư '{item.MaVatTu}'");
+                    }
+                    
+                    if (errors.Any())
+                    {
+                        item.ValidationError = string.Join("; ", errors);
+                    }
+                    */
+                }
+            }
+            catch (Exception ex)
+            {
+                // If validation fails, mark all items as invalid
+                foreach (var item in items)
+                {
+                    if (string.IsNullOrEmpty(item.ValidationError))
+                    {
+                        item.ValidationError = $"Lỗi validation: {ex.Message}";
                     }
                 }
             }
 
-            return excelData;
+            return Task.CompletedTask;
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private async void btnSave_Click(object sender, EventArgs e)
         {
             try
             {
                 // Validation
-                if (!currentExcelData?.Any() == true)
+                if (currentImportData == null || !currentImportData.WarehouseGroups.Any())
                 {
                     MessageBox.Show("Vui lòng tải dữ liệu từ Excel trước!", "Thông báo", 
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                if (cboWarehouse.SelectedItem == null)
+                if (currentImportData.InvalidItemsCount > 0)
                 {
-                    MessageBox.Show("Vui lòng chọn kho!", "Thông báo", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Lấy thông tin kho được chọn
-                var selectedWarehouse = cboWarehouse.SelectedItem as Warehouse;
-                var warehouseCode = selectedWarehouse.Id;
-
-                // Debug: Kiểm tra mã kho truyền vào
-                System.Diagnostics.Debug.WriteLine($"DEBUG: Warehouse Code = '{warehouseCode}', Name = '{selectedWarehouse?.TenKho}'");
-
-                // Kiểm tra mã kho hợp lệ
-                if (warehouseCode == 0)
-                {
-                    MessageBox.Show("Mã kho không hợp lệ!", "Thông báo", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Kiểm tra mapping
-                var unmappedItems = currentExcelData.Where(x => !x.IsMapped).ToList();
-                if (unmappedItems.Any())
-                {
-                    var unmappedCodes = string.Join(", ", unmappedItems.Take(5).Select(x => x.ItemCode));
-                    var extraCount = unmappedItems.Count > 5 ? $" và {unmappedItems.Count - 5} vật tư khác" : "";
-                    
                     var result = MessageBox.Show(
-                        $"Có {unmappedItems.Count} vật tư chưa mapping được:\n{unmappedCodes}{extraCount}\n\n" +
-                        $"Chỉ các vật tư đã mapping sẽ được lưu vào hệ thống.\n\n" +
-                        $"Tiếp tục lưu {currentExcelData.Count(x => x.IsMapped)} vật tư đã mapping?",
-                        "Cảnh báo mapping",
+                        $"Có {currentImportData.InvalidItemsCount} dòng dữ liệu lỗi!\n\n" +
+                        $"Chỉ {currentImportData.ValidItemsCount} dòng hợp lệ sẽ được xử lý.\n\n" +
+                        $"Tiếp tục lưu?",
+                        "Cảnh báo dữ liệu lỗi",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Warning);
 
@@ -325,79 +421,261 @@ namespace QLVT.GUI
                         return;
                 }
 
-                // Lấy danh sách vật tư đã mapping
-                var validItems = currentExcelData.Where(x => x.IsMapped).ToList();
-                if (!validItems.Any())
-                {
-                    MessageBox.Show("Không có vật tư nào đã mapping để lưu!", "Thông báo", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
                 // Xác nhận cuối cùng
-                var finalResult = MessageBox.Show(
-                    $"Xác nhận cập nhật tồn kho đầu kỳ?\n\n" +
-                    $"Kho: {selectedWarehouse?.TenKho}\n" +
-                    $"Số lượng vật tư sẽ lưu: {validItems.Count}\n" +
-                    $"Tổng số dòng từ Excel: {currentExcelData.Count}\n\n" +
-                    $"Dữ liệu sẽ được lưu vào hệ thống.",
-                    "Xác nhận",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                var summary = $"Xác nhận tạo tồn đầu kỳ?\n\n" +
+                            $"Số kho sẽ xử lý: {currentImportData.WarehouseGroups.Count}\n" +
+                            $"Tổng số vật tư: {currentImportData.ValidItemsCount}\n\n" +
+                            $"Hệ thống sẽ:\n" +
+                            $"- Tạo transaction tồn đầu kỳ cho từng kho\n" +
+                            $"- Tạo chi tiết transaction cho từng vật tư\n" +
+                            $"- Cập nhật inventory (tồn kho)\n\n" +
+                            $"Tiếp tục?";
+
+                var finalResult = MessageBox.Show(summary, "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (finalResult == DialogResult.Yes)
                 {
-                    lblStatus.Text = "Đang lưu tồn kho đầu kỳ...";
+                    lblStatus.Text = "Đang xử lý tồn đầu kỳ...";
                     lblStatus.ForeColor = Color.Blue;
-
-                    // Debug: Hiển thị thông tin mã kho
-                    System.Diagnostics.Debug.WriteLine($"DEBUG: Mã kho được chọn: '{selectedWarehouse?.Id}'");
-                    System.Diagnostics.Debug.WriteLine($"DEBUG: Tên kho được chọn: '{selectedWarehouse?.TenKho}'");
-
-                    // Chuyển đổi dữ liệu Excel thành OpeningInventoryInput với đầy đủ thông tin
-                    var inputs = validItems.Select(item => new OpeningInventoryInput
-                    {
-                        MaKho = selectedWarehouse?.MaKho, // Mã kho từ ComboBox được chọn
-                        MaVatTu = item.ItemCode,
-                        SoLuong = item.Quantity,
-                        SupplyId = item.SupplyId.Value, // Đã kiểm tra IsMapped nên .Value an toàn
-                        TenVatTu = item.SupplyName
-                    }).ToList();
-
-                    // Debug: Hiển thị thông tin input đầu tiên
-                    if (inputs.Any())
-                    {
-                        var firstInput = inputs.First();
-                        System.Diagnostics.Debug.WriteLine($"DEBUG: Input đầu tiên - MaKho: '{firstInput.MaKho}', MaVatTu: '{firstInput.MaVatTu}', SoLuong: {firstInput.SoLuong}");
-                    }
-
-                    string nguoiNhap = "Admin"; // TODO: Lấy từ session hiện tại
-                    int transactionId = importTransactionDAL.CreateOpeningInventoryTransaction(selectedWarehouse.Id, inputs, nguoiNhap);
-
-                    lblStatus.Text = $"✅ Đã tạo transaction #{transactionId} thành công";
-                    lblStatus.ForeColor = Color.Green;
-
-                    MessageBox.Show($"Đã tạo transaction tồn đầu kỳ #{transactionId} thành công!\n\n" +
-                                  $"Chi tiết:\n" +
-                                  $"- Tổng dòng Excel: {currentExcelData.Count}\n" +
-                                  $"- Đã mapping: {validItems.Count}\n" +
-                                  $"- Transaction ID: {transactionId}", 
-                        "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // Clear dữ liệu sau khi lưu thành công
-                    currentExcelData.Clear();
-                    dgvInput.DataSource = null;
-                    txtExcelFilePath.Text = "";
+                    
+                    // Disable buttons during processing
+                    btnSave.Enabled = false;
                     btnLoadExcel.Enabled = false;
-                    lblStatus.Text = "Sẵn sàng - Chọn file Excel...";
-                    lblStatus.ForeColor = Color.Blue;
+
+                    await ProcessOpeningInventoryAsync();
                 }
             }
             catch (Exception ex)
             {
-                lblStatus.Text = $"❌ Lỗi lưu: {ex.Message}";
+                lblStatus.Text = $"❌ Lỗi: {ex.Message}";
                 lblStatus.ForeColor = Color.Red;
-                ShowError($"Lỗi khi lưu tồn kho đầu kỳ: {ex.Message}");
+                ShowError($"Lỗi khi lưu tồn đầu kỳ: {ex.Message}");
+            }
+            finally
+            {
+                // Re-enable buttons
+                btnSave.Enabled = true;
+                btnLoadExcel.Enabled = true;
+            }
+        }
+
+        private async Task ProcessOpeningInventoryAsync()
+        {
+            try
+            {
+                var totalProcessed = 0;
+                var successfulWarehouses = new List<string>();
+                var failedWarehouses = new List<string>();
+
+                foreach (var warehouseGroup in currentImportData!.WarehouseGroups)
+                {
+                    try
+                    {
+                        lblStatus.Text = $"Đang xử lý kho: {warehouseGroup.TenKho} ({warehouseGroup.Items.Count} vật tư)...";
+                        
+                        // Get warehouse ID
+                        var warehouseId = await GetWarehouseIdByCode(warehouseGroup.MaKho);
+                        if (warehouseId == null)
+                        {
+                            failedWarehouses.Add($"{warehouseGroup.MaKho} - Không tìm thấy kho");
+                            continue;
+                        }
+
+                        // Create transaction using existing pattern from NhapKhoTransactionDAL
+                        using (var connection = DatabaseHelper.GetConnection())
+                        {
+                            await connection.OpenAsync();
+                            using (var dbTransaction = connection.BeginTransaction())
+                            {
+                                try
+                                {
+                                    // Generate transaction number
+                                    string soPhieu = GenerateOpeningInventoryTransactionNumber(warehouseId.Value);
+                                    
+                                    // Create transaction
+                                    string insertTransactionSql = @"
+                                        INSERT INTO Transactions 
+                                        (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaKhoNhan, GhiChu, CreatedBy, CreatedDate)
+                                        VALUES 
+                                        (@soPhieu, @ngayGiaoDich, 'TonDauKy', @maKhoNhan, @ghiChu, @createdBy, @createdDate);
+                                        SELECT SCOPE_IDENTITY();";
+
+                                    int transactionId;
+                                    using (var command = new SqlCommand(insertTransactionSql, connection, dbTransaction))
+                                    {
+                                        command.Parameters.AddWithValue("@soPhieu", soPhieu);
+                                        command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Today);
+                                        command.Parameters.AddWithValue("@maKhoNhan", warehouseId.Value);
+                                        command.Parameters.AddWithValue("@ghiChu", $"Tồn đầu kỳ 31/12/2024");
+                                        command.Parameters.AddWithValue("@createdBy", "SYSTEM");
+                                        command.Parameters.AddWithValue("@createdDate", DateTime.Now);
+
+                                        var result = await command.ExecuteScalarAsync();
+                                        transactionId = Convert.ToInt32(result);
+                                    }
+
+                                    warehouseGroup.TransactionID = transactionId;
+
+                                    // Create transaction details
+                                    foreach (var item in warehouseGroup.Items)
+                                    {
+
+                                            var supply = await supplyDAL.GetSupplyByErpIdAsync(item.MaVatTu);
+                                            if (supply != null)
+                                            {
+                                                // Insert transaction detail
+                                                string insertDetailSql = @"
+                                                    INSERT INTO TransactionDetails (TransactionID, ErpID, SoLuong, GhiChu, CreatedBy)
+                                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, 'admin')";
+
+                                                using (var detailCommand = new SqlCommand(insertDetailSql, connection, dbTransaction))
+                                                {
+                                                    detailCommand.Parameters.AddWithValue("@transactionId", transactionId);
+                                                    detailCommand.Parameters.AddWithValue("@erpId", supply.ErpId ?? 0);
+                                                    detailCommand.Parameters.AddWithValue("@soLuong", item.SoLuong);
+                                                    detailCommand.Parameters.AddWithValue("@ghiChu", "Tồn đầu kỳ");
+
+                                                    await detailCommand.ExecuteNonQueryAsync();
+                                                }
+
+                                                // Update inventory
+                                                await UpdateInventoryForOpeningBalance(warehouseId.Value, item.MaVatTu, item.SoLuong);
+                                                
+                                                totalProcessed++;
+                                            }
+                                    }
+
+                                    // Commit transaction
+                                    dbTransaction.Commit();
+                                    warehouseGroup.IsProcessed = true;
+                                    successfulWarehouses.Add($"{warehouseGroup.TenKho} ({warehouseGroup.Items.Count} vật tư)");
+                                }
+                                catch (Exception ex)
+                                {
+                                    dbTransaction.Rollback();
+                                    failedWarehouses.Add($"{warehouseGroup.MaKho} - Lỗi: {ex.Message}");
+                                }
+                            }
+                        }
+                        
+                    }
+                    catch (Exception ex)
+                    {
+                        failedWarehouses.Add($"{warehouseGroup.TenKho}: {ex.Message}");
+                    }
+                }
+
+                // Show completion summary
+                var completionMessage = $"Hoàn thành xử lý tồn đầu kỳ!\n\n" +
+                                       $"Tổng số vật tư đã xử lý: {totalProcessed}\n" +
+                                       $"Kho xử lý thành công: {successfulWarehouses.Count}\n" +
+                                       $"Kho lỗi: {failedWarehouses.Count}\n\n";
+
+                if (successfulWarehouses.Any())
+                {
+                    completionMessage += "✅ Kho thành công:\n" + string.Join("\n", successfulWarehouses) + "\n\n";
+                }
+
+                if (failedWarehouses.Any())
+                {
+                    completionMessage += "❌ Kho lỗi:\n" + string.Join("\n", failedWarehouses);
+                }
+
+                lblStatus.Text = failedWarehouses.Any() ? 
+                    $"⚠️ Hoàn thành với lỗi: {successfulWarehouses.Count}/{currentImportData.WarehouseGroups.Count} kho" :
+                    $"✅ Hoàn thành: {totalProcessed} vật tư, {successfulWarehouses.Count} kho";
+                lblStatus.ForeColor = failedWarehouses.Any() ? Color.Orange : Color.Green;
+
+                MessageBox.Show(completionMessage, "Kết quả xử lý", MessageBoxButtons.OK, 
+                    failedWarehouses.Any() ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+
+                // Clear data after successful processing
+                if (!failedWarehouses.Any())
+                {
+                    currentImportData = null;
+                    dgvInput.DataSource = null;
+                    txtExcelFilePath.Text = "";
+                }
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = $"❌ Lỗi xử lý: {ex.Message}";
+                lblStatus.ForeColor = Color.Red;
+                throw;
+            }
+        }
+
+        private string GenerateOpeningInventoryTransactionNumber(long warehouseCode)
+        {
+            var date = DateTime.Now.ToString("yyyyMMdd");
+            var time = DateTime.Now.ToString("HHmmss");
+            return $"TDK20241231-{warehouseCode}";
+        }
+
+        private async Task UpdateInventoryForOpeningBalance(long warehouseCode, long supplyCode, decimal quantity)
+        {
+            try
+            {
+                // Check if inventory record exists
+                var existingInventory = await inventoryDAL.GetInventoryAsync(warehouseCode, supplyCode);
+                
+                if (existingInventory != null)
+                {
+                    // Update existing inventory
+                    existingInventory.SoLuongTon = quantity;
+                    existingInventory.LastUpdated = DateTime.Now;
+                    await inventoryDAL.UpdateInventoryAsync(existingInventory);
+                }
+                else
+                {
+                    // Create new inventory record
+                    var newInventory = new Inventory
+                    {
+                        WarehouseId = warehouseCode,
+                        SupplyErpId = supplyCode,
+                        SoLuongTon = quantity,
+                        LastUpdated = DateTime.Now
+                    };
+                    await inventoryDAL.AddInventoryAsync(newInventory);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi cập nhật inventory cho {warehouseCode}-{supplyCode}: {ex.Message}");
+            }
+        }
+
+        private void UpdateRowColors()
+        {
+            if (dgvInput.DataSource == null) return;
+
+            foreach (DataGridViewRow row in dgvInput.Rows)
+            {
+                if (row.DataBoundItem is OpeningInventoryExcelItem item)
+                {
+                    if (!item.IsValid)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightCoral;
+                        row.DefaultCellStyle.ForeColor = Color.White;
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightGreen;
+                        row.DefaultCellStyle.ForeColor = Color.Black;
+                    }
+                }
+            }
+        }
+        private async Task<int?> GetWarehouseIdByCode(string warehouseCode)
+        {
+            try
+            {
+                var warehouse = await warehouseDAL.GetWarehouseByCodeAsync(warehouseCode);
+                return warehouse?.Id;
+            }
+            catch
+            {
+                return null;
             }
         }
 

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using QLVT.BLL;
+using QLVT.DAL;
 using QLVT.Models;
 using QLVT.GUI.Components;
 
@@ -277,6 +278,9 @@ namespace QLVT.GUI
             btnExportExcel.Click += BtnExportExcel_Click;
             this.Load += BaoCaoXuatNhapTonChiTietForm_Load;
             
+            // DataGridView events
+            dgvResults.CellDoubleClick += DgvResults_CellDoubleClick;
+            
             // Component events
             warehouseComboBox.WarehouseSelected += WarehouseComboBox_WarehouseSelected;
             vatTuTextBox.TextChanged += VatTuTextBox_TextChanged;
@@ -295,7 +299,7 @@ namespace QLVT.GUI
             currentFilter.DenNgay = dtpDenNgay.Value;
         }
 
-        private async void BaoCaoXuatNhapTonChiTietForm_Load(object sender, EventArgs e)
+        private void BaoCaoXuatNhapTonChiTietForm_Load(object sender, EventArgs e)
         {
             try
             {
@@ -304,7 +308,7 @@ namespace QLVT.GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi khởi tạo form: {ex.Message}", "Lỗi", 
+                MessageBox.Show($"Lỗi khi khởi tạo form: {ex.Message}", "Lỗi",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -423,6 +427,69 @@ namespace QLVT.GUI
 
             // Enable button if all fields filled, but don't auto-run
             btnTimKiem.Enabled = allFilled;
+        }
+
+        private static bool _isEditFormOpen = false; // Prevent multiple forms
+
+        private async void DgvResults_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                // Prevent opening multiple edit forms
+                if (_isEditFormOpen)
+                {
+                    return;
+                }
+
+                // Kiểm tra có row được chọn và không phải header
+                if (e.RowIndex < 0 || dgvResults.Rows[e.RowIndex].DataBoundItem == null)
+                    return;
+
+                // Lấy item từ row được double-click
+                var item = dgvResults.Rows[e.RowIndex].DataBoundItem as BaoCaoXuatNhapTonChiTietItem;
+                if (item == null) return;
+
+                // Kiểm tra SoPhieu có hợp lệ không
+                if (string.IsNullOrWhiteSpace(item.SoPhieu) || item.SoPhieu == "Tồn đầu kỳ")
+                {
+                    MessageBox.Show("Không thể chỉnh sửa dòng này!", "Thông báo", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                _isEditFormOpen = true;
+
+                // Tìm transaction bằng số phiếu
+                var transactionDAL = new TransactionDAL();
+                var transaction = await transactionDAL.GetTransactionBySoPhieuAsync(item.SoPhieu);
+                
+                if (transaction == null)
+                {
+                    MessageBox.Show($"Không tìm thấy phiếu với số: {item.SoPhieu}", "Lỗi", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    _isEditFormOpen = false;
+                    return;
+                }
+
+                // Mở form chỉnh sửa phiếu
+                var editForm = new PhieuEditForm(transaction.TransactionID);
+                try
+                {
+                    editForm.ShowDialog();
+                }
+                finally
+                {
+                    _isEditFormOpen = false; // Reset flag when form closes
+                }
+
+                // Có thể refresh lại dữ liệu sau khi chỉnh sửa
+                // await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở form chỉnh sửa: {ex.Message}", "Lỗi", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         #endregion
