@@ -234,7 +234,7 @@ namespace QLVT.BLL
         /// <summary>
         /// Export báo cáo chi tiết ra Excel với bộ lọc mở rộng
         /// </summary>
-        public async Task<bool> ExportDetailReportToExcelAsync(
+        public Task<bool> ExportDetailReportToExcelAsync(
             List<TransactionDetailReportItem> data, 
             string fileName,
             DateTime tuNgay, 
@@ -328,13 +328,13 @@ namespace QLVT.BLL
                 MessageBox.Show($"Xuất Excel thành công!\nFile: {fileName}", "Thông báo", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                return Task.FromResult(false);
             }
         }
     }

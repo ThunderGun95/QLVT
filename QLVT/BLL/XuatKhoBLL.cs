@@ -11,7 +11,6 @@ namespace QLVT.BLL
         private readonly SupplyMappingDAL supplyMappingDAL;
         private readonly WarehouseDAL warehouseDAL;
         private readonly XuatKhoTransactionDAL xuatKhoTransactionDAL;
-        private readonly WarehouseMappingBLL warehouseMappingBLL;
 
         public XuatKhoBLL()
         {
@@ -19,7 +18,6 @@ namespace QLVT.BLL
             supplyMappingDAL = new SupplyMappingDAL();
             warehouseDAL = new WarehouseDAL();
             xuatKhoTransactionDAL = new XuatKhoTransactionDAL();
-            warehouseMappingBLL = new WarehouseMappingBLL();
         }
 
         /// <summary>
@@ -82,6 +80,7 @@ namespace QLVT.BLL
                     // Mapping kho nguồn sử dụng WarehouseMappingBLL
                     if (!string.IsNullOrEmpty(detail.MaKhoXuat))
                     {
+                        /*
                         // Sử dụng mapping rule: kho ERP (1,3,4,34) -> kho công ty (ID=6)
                         var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(detail.MaKhoXuat);
                         if (internalWarehouse != null)
@@ -98,6 +97,7 @@ namespace QLVT.BLL
                                 detail.SourceWarehouseId = warehouse.Id;
                             }
                         }
+                        */
                     }
 
                     order.ChiTiet.Add(detail);

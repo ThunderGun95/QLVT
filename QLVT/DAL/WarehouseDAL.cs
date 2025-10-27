@@ -245,6 +245,52 @@ namespace QLVT.DAL
             }
             return null;
         }
+
+        /// <summary>
+        /// Lấy kho theo mã kho string
+        /// </summary>
+        public async Task<Warehouse?> GetWarehouseByMaKhoAsync(string maKho)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    await connection.OpenAsync();
+                    var query = @"
+                        SELECT Id, MaKho, TenKho, LoaiKho, MaNV, DiaChi, GhiChu, IsActive 
+                        FROM Warehouses 
+                        WHERE MaKho = @MaKho AND IsActive = 1";
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaKho", maKho);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new Warehouse
+                                {
+                                    Id = reader.GetInt32("Id"),
+                                    MaKho = reader.GetString("MaKho"),
+                                    TenKho = reader.GetString("TenKho"),
+                                    LoaiKho = reader.GetString("LoaiKho"),
+                                    MaNV = reader.IsDBNull("MaNV") ? null : reader.GetString("MaNV"),
+                                    DiaChi = reader.IsDBNull("DiaChi") ? null : reader.GetString("DiaChi"),
+                                    GhiChu = reader.IsDBNull("GhiChu") ? null : reader.GetString("GhiChu"),
+                                    IsActive = reader.GetBoolean("IsActive")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi lấy thông tin kho {maKho}: {ex.Message}");
+            }
+            return null;
+        }
         
     }
 }

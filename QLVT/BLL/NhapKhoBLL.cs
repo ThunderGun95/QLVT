@@ -1,7 +1,9 @@
+using System.Linq;
 using QLVT.DAL;
 using QLVT.ERP.DAL;
 using QLVT.ERP.Models;
 using QLVT.Models;
+using QLVT.Utils;
 
 namespace QLVT.BLL
 {
@@ -11,7 +13,6 @@ namespace QLVT.BLL
         private readonly SupplyMappingDAL supplyMappingDAL;
         private readonly WarehouseDAL warehouseDAL;
         private readonly NhapKhoTransactionDAL nhapKhoTransactionDAL;
-        private readonly WarehouseMappingBLL warehouseMappingBLL;
 
 
         public NhapKhoBLL()
@@ -20,7 +21,6 @@ namespace QLVT.BLL
             supplyMappingDAL = new SupplyMappingDAL();
             warehouseDAL = new WarehouseDAL();
             nhapKhoTransactionDAL = new NhapKhoTransactionDAL();
-            warehouseMappingBLL = new WarehouseMappingBLL();
         }
 
         /// <summary>
@@ -148,14 +148,15 @@ namespace QLVT.BLL
                 if (erpNhapKhoDAL.IsImportOrderProcessed(order.SoPhieuNhapKho, order.NAM))
                     throw new Exception($"Phiếu {order.SoPhieuNhapKho}-{order.NAM} đã được xử lý rồi");
 
-                var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(maKho);
+                // Tìm warehouse internal theo mã kho đã mapping
+                var internalWarehouse = warehouseDAL.GetAllWarehouses()
+                    .FirstOrDefault(w => w.MaKho == maKho);
+                
+                if (internalWarehouse == null)
+                    throw new Exception($"Không tìm thấy kho nội bộ với mã: {maKho}");
+
                 // Thực hiện nhập kho
-                int maKhoNhap = 0;
-                if (internalWarehouse != null)
-                {
-                    maKhoNhap = internalWarehouse.Id;
-                }
-                return nhapKhoTransactionDAL.CreateNhapKhoErpTransaction(order, maKhoNhap, createdBy);
+                return nhapKhoTransactionDAL.CreateNhapKhoErpTransaction(order, internalWarehouse.Id, createdBy);
             }
             catch (Exception ex)
             {

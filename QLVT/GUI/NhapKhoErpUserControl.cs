@@ -234,7 +234,7 @@ namespace QLVT.GUI
             
             // Sử dụng warehouse mapping để hiển thị kho đích
             string MaKhoNhap = ERPWarehouseMapping.MapERPToQLVT(order.MaKhoVatTu, order.ChiTiet);
-            khoNhap = await warehouseDAL.GetWarehouseByCodeAsync(MaKhoNhap);
+            khoNhap = await warehouseDAL.GetWarehouseByMaKhoAsync(MaKhoNhap);
             lblKhoNhap.Text = $"{khoNhap!.TenKho} ({khoNhap.MaKho})";
             
             lblNguoiTao.Text = order.NhanVienMua;

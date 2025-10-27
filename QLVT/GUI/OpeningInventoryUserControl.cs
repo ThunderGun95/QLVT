@@ -305,7 +305,7 @@ namespace QLVT.GUI
                     // Get warehouse name
                     try
                     {
-                        var warehouse = await warehouseDAL.GetWarehouseByCodeAsync(group.Key);
+                        var warehouse = await warehouseDAL.GetWarehouseByMaKhoAsync(group.Key);
                         warehouseInventory.TenKho = warehouse?.TenKho ?? "Không tìm thấy";
                     }
                     catch
@@ -670,7 +670,7 @@ namespace QLVT.GUI
         {
             try
             {
-                var warehouse = await warehouseDAL.GetWarehouseByCodeAsync(warehouseCode);
+                var warehouse = await warehouseDAL.GetWarehouseByMaKhoAsync(warehouseCode);
                 return warehouse?.Id;
             }
             catch

@@ -45,7 +45,7 @@ namespace QLVT.BLL
         /// <summary>
         /// Xuất báo cáo tổng ra file Excel
         /// </summary>
-        public async Task<bool> ExportToExcelAsync(List<TransactionSummaryReportItem> data, TransactionSummaryFilter filter)
+        public Task<bool> ExportToExcelAsync(List<TransactionSummaryReportItem> data, TransactionSummaryFilter filter)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace QLVT.BLL
 
                         MessageBox.Show($"Xuất file Excel thành công!\nĐường dẫn: {saveFileDialog.FileName}", 
                                       "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return true;
+                        return Task.FromResult(true);
                     }
                 }
             }
@@ -158,7 +158,7 @@ namespace QLVT.BLL
                               "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            return false;
+            return Task.FromResult(false);
         }
 
         /// <summary>
