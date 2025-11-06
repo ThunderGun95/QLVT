@@ -43,6 +43,42 @@ namespace QLVT.Utils
                 "7" => "037",
                 "34" => "037", 
                 "6" => "036",
+                "45" => "011", // Kho 45 map sang kho 011
+                _ => "001" // Default cho các kho khác
+            };
+        }
+
+        /// <summary>
+        /// Map warehouse cho phiếu xuất ERP dựa trên mã kho ERP và ErpId vật tư
+        /// </summary>
+        /// <param name="erpWarehouseCode">Mã kho từ ERP</param>
+        /// <param name="chiTietList">Danh sách chi tiết vật tư xuất kho</param>
+        /// <returns>Mã kho trong QLVT</returns>
+        public static string MapERPToQLVT(string erpWarehouseCode, List<ERP_PhieuXuatKhoChiTiet> chiTietList)
+        {
+            if (string.IsNullOrWhiteSpace(erpWarehouseCode))
+                return "001";
+            
+            var cleanCode = erpWarehouseCode.Trim();
+            
+            // RULE MỚI: Kho ERP mã 3 - phân loại theo ErpId vật tư
+            if (cleanCode == "3" && chiTietList != null && chiTietList.Any(x => x.IsMapped))
+            {
+                // Kiểm tra ErpId của vật tư đầu tiên đã mapping
+                var firstMappedItem = chiTietList.First(x => x.IsMapped);
+                if (firstMappedItem.MappedSupplyId.HasValue)
+                {
+                    return _specialErpIds.Contains(firstMappedItem.MappedSupplyId.Value) ? "037" : "001";
+                }
+            }
+            
+            // RULE CŨ: Các kho khác theo mapping thông thường
+            return cleanCode switch
+            {
+                "7" => "037",
+                "34" => "037", 
+                "6" => "036",
+                "45" => "011", // Kho 45 map sang kho 011
                 _ => "001" // Default cho các kho khác
             };
         }

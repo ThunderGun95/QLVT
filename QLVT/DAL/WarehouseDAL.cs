@@ -208,7 +208,7 @@ namespace QLVT.DAL
         /// <summary>
         /// Lấy kho theo mã kho
         /// </summary>
-        public async Task<Warehouse?> GetWarehouseByCodeAsync(long warehouseCode)
+        public async Task<Warehouse?> GetWarehouseByIdAsync(long warehouseId)
         {
             try
             {
@@ -218,11 +218,11 @@ namespace QLVT.DAL
                     var query = @"
                         SELECT Id, MaKho, TenKho, DiaChi, GhiChu 
                         FROM Warehouses 
-                        WHERE MaKho = @MaKho";
+                        WHERE Id = @MaKho";
 
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@MaKho", warehouseCode);
+                        command.Parameters.AddWithValue("@MaKho", warehouseId);
 
                         using (var reader = await command.ExecuteReaderAsync())
                         {
@@ -241,7 +241,7 @@ namespace QLVT.DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi lấy thông tin kho {warehouseCode}: {ex.Message}");
+                throw new Exception($"Lỗi lấy thông tin kho Id {warehouseId}: {ex.Message}");
             }
             return null;
         }
@@ -287,7 +287,7 @@ namespace QLVT.DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi lấy thông tin kho {maKho}: {ex.Message}");
+                throw new Exception($"Lỗi lấy thông tin kho mã {maKho}: {ex.Message}");
             }
             return null;
         }

@@ -136,14 +136,17 @@ namespace QLVT.DAL
                             {
                                 // Insert transaction detail
                                 string insertDetailSql = @"
-                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong)
-                                    VALUES (@transactionId, @erpId, @soLuong)";
+                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, CreatedBy)
+                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @maKhoXuat, @createdBy)";
 
                                 using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                                 {
                                     command.Parameters.AddWithValue("@transactionId", transactionId);
                                     command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
+                                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư MC4: {maddk}");
+                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                     command.ExecuteNonQuery();
                                 }
@@ -195,7 +198,7 @@ namespace QLVT.DAL
                             NgayHoanUng = reader.IsDBNull("NgayHoanUng") ? null : reader.GetDateTime("NgayHoanUng"),
                             DaHoanUng = reader.IsDBNull("DaHoanUng") ? null : reader.GetBoolean("DaHoanUng"),
                             ThoiGianXacNhanHoanUng = reader.IsDBNull("ThoiGianXacNhanHoanUng") ? null : reader.GetDateTime("ThoiGianXacNhanHoanUng"),
-                            MaNVXacNhan = reader.GetString("MaNVXacNhan"),
+                            MaNVXacNhan = reader.IsDBNull("MaNVXacNhan") ? "" : reader.GetString("MaNVXacNhan"),
                             CreatedDate = reader.GetDateTime("CreatedDate"),
                             UpdatedDate = reader.GetDateTime("UpdatedDate")
                         };
@@ -736,6 +739,249 @@ namespace QLVT.DAL
                     }
                 }
             }
+        }
+        #endregion
+
+        #region BGK (Bàn giao kỹ thuật)
+        public List<NghiemThuGiaoKhoanModel> BGK_GetDanhSachChoHoanUng()
+        {
+            var result = new List<NghiemThuGiaoKhoanModel>();
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                string sql = @"
+                    SELECT GiaoKhoanNghiemThuVatTuID, SoBGK, SoNghiemThu, NamNghiemThu, SoLanNghiemThu,
+                           NhanVienKyThuat, NhanVienXayLap, NoiDung, DaHoanUng, NgayHoanUng
+                    FROM ct.NghiemThuGiaoKhoan 
+                    WHERE (DaHoanUng IS NULL OR DaHoanUng = 0)
+                    ORDER BY SoNghiemThu DESC, SoLanNghiemThu DESC";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new NghiemThuGiaoKhoanModel
+                            {
+                                GiaoKhoanNghiemThuVatTuID = reader.GetInt64("GiaoKhoanNghiemThuVatTuID"),
+                                SoBGK = reader.IsDBNull("SoBGK") ? null : reader.GetString("SoBGK"),
+                                SoNghiemThu = reader.IsDBNull("SoNghiemThu") ? null : reader.GetInt32("SoNghiemThu"),
+                                NamNghiemThu = reader.IsDBNull("NamNghiemThu") ? null : reader.GetInt32("NamNghiemThu"),
+                                SoLanNghiemThu = reader.IsDBNull("SoLanNghiemThu") ? null : reader.GetInt32("SoLanNghiemThu"),
+                                NhanVienKyThuat = reader.IsDBNull("NhanVienKyThuat") ? null : reader.GetString("NhanVienKyThuat"),
+                                NhanVienXayLap = reader.IsDBNull("NhanVienXayLap") ? null : reader.GetString("NhanVienXayLap"),
+                                NoiDung = reader.IsDBNull("NoiDung") ? null : reader.GetString("NoiDung"),
+                                DaHoanUng = reader.IsDBNull("DaHoanUng") ? null : reader.GetBoolean("DaHoanUng"),
+                                NgayHoanUng = reader.IsDBNull("NgayHoanUng") ? null : reader.GetDateTime("NgayHoanUng")
+                            });
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public bool BGK_UpdateHoanUngBGK(long giaoKhoanNghiemThuVatTuID, string nguoiXacNhan)
+        {
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Bước 0: Lấy thông tin BGK để kiểm tra
+                            var bgk = BGK_GetBGKByID(giaoKhoanNghiemThuVatTuID, connection, transaction);
+                            if (bgk == null)
+                            {
+                                throw new Exception("Không tìm thấy BGK");
+                            }
+
+                            // Kiểm tra BGK đã hoàn ứng chưa
+                            if (bgk.DaHoanUng == true)
+                            {
+                                throw new Exception("BGK đã được hoàn ứng trước đó");
+                            }
+
+                            // Bước 0.1: Tìm kho dựa trên mã nhân viên xây lắp
+                            int warehouseId = GetWarehouseIdByStaffCode(bgk.NhanVienXayLap, connection, transaction);
+                            if (warehouseId == 0)
+                            {
+                                throw new Exception($"Không tìm thấy kho cho nhân viên: {bgk.NhanVienXayLap}");
+                            }
+
+                            // Bước 1: Cập nhật trạng thái hoàn ứng trong bảng ct.NghiemThuGiaoKhoan
+                            string sqlUpdateBGK = @"
+                                UPDATE ct.NghiemThuGiaoKhoan 
+                                SET DaHoanUng = 1,
+                                    MaNVXacNhan = @nguoiXacNhan,
+                                    ThoiGianXacNhanHoanUng = @thoiGianXacNhan,
+                                    NgayHoanUng = @ngayHoanUng,
+                                    UpdatedDate = @updateDate
+                                WHERE GiaoKhoanNghiemThuVatTuID = @giaoKhoanID AND (DaHoanUng IS NULL OR DaHoanUng = 0)";
+
+                            using (var command = new SqlCommand(sqlUpdateBGK, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@giaoKhoanID", giaoKhoanNghiemThuVatTuID);
+                                command.Parameters.AddWithValue("@nguoiXacNhan", nguoiXacNhan);
+                                command.Parameters.AddWithValue("@thoiGianXacNhan", DateTime.Now);
+                                command.Parameters.AddWithValue("@ngayHoanUng", DateTime.Now);
+                                command.Parameters.AddWithValue("@updateDate", DateTime.Now);
+
+                                int rows = command.ExecuteNonQuery();
+                                if (rows == 0)
+                                {
+                                    throw new Exception("Không tìm thấy BGK để cập nhật");
+                                }
+                            }
+
+                            // Bước 2: Lấy danh sách chi tiết vật tư cần hoàn ứng
+                            var chiTietList = BGK_GetChiTietBGKByID(giaoKhoanNghiemThuVatTuID, connection, transaction);
+
+                            if (chiTietList.Count == 0)
+                            {
+                                throw new Exception("Không có vật tư nào để hoàn ứng");
+                            }
+
+                            // Bước 3: Tạo transaction hoàn ứng trong bảng qlvt.HoanUngTransaction
+                            DateTime ngayHoanUng = DateTime.Now;
+                            int transactionId = CreateHoanUngTransaction(bgk.SoBGK ?? "BGK", "BGK", nguoiXacNhan, ngayHoanUng, bgk.NhanVienXayLap ?? "", warehouseId, connection, transaction);
+
+                            // Bước 4: Tạo chi tiết giao dịch và cập nhật tồn kho
+                            foreach (var chiTiet in chiTietList)
+                            {
+                                // Tạo chi tiết giao dịch
+                                CreateHoanUngTransactionDetail(transactionId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng, connection, transaction);
+
+                                // Cập nhật tồn kho
+                                CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                            }
+
+                            transaction.Commit();
+                            return true;
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi cập nhật hoàn ứng BGK: {ex.Message}", ex);
+            }
+        }
+
+        private NghiemThuGiaoKhoanModel? BGK_GetBGKByID(long giaoKhoanID, SqlConnection connection, SqlTransaction transaction)
+        {
+            string sql = @"
+                SELECT GiaoKhoanNghiemThuVatTuID, SoBGK, SoNghiemThu, NamNghiemThu, SoLanNghiemThu,
+                       NhanVienKyThuat, NhanVienXayLap, NoiDung, DaHoanUng, NgayHoanUng
+                FROM ct.NghiemThuGiaoKhoan 
+                WHERE GiaoKhoanNghiemThuVatTuID = @giaoKhoanID";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@giaoKhoanID", giaoKhoanID);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new NghiemThuGiaoKhoanModel
+                        {
+                            GiaoKhoanNghiemThuVatTuID = reader.GetInt64("GiaoKhoanNghiemThuVatTuID"),
+                            SoBGK = reader.IsDBNull("SoBGK") ? null : reader.GetString("SoBGK"),
+                            SoNghiemThu = reader.IsDBNull("SoNghiemThu") ? null : reader.GetInt32("SoNghiemThu"),
+                            NamNghiemThu = reader.IsDBNull("NamNghiemThu") ? null : reader.GetInt32("NamNghiemThu"),
+                            SoLanNghiemThu = reader.IsDBNull("SoLanNghiemThu") ? null : reader.GetInt32("SoLanNghiemThu"),
+                            NhanVienKyThuat = reader.IsDBNull("NhanVienKyThuat") ? null : reader.GetString("NhanVienKyThuat"),
+                            NhanVienXayLap = reader.IsDBNull("NhanVienXayLap") ? null : reader.GetString("NhanVienXayLap"),
+                            NoiDung = reader.IsDBNull("NoiDung") ? null : reader.GetString("NoiDung"),
+                            DaHoanUng = reader.IsDBNull("DaHoanUng") ? null : reader.GetBoolean("DaHoanUng"),
+                            NgayHoanUng = reader.IsDBNull("NgayHoanUng") ? null : reader.GetDateTime("NgayHoanUng")
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private List<NghiemThuGiaoKhoanCTModel> BGK_GetChiTietBGKByID(long giaoKhoanID, SqlConnection connection, SqlTransaction transaction)
+        {
+            var result = new List<NghiemThuGiaoKhoanCTModel>();
+            string sql = @"
+                SELECT MaVTErp as VatTuHangHoa, TenVatTu, DonViTinh, SoLuongHoanUng
+                FROM ct.NghiemThuGiaoKhoanCT 
+                WHERE GiaoKhoanNghiemThuVatTuID = @giaoKhoanID AND SoLuongHoanUng > 0";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@giaoKhoanID", giaoKhoanID);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new NghiemThuGiaoKhoanCTModel
+                        {
+                            MaVTErp = reader.GetInt32("VatTuHangHoa"),
+                            VatTuHangHoa = reader.GetInt32("VatTuHangHoa").ToString(),
+                            TenVatTu = reader.IsDBNull("TenVatTu") ? null : reader.GetString("TenVatTu"),
+                            DonViTinh = reader.IsDBNull("DonViTinh") ? null : reader.GetString("DonViTinh"),
+                            SoLuongHoanUng = reader.GetDecimal("SoLuongHoanUng")
+                        });
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public List<NghiemThuGiaoKhoanCTModel> BGK_GetChiTietVatTuWithTonKho(long giaoKhoanID)
+        {
+            var result = new List<NghiemThuGiaoKhoanCTModel>();
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                string sql = @"
+                    SELECT ct.MaVTErp as VatTuHangHoa, ct.TenVatTu, ct.DonViTinh, ct.SoLuongHoanUng,
+                           ISNULL(tk.TonKho, 0) as TonKhoSo
+                    FROM ct.NghiemThuGiaoKhoanCT ct
+                    LEFT JOIN qlvt.TonKho tk ON ct.MaVTErp = tk.MaVatTu
+                    WHERE ct.GiaoKhoanNghiemThuVatTuID = @giaoKhoanID AND ct.SoLuongHoanUng > 0
+                    ORDER BY ct.TenVatTu";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@giaoKhoanID", giaoKhoanID);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new NghiemThuGiaoKhoanCTModel
+                            {
+                                MaVTErp = reader.GetInt32("VatTuHangHoa"),
+                                VatTuHangHoa = reader.GetInt32("VatTuHangHoa").ToString(),
+                                TenVatTu = reader.IsDBNull("TenVatTu") ? null : reader.GetString("TenVatTu"),
+                                DonViTinh = reader.IsDBNull("DonViTinh") ? null : reader.GetString("DonViTinh"),
+                                SoLuongHoanUng = reader.GetDecimal("SoLuongHoanUng")
+                                // TonKho information can be accessed separately if needed
+                            });
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
         #endregion
 

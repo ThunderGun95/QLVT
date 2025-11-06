@@ -63,7 +63,7 @@ namespace QLVT.DAL
                                 command.Parameters.AddWithValue("@maKhoNhap", maKho);
                                 command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongNhapKho);
-                                command.Parameters.AddWithValue("@ghiChu", $"Nhập ERP kho {order.TenKho}");
+                                command.Parameters.AddWithValue("@ghiChu", $"Nhập ERP kho {order.TenKho}, phiếu({order.SoPhieuNhapKho}-{order.NAM})");
                                 command.Parameters.AddWithValue("@createdBy", createdBy);
 
                                 command.ExecuteNonQuery();

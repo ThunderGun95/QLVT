@@ -330,8 +330,7 @@ namespace QLVT.GUI
                     $"Xác nhận xuất kho phiếu {currentOrder.SoPhieuDayDu}?\n" +
                     $"Người nhận: {currentOrder.TenNhanVien} ({currentOrder.MaNhanVien})\n" +
                     $"Kho đích: {employeeWarehouse.TenKho}\n" +
-                    $"Vật tư sẽ được chuyển từ các kho nguồn tương ứng đến kho nhân viên.\n" +
-                    $"Tổng cộng: {currentOrder.ChiTiet.Count} loại vật tư từ {currentOrder.ChiTiet.Where(c => !string.IsNullOrEmpty(c.TenKhoXuat)).Select(c => c.TenKhoXuat).Distinct().Count()} kho khác nhau.",
+                    $"Vật tư sẽ được chuyển từ các kho nguồn tương ứng đến kho nhân viên.\n",
                     "Xác nhận xuất kho", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (confirmResult == DialogResult.Yes)
