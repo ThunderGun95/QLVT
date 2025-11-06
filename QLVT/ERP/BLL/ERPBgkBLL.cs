@@ -59,22 +59,5 @@ namespace QLVT.ERP.BLL
                 throw new Exception($"Lỗi BLL - Lấy chi tiết BGK: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Cập nhật trạng thái hoàn ứng cho nghiệm thu giao khoán
-        /// </summary>
-        public void UpdateNghiemThuGiaoKhoanHoanUng(long giaoKhoanNghiemThuVatTuID, 
-            DateTime ngayHoanUng, bool daHoanUng, DateTime thoiGianXacNhan)
-        {
-            try
-            {
-                _erpBgkDAL.UpdateNghiemThuGiaoKhoanHoanUng(giaoKhoanNghiemThuVatTuID,
-                    ngayHoanUng, daHoanUng, thoiGianXacNhan);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi BLL - Cập nhật trạng thái hoàn ứng: {ex.Message}");
-            }
-        }
     }
 }

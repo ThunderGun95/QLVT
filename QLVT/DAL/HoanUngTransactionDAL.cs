@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using QLVT.BLL;
 using QLVT.ERP.DAL;
 using QLVT.ERP.Models;
 using QLVT.Models;
@@ -9,6 +10,12 @@ namespace QLVT.DAL
 {
     public class HoanUngTransactionDAL
     {
+        private readonly WarehouseDAL _warehouseDAL;
+        public HoanUngTransactionDAL()
+        {
+            _warehouseDAL = new WarehouseDAL();
+        }
+
         #region Mạng cấp 4
         public List<DonDangKyModel> MC4_GetDanhSachDonDangKy()
         {
@@ -75,8 +82,9 @@ namespace QLVT.DAL
                         }
 
                         // Bước 0.1: Tìm kho dựa trên mã nhân viên xây lắp
-                        int warehouseId = GetWarehouseIdByStaffCode(donDangKy.MaNhanVienXayLap, connection, transaction);
-                        if (warehouseId == 0)
+                        var wh = _warehouseDAL.GetKhoUuTienByMaNV(donDangKy.MaNhanVienXayLap);
+
+                        if (wh == null)
                         {
                             throw new Exception($"Không tìm thấy kho cho nhân viên: {donDangKy.MaNhanVienXayLap}");
                         }
@@ -120,7 +128,7 @@ namespace QLVT.DAL
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
                             command.Parameters.AddWithValue("@ngayGiaoDich", donDangKy.NgayHoanUng);
                             command.Parameters.AddWithValue("@maNV", donDangKy.MaNhanVienXayLap);
-                            command.Parameters.AddWithValue("@maKhoNguon", warehouseId); // Kho của nhân viên xây lắp
+                            command.Parameters.AddWithValue("@maKhoNguon", wh.Id); // Kho của nhân viên xây lắp
                             command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư cho đơn đăng ký: {maddk}");
                             command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
                             command.Parameters.AddWithValue("@entityHoanUng", maddk);
@@ -145,14 +153,14 @@ namespace QLVT.DAL
                                     command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
                                     command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư MC4: {maddk}");
-                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
                                     command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                     command.ExecuteNonQuery();
                                 }
 
                                 // Cập nhật tồn kho từ kho của nhân viên xây lắp
-                                CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                                CapNhatTonKhoHoanUng(connection, transaction, wh.Id, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
                             }
                         }
 
@@ -457,8 +465,8 @@ namespace QLVT.DAL
                             }
 
                             // Bước 0.1: Tìm kho dựa trên mã nhân viên xây lắp
-                            int warehouseId = GetWarehouseIdByStaffCode(suaChua.MaNhanVienXayLap, connection, transaction);
-                            if (warehouseId == 0)
+                            var wh = _warehouseDAL.GetKhoUuTienByMaNV(suaChua.MaNhanVienXayLap); 
+                            if (wh == null)
                             {
                                 throw new Exception($"Không tìm thấy kho cho nhân viên: {suaChua.MaNhanVienXayLap}");
                             }
@@ -495,7 +503,7 @@ namespace QLVT.DAL
                             }
 
                             // Bước 3: Tạo transaction hoàn ứng
-                            int transactionId = CreateHoanUngTransaction(maDon, "SuaChua", nguoiXacNhan, suaChua.NgayHoanUng.GetValueOrDefault(), suaChua.MaNhanVienXayLap, warehouseId, connection, transaction);
+                            int transactionId = CreateHoanUngTransaction(maDon, "SuaChua", nguoiXacNhan, suaChua.NgayHoanUng.GetValueOrDefault(), suaChua.MaNhanVienXayLap, wh.Id, connection, transaction);
                             // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho
                             foreach (var chiTiet in chiTietList)
                             {
@@ -509,14 +517,14 @@ namespace QLVT.DAL
                                     command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
                                     command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư ĐC: {maDon}");
-                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
                                     command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                     command.ExecuteNonQuery();
                                 }
 
                                 // Cập nhật tồn kho
-                                CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                                CapNhatTonKhoHoanUng(connection, transaction, wh.Id, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
                             }
 
                             transaction.Commit();
@@ -634,7 +642,7 @@ namespace QLVT.DAL
                     FROM ct.SuaChua sc
                         INNER JOIN ct.SuaChuaCT ct ON sc.MADON = ct.MADON
                         INNER JOIN ViewVatTus vt ON vt.ErpId = ct.MaVTErp
-                        LEFT JOIN Warehouses w ON w.MaNV = sc.MaNhanVienXayLap
+                        LEFT JOIN Warehouses w ON w.MaNV = sc.MaNhanVienXayLap AND w.KhoUuTien = 1
                         LEFT JOIN ViewTonKhoVatTu tk ON tk.WarehouseId = w.Id and tk.SupplyErpId = ct.MaVTErp
                     WHERE ct.MADON = @madon";
 
@@ -821,8 +829,8 @@ namespace QLVT.DAL
                             }
 
                             // Bước 0.1: Tìm kho dựa trên mã nhân viên xây lắp
-                            int warehouseId = GetWarehouseIdByStaffCode(bgk.NhanVienXayLap, connection, transaction);
-                            if (warehouseId == 0)
+                            var wh = _warehouseDAL.GetKhoUuTienByMaNV(bgk.NhanVienXayLap);
+                            if (wh == null)
                             {
                                 throw new Exception($"Không tìm thấy kho cho nhân viên: {bgk.NhanVienXayLap}");
                             }
@@ -862,7 +870,7 @@ namespace QLVT.DAL
 
                             // Bước 3: Tạo transaction hoàn ứng trong bảng qlvt.HoanUngTransaction
                             DateTime ngayHoanUng = DateTime.Now;
-                            int transactionId = CreateHoanUngTransaction(bgk.SoBGK ?? "BGK", "BGK", nguoiXacNhan, ngayHoanUng, bgk.NhanVienXayLap ?? "", warehouseId, connection, transaction);
+                            int transactionId = CreateHoanUngTransaction(bgk.SoBGK ?? "BGK", "BGK", nguoiXacNhan, ngayHoanUng, bgk.NhanVienXayLap ?? "", wh.Id, connection, transaction);
 
                             // Bước 4: Tạo chi tiết giao dịch và cập nhật tồn kho
                             foreach (var chiTiet in chiTietList)
@@ -877,14 +885,14 @@ namespace QLVT.DAL
                                     command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
                                     command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư BGK: {bgk.SoBGK}");
-                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
                                     command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                     command.ExecuteNonQuery();
                                 }
 
                                 // Cập nhật tồn kho
-                                CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                                CapNhatTonKhoHoanUng(connection, transaction, wh.Id, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
                             }
 
                             transaction.Commit();
@@ -1084,7 +1092,7 @@ namespace QLVT.DAL
                 command.Parameters.AddWithValue("@erpId", erpId);
 
                 var result = command.ExecuteScalar();
-                int currentStock = result != null ? Convert.ToInt32(result) : 0;
+                decimal currentStock = result != null ? Convert.ToDecimal(result) : 0;
 
                 if (currentStock < quantity)
                 {
@@ -1111,23 +1119,6 @@ namespace QLVT.DAL
                 }
             }
         }
-
-        private int GetWarehouseIdByStaffCode(string maNhanVien, SqlConnection connection, SqlTransaction transaction)
-        {
-            string sql = @"
-                SELECT Id
-                FROM Warehouses
-                WHERE MaNV = @maNV";
-
-            using (var command = new SqlCommand(sql, connection, transaction))
-            {
-                command.Parameters.AddWithValue("@maNV", maNhanVien);
-
-                var result = command.ExecuteScalar();
-                return result != null ? Convert.ToInt32(result) : 0;
-            }
-        }
         #endregion
-
     }
 }
