@@ -499,8 +499,21 @@ namespace QLVT.DAL
                             // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho
                             foreach (var chiTiet in chiTietList)
                             {
-                                // Tạo chi tiết transaction
-                                CreateHoanUngTransactionDetail(transactionId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng, connection, transaction);
+                                string insertDetailSql = @"
+                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, CreatedBy)
+                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @maKhoXuat, @createdBy)";
+
+                                using (var command = new SqlCommand(insertDetailSql, connection, transaction))
+                                {
+                                    command.Parameters.AddWithValue("@transactionId", transactionId);
+                                    command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
+                                    command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
+                                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư ĐC: {maDon}");
+                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
+
+                                    command.ExecuteNonQuery();
+                                }
 
                                 // Cập nhật tồn kho
                                 CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
@@ -854,8 +867,21 @@ namespace QLVT.DAL
                             // Bước 4: Tạo chi tiết giao dịch và cập nhật tồn kho
                             foreach (var chiTiet in chiTietList)
                             {
-                                // Tạo chi tiết giao dịch
-                                CreateHoanUngTransactionDetail(transactionId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng, connection, transaction);
+                                string insertDetailSql = @"
+                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, CreatedBy)
+                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @maKhoXuat, @createdBy)";
+
+                                using (var command = new SqlCommand(insertDetailSql, connection, transaction))
+                                {
+                                    command.Parameters.AddWithValue("@transactionId", transactionId);
+                                    command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
+                                    command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
+                                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư BGK: {bgk.SoBGK}");
+                                    command.Parameters.AddWithValue("@maKhoXuat", warehouseId);
+                                    command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
+
+                                    command.ExecuteNonQuery();
+                                }
 
                                 // Cập nhật tồn kho
                                 CapNhatTonKhoHoanUng(connection, transaction, warehouseId, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
@@ -1043,23 +1069,7 @@ namespace QLVT.DAL
                 return Convert.ToInt32(command.ExecuteScalar());
             }
         }
-        private void CreateHoanUngTransactionDetail(int transactionId, int maVTErp, decimal soLuong,
-            SqlConnection connection, SqlTransaction transaction)
-        {
-            string insertDetailSql = @"INSERT INTO TransactionDetails 
-                                        (TransactionId, ErpId, SoLuong)
-                                        VALUES (@transactionId, @erpId, @soLuong)";
 
-
-            using (var command = new SqlCommand(insertDetailSql, connection, transaction))
-            {
-                command.Parameters.AddWithValue("@TransactionId", transactionId);
-                command.Parameters.AddWithValue("@erpId", maVTErp);
-                command.Parameters.AddWithValue("@soLuong", soLuong);
-
-                command.ExecuteNonQuery();
-            }
-        }
         private void CapNhatTonKhoHoanUng(SqlConnection connection, SqlTransaction transaction, int warehouseId, int erpId, decimal quantity)
         {
             // Kiểm tra tồn kho hiện tại tại kho này
