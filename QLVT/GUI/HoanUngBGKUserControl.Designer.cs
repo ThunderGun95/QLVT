@@ -119,7 +119,7 @@ namespace QLVT.GUI
             lblSoBGKTimLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblSoBGKTimLabel.Location = new Point(20, 25);
             lblSoBGKTimLabel.Name = "lblSoBGKTimLabel";
-            lblSoBGKTimLabel.Size = new Size(54, 15);
+            lblSoBGKTimLabel.Size = new Size(53, 15);
             lblSoBGKTimLabel.TabIndex = 0;
             lblSoBGKTimLabel.Text = "Số BGK:";
             // 
@@ -138,7 +138,7 @@ namespace QLVT.GUI
             lblSeparator.Font = new Font("Microsoft Sans Serif", 9F);
             lblSeparator.Location = new Point(185, 25);
             lblSeparator.Name = "lblSeparator";
-            lblSeparator.Size = new Size(12, 15);
+            lblSeparator.Size = new Size(10, 15);
             lblSeparator.TabIndex = 2;
             lblSeparator.Text = "/";
             // 
@@ -180,12 +180,12 @@ namespace QLVT.GUI
             // 
             lblConnectionStatus.AutoSize = true;
             lblConnectionStatus.Font = new Font("Microsoft Sans Serif", 9F);
+            lblConnectionStatus.ForeColor = Color.Blue;
             lblConnectionStatus.Location = new Point(20, 50);
             lblConnectionStatus.Name = "lblConnectionStatus";
-            lblConnectionStatus.Size = new Size(182, 15);
+            lblConnectionStatus.Size = new Size(178, 15);
             lblConnectionStatus.TabIndex = 6;
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
-            lblConnectionStatus.ForeColor = Color.Blue;
             // 
             // grpBGKInfo
             // 
@@ -215,7 +215,7 @@ namespace QLVT.GUI
             lblSoBGKLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblSoBGKLabel.Location = new Point(20, 25);
             lblSoBGKLabel.Name = "lblSoBGKLabel";
-            lblSoBGKLabel.Size = new Size(54, 15);
+            lblSoBGKLabel.Size = new Size(53, 15);
             lblSoBGKLabel.TabIndex = 0;
             lblSoBGKLabel.Text = "Số BGK:";
             // 
@@ -235,7 +235,7 @@ namespace QLVT.GUI
             lblTrangThaiLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblTrangThaiLabel.Location = new Point(250, 25);
             lblTrangThaiLabel.Name = "lblTrangThaiLabel";
-            lblTrangThaiLabel.Size = new Size(70, 15);
+            lblTrangThaiLabel.Size = new Size(65, 15);
             lblTrangThaiLabel.TabIndex = 8;
             lblTrangThaiLabel.Text = "Trạng thái:";
             // 
@@ -255,7 +255,7 @@ namespace QLVT.GUI
             lblNhanVienKyThuatLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblNhanVienKyThuatLabel.Location = new Point(470, 25);
             lblNhanVienKyThuatLabel.Name = "lblNhanVienKyThuatLabel";
-            lblNhanVienKyThuatLabel.Size = new Size(100, 15);
+            lblNhanVienKyThuatLabel.Size = new Size(72, 15);
             lblNhanVienKyThuatLabel.TabIndex = 10;
             lblNhanVienKyThuatLabel.Text = "NV Kỹ thuật:";
             // 
@@ -275,7 +275,7 @@ namespace QLVT.GUI
             lblNhanVienXayLapLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblNhanVienXayLapLabel.Location = new Point(20, 50);
             lblNhanVienXayLapLabel.Name = "lblNhanVienXayLapLabel";
-            lblNhanVienXayLapLabel.Size = new Size(95, 15);
+            lblNhanVienXayLapLabel.Size = new Size(69, 15);
             lblNhanVienXayLapLabel.TabIndex = 12;
             lblNhanVienXayLapLabel.Text = "NV Xây lắp:";
             // 
@@ -295,7 +295,7 @@ namespace QLVT.GUI
             lblNoiDungLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblNoiDungLabel.Location = new Point(20, 75);
             lblNoiDungLabel.Name = "lblNoiDungLabel";
-            lblNoiDungLabel.Size = new Size(65, 15);
+            lblNoiDungLabel.Size = new Size(60, 15);
             lblNoiDungLabel.TabIndex = 14;
             lblNoiDungLabel.Text = "Nội dung:";
             // 
@@ -315,7 +315,7 @@ namespace QLVT.GUI
             lblSoNghiemThuLabel.Font = new Font("Microsoft Sans Serif", 9F);
             lblSoNghiemThuLabel.Location = new Point(250, 50);
             lblSoNghiemThuLabel.Name = "lblSoNghiemThuLabel";
-            lblSoNghiemThuLabel.Size = new Size(85, 15);
+            lblSoNghiemThuLabel.Size = new Size(90, 15);
             lblSoNghiemThuLabel.TabIndex = 16;
             lblSoNghiemThuLabel.Text = "Số nghiệm thu:";
             // 
@@ -362,7 +362,7 @@ namespace QLVT.GUI
             lblNgayHoanUng.Font = new Font("Microsoft Sans Serif", 9F);
             lblNgayHoanUng.Location = new Point(20, 390);
             lblNgayHoanUng.Name = "lblNgayHoanUng";
-            lblNgayHoanUng.Size = new Size(102, 15);
+            lblNgayHoanUng.Size = new Size(93, 15);
             lblNgayHoanUng.TabIndex = 1;
             lblNgayHoanUng.Text = "Ngày hoàn ứng:";
             // 
@@ -392,12 +392,12 @@ namespace QLVT.GUI
             // 
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Microsoft Sans Serif", 9F);
+            lblStatus.ForeColor = Color.Green;
             lblStatus.Location = new Point(20, 700);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(44, 15);
+            lblStatus.Size = new Size(59, 15);
             lblStatus.TabIndex = 4;
             lblStatus.Text = "Sẵn sàng";
-            lblStatus.ForeColor = Color.Green;
             // 
             // HoanUngBGKUserControl
             // 
@@ -411,6 +411,7 @@ namespace QLVT.GUI
             Controls.Add(lblTitle);
             Name = "HoanUngBGKUserControl";
             Size = new Size(1200, 720);
+            Load += HoanUngBGKUserControl_Load;
             grpTimKiem.ResumeLayout(false);
             grpTimKiem.PerformLayout();
             grpBGKInfo.ResumeLayout(false);

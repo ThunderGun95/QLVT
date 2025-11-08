@@ -2,6 +2,7 @@ using QLVT.DAL;
 using QLVT.Models;
 using QLVT.ERP.DAL;
 using QLVT.ERP.Models;
+using QLVT.Utils;
 
 namespace QLVT.BLL
 {
@@ -53,7 +54,7 @@ namespace QLVT.BLL
                     ChiTiet = new List<ERP_PhieuXuatKhoChiTiet>()
                 };
 
-                // Thực hiện mapping tự động cho từng chi tiết
+                // Thực hiện mapping vật tư cho tất cả chi tiết trước
                 foreach (var erpDetail in erpOrder.ChiTiet)
                 {
                     var detail = new ERP_PhieuXuatKhoChiTiet
@@ -62,6 +63,7 @@ namespace QLVT.BLL
                         MaVatTuHangHoa = erpDetail.MaVatTuHangHoa,
                         TenVatTu = erpDetail.TenVatTu,
                         SoLuongXuatKho = erpDetail.SoLuongXuatKho,
+                        MucDichSuDung = erpDetail.MucDichSuDung,
                         DonViTinh = erpDetail.DonViTinh,
                         MaKhoXuat = erpDetail.MaKhoXuat,
                         TenKhoXuat = erpDetail.TenKhoXuat
@@ -77,30 +79,37 @@ namespace QLVT.BLL
                         detail.MappedUnit = supply.TenDVT;
                     }
 
-                    // Mapping kho nguồn sử dụng WarehouseMappingBLL
+                    order.ChiTiet.Add(detail);
+                }
+
+                // Sau khi đã mapping tất cả vật tư, thực hiện warehouse mapping
+                // Sử dụng ERPWarehouseMapping với toàn bộ danh sách chi tiết để áp dụng quy tắc đặc biệt cho kho 3
+                foreach (var detail in order.ChiTiet)
+                {
                     if (!string.IsNullOrEmpty(detail.MaKhoXuat))
                     {
-                        /*
-                        // Sử dụng mapping rule: kho ERP (1,3,4,34) -> kho công ty (ID=6)
-                        var internalWarehouse = warehouseMappingBLL.GetInternalWarehouseFromERP(detail.MaKhoXuat);
-                        if (internalWarehouse != null)
+                        // Sử dụng ERPWarehouseMapping để map mã kho ERP sang QLVT với danh sách chi tiết
+                        var qlvtWarehouseCode = ERPWarehouseMapping.MapERPToQLVT(detail.MaKhoXuat, order.ChiTiet);
+                        
+                        // Tìm warehouse theo mã QLVT đã được map
+                        var warehouse = warehouseDAL.GetAllWarehouses()
+                            .FirstOrDefault(w => w.MaKho == qlvtWarehouseCode);
+                            
+                        if (warehouse != null)
                         {
-                            detail.SourceWarehouseId = internalWarehouse.Id;
+                            detail.SourceWarehouseId = warehouse.Id;
                         }
                         else
                         {
-                            // Fallback: tìm trực tiếp theo MaKho (để hỗ trợ các kho khác)
-                            var warehouse = warehouseDAL.GetAllWarehouses()
+                            // Fallback: tìm trực tiếp theo MaKho gốc
+                            var directWarehouse = warehouseDAL.GetAllWarehouses()
                                 .FirstOrDefault(w => w.MaKho == detail.MaKhoXuat);
-                            if (warehouse != null)
+                            if (directWarehouse != null)
                             {
-                                detail.SourceWarehouseId = warehouse.Id;
+                                detail.SourceWarehouseId = directWarehouse.Id;
                             }
                         }
-                        */
                     }
-
-                    order.ChiTiet.Add(detail);
                 }
 
                 return order;
@@ -140,7 +149,7 @@ namespace QLVT.BLL
         {
             try
             {
-                return warehouseDAL.GetWarehouseByStaffCode(staffCode);
+                return warehouseDAL.GetKhoUuTienByMaNV(staffCode);
             }
             catch (Exception ex)
             {
@@ -186,9 +195,8 @@ namespace QLVT.BLL
                 if (missingWarehouses > 0)
                     throw new Exception($"Còn {missingWarehouses} vật tư chưa xác định kho nguồn");
 
-                if (employeeWarehouseId <= 0)
-                    throw new ArgumentException("Chưa chọn kho nhân viên đích");
-
+                // Kiểm tra trường hợp vật tư không phải VP và không tìm thấy kho nhân viên
+                ValidateNonVPSuppliesHaveEmployeeWarehouse(order, employeeWarehouseId);
 
                 // Kiểm tra lại phiếu đã xử lý chưa
                 if (erpXuatKhoErpDAL.IsExportOrderProcessed(order.SoPhieuXuatKho, order.NAM))
@@ -210,6 +218,41 @@ namespace QLVT.BLL
         public bool TestERPConnection()
         {
             return Utils.ExternalDatabaseHelper.TestExternalConnection();
+        }
+
+        /// <summary>
+        /// Kiểm tra vật tư không phải VP phải có kho nhân viên hợp lệ
+        /// </summary>
+        /// <param name="order">Phiếu xuất</param>
+        /// <param name="employeeWarehouseId">ID kho nhân viên</param>
+        private void ValidateNonVPSuppliesHaveEmployeeWarehouse(ERP_PhieuXuatKho order, int employeeWarehouseId)
+        {
+            // Lấy tất cả vật tư trong đơn để kiểm tra DanhMuc
+            var supplyIds = order.ChiTiet
+                .Where(d => d.MappedSupplyId.HasValue)
+                .Select(d => d.MappedSupplyId!.Value)
+                .Distinct()
+                .ToList();
+
+            if (supplyIds.Count == 0) return;
+
+            // Lấy thông tin DanhMuc từ database
+            var suppliesWithCategory = supplyMappingDAL.GetSuppliesCategoryByIds(supplyIds);
+            
+            // Tìm vật tư không phải VP
+            var nonVPSupplies = suppliesWithCategory
+                .Where(s => s.DanhMuc != "VP")
+                .ToList();
+
+            // Nếu có vật tư không phải VP và không có kho nhân viên
+            if (nonVPSupplies.Any() && employeeWarehouseId <= 0)
+            {
+                var employeeName = !string.IsNullOrEmpty(order.TenNhanVien) 
+                    ? order.TenNhanVien 
+                    : order.MaNhanVien;
+                    
+                throw new Exception($"Không tìm thấy kho nhân viên ({employeeName})");
+            }
         }
     }
 }

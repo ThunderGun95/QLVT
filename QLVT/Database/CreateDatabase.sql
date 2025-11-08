@@ -48,6 +48,7 @@ BEGIN
         TenVatTu NVARCHAR(500) NOT NULL,
         DacTinhKyThuat NVARCHAR(1000) NULL,
         MaDVT NVARCHAR(10) NOT NULL,
+        DanhMuc NVARCHAR(10) NOT NULL,
         FOREIGN KEY (MaDVT) REFERENCES Units(MaDVT)
     );
 END
@@ -599,9 +600,7 @@ BEGIN
         GiaoKhoanNghiemThuVatTuID BIGINT NOT NULL,
         MaVTErp INT NOT NULL,
         SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
-        NgayHoanUng DATETIME NULL,
-        DaHoanUng BIT DEFAULT 0,
-        ThoiGianXacNhanHoanUng DATETIME NULL,
+        SoLuongHoanUngThucTe DECIMAL(18,2),
         CreatedDate DATETIME DEFAULT GETDATE(),
         
         FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)

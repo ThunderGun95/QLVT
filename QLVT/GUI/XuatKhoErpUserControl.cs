@@ -6,12 +6,14 @@ using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.Models;
 using QLVT.ERP.Models;
+using QLVT.DAL;
 
 namespace QLVT.GUI
 {
     public partial class XuatKhoErpUserControl : UserControl
     {
         private readonly XuatKhoBLL exportBLL;
+        private readonly WarehouseDAL warehouseDAL;
         private ERP_PhieuXuatKho? currentOrder;
         private int selectedEmployeeWarehouseId = 0;
 
@@ -19,6 +21,7 @@ namespace QLVT.GUI
         {
             InitializeComponent();
             exportBLL = new XuatKhoBLL();
+            warehouseDAL = new WarehouseDAL();
             SetupDataGridView();
             CheckERPConnection();
         }
@@ -315,7 +318,7 @@ namespace QLVT.GUI
                     return;
                 }
 
-                var employeeWarehouse = exportBLL.GetWarehouseByStaffCode(currentOrder.MaNhanVien);
+                var employeeWarehouse = warehouseDAL.GetKhoUuTienByMaNV(currentOrder.MaNhanVien);
                 if (employeeWarehouse == null)
                 {
                     MessageBox.Show($"Không tìm thấy kho cá nhân cho nhân viên {currentOrder.MaNhanVien} ({currentOrder.TenNhanVien})!\n" +

@@ -44,7 +44,7 @@ namespace QLVT.DAL
                             command.Parameters.AddWithValue("@maKhoNhan", maKho);
                             command.Parameters.AddWithValue("@ghiChu", $"Nhập kho từ phiếu ERP: {order.SoPhieuNhapKho}-{order.NAM} - {order.TenKho}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
-                            command.Parameters.AddWithValue("@entityNhapKho", $"{order.SoPhieuNhapKho}-{order.NAM}");
+                            command.Parameters.AddWithValue("@entityNhapKho", $"NK:{order.SoPhieuNhapKho}-{order.NAM}");
                             
                             transactionId = Convert.ToInt32(command.ExecuteScalar());
                         }
@@ -108,7 +108,7 @@ namespace QLVT.DAL
             {
                 command.Parameters.AddWithValue("@maKho", maKho);
                 command.Parameters.AddWithValue("@erpId", erpId);
-                command.Parameters.AddWithValue("@quantity", quantity);
+                command.Parameters.AddWithValue("@quantity", Math.Round(quantity,2));
                 
                 command.ExecuteNonQuery();
             }

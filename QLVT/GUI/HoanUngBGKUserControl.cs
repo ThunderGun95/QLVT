@@ -17,6 +17,7 @@ namespace QLVT.GUI
     public partial class HoanUngBGKUserControl : UserControl
     {
         private readonly ERPBgkBLL _erpBgkBLL;
+        private readonly HoanUngBLL _hoanUngBLL;
         private NghiemThuGiaoKhoanModel? currentBGK;
         private List<NghiemThuGiaoKhoanCTModel>? currentVatTuList;
 
@@ -24,11 +25,12 @@ namespace QLVT.GUI
         {
             InitializeComponent();
             _erpBgkBLL = new ERPBgkBLL();
+            _hoanUngBLL = new HoanUngBLL();
             SetupDataGridView();
             // Khởi tạo trạng thái ban đầu
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
             lblConnectionStatus.ForeColor = Color.Blue;
-            
+
             // Kiểm tra kết nối ERP khi load
             CheckERPConnection();
         }
@@ -38,7 +40,7 @@ namespace QLVT.GUI
             try
             {
                 bool isConnected = _erpBgkBLL.TestERPConnection();
-                
+
                 if (isConnected)
                 {
                     lblConnectionStatus.Text = "✅ Kết nối ERP thành công";
@@ -66,15 +68,16 @@ namespace QLVT.GUI
             dgvChiTiet.AutoGenerateColumns = false;
             dgvChiTiet.AllowUserToAddRows = false;
             dgvChiTiet.AllowUserToDeleteRows = false;
-            dgvChiTiet.ReadOnly = true;
-            dgvChiTiet.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvChiTiet.ReadOnly = false; // Cho phép chỉnh sửa
+            dgvChiTiet.SelectionMode = DataGridViewSelectionMode.CellSelect;
 
             // Tạo các cột
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "STT",
                 HeaderText = "STT",
-                Width = 50
+                Width = 50,
+                ReadOnly = true
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
@@ -82,7 +85,8 @@ namespace QLVT.GUI
                 Name = "VatTuHangHoa",
                 HeaderText = "Mã VT",
                 DataPropertyName = "VatTuHangHoa",
-                Width = 100
+                Width = 100,
+                ReadOnly = true
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
@@ -90,7 +94,8 @@ namespace QLVT.GUI
                 Name = "TenVatTu",
                 HeaderText = "Tên vật tư",
                 DataPropertyName = "TenVatTu",
-                Width = 200
+                Width = 200,
+                ReadOnly = true
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
@@ -98,15 +103,27 @@ namespace QLVT.GUI
                 Name = "DonViTinh",
                 HeaderText = "ĐVT",
                 DataPropertyName = "DonViTinh",
-                Width = 60
+                Width = 60,
+                ReadOnly = true
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
-                Name = "SoLuongHoanUng", 
+                Name = "SoLuongHoanUng",
                 HeaderText = "SL hoàn ứng",
-                DataPropertyName = "SoLuongHoanUng",
+                DataPropertyName = "SoLuongHoanUngThucTe", // Bind trực tiếp vào SoLuongHoanUngThucTe
                 Width = 100,
+                ReadOnly = false, // Cho phép sửa
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
+            });
+
+            dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "TonKho",
+                HeaderText = "Tồn kho",
+                DataPropertyName = "TonKho",
+                Width = 100,
+                ReadOnly = true,
                 DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
             });
 
@@ -114,6 +131,122 @@ namespace QLVT.GUI
             dgvChiTiet.RowsAdded += (s, e) => UpdateSTT();
             dgvChiTiet.RowsRemoved += (s, e) => UpdateSTT();
             dgvChiTiet.DataBindingComplete += (s, e) => UpdateSTT();
+            
+            // Event để đánh dấu màu cho dòng có SL hoàn ứng > tồn kho
+            dgvChiTiet.CellFormatting += DgvChiTiet_CellFormatting;
+            
+            // Event để validate khi người dùng nhập số lượng
+            dgvChiTiet.CellValidating += DgvChiTiet_CellValidating;
+            dgvChiTiet.CellEndEdit += DgvChiTiet_CellEndEdit;
+        }
+
+        private void DgvChiTiet_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || currentVatTuList == null || e.RowIndex >= currentVatTuList.Count) return;
+
+            try
+            {
+                // Lấy data từ data source thay vì cell value để đảm bảo đúng với giá trị đã sửa
+                var vatTu = currentVatTuList[e.RowIndex];
+                decimal soLuongHoanUng = vatTu.SoLuongHoanUngThucTe ?? vatTu.SoLuongHoanUng;
+                decimal tonKho = vatTu.TonKho;
+
+                var row = dgvChiTiet.Rows[e.RowIndex];
+
+                // Nếu số lượng hoàn ứng > tồn kho, đánh dấu màu hồng
+                if (soLuongHoanUng > tonKho)
+                {
+                    row.DefaultCellStyle.BackColor = Color.LightPink;
+                    row.DefaultCellStyle.ForeColor = Color.DarkRed;
+                }
+                else
+                {
+                    row.DefaultCellStyle.BackColor = Color.White;
+                    row.DefaultCellStyle.ForeColor = Color.Black;
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi formatting
+            }
+        }
+
+        private void DgvChiTiet_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            // Chỉ validate cột số lượng hoàn ứng
+            if (dgvChiTiet.Columns[e.ColumnIndex].Name != "SoLuongHoanUng")
+                return;
+
+            if (e.FormattedValue == null || string.IsNullOrWhiteSpace(e.FormattedValue.ToString()))
+                return;
+
+            // Kiểm tra giá trị nhập vào có phải số hợp lệ không
+            if (!decimal.TryParse(e.FormattedValue.ToString(), out decimal value))
+            {
+                e.Cancel = true;
+                MessageBox.Show("Vui lòng nhập số hợp lệ!", "Lỗi nhập liệu",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Kiểm tra số lượng không được âm
+            if (value < 0)
+            {
+                e.Cancel = true;
+                MessageBox.Show("Số lượng hoàn ứng không được âm!", "Lỗi nhập liệu",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Kiểm tra số lượng hoàn ứng <= tồn kho
+            try
+            {
+                var row = dgvChiTiet.Rows[e.RowIndex];
+                var tonKhoCell = row.Cells["TonKho"].Value;
+                
+                if (tonKhoCell != null)
+                {
+                    decimal tonKho = Convert.ToDecimal(tonKhoCell);
+                    
+                    if (value > tonKho)
+                    {
+                        var result = MessageBox.Show(
+                            $"⚠️ Số lượng hoàn ứng ({value:N2}) vượt quá tồn kho ({tonKho:N2})!\n\n" +
+                            $"Bạn có chắc chắn muốn tiếp tục?",
+                            "Cảnh báo",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+                        
+                        if (result == DialogResult.No)
+                        {
+                            e.Cancel = true;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi khi không lấy được tồn kho
+            }
+        }
+
+        private void DgvChiTiet_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            // Sau khi sửa xong, cập nhật lại màu của dòng
+            if (dgvChiTiet.Columns[e.ColumnIndex].Name == "SoLuongHoanUng")
+            {
+                try
+                {
+                    // DataGridView đã tự động cập nhật vào SoLuongHoanUngThucTe qua DataPropertyName
+                    // Chỉ cần refresh row để cập nhật màu
+                    dgvChiTiet.InvalidateRow(e.RowIndex);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi cập nhật số lượng: {ex.Message}", "Lỗi",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void UpdateSTT()
@@ -130,7 +263,7 @@ namespace QLVT.GUI
             {
                 if (string.IsNullOrWhiteSpace(txtSoBGK.Text))
                 {
-                    MessageBox.Show("Vui lòng nhập số BGK!", "Thông báo", 
+                    MessageBox.Show("Vui lòng nhập số BGK!", "Thông báo",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     txtSoBGK.Focus();
                     return;
@@ -138,7 +271,7 @@ namespace QLVT.GUI
 
                 if (string.IsNullOrWhiteSpace(txtNam.Text) || !int.TryParse(txtNam.Text, out int nam))
                 {
-                    MessageBox.Show("Vui lòng nhập năm hợp lệ!", "Thông báo", 
+                    MessageBox.Show("Vui lòng nhập năm hợp lệ!", "Thông báo",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     txtNam.Focus();
                     return;
@@ -149,24 +282,50 @@ namespace QLVT.GUI
 
                 // Tìm BGK theo số nghiệm thu và năm
                 var bgkList = _erpBgkBLL.GetNghiemThuGiaoKhoanData(int.Parse(txtSoBGK.Text), nam);
-                
+
                 if (bgkList != null && bgkList.Count > 0)
                 {
                     currentBGK = bgkList.First();
+                    
+                    // Kiểm tra BGK đã hoàn ứng trong database chưa
+                    if (currentBGK.GiaoKhoanNghiemThuVatTuID.HasValue)
+                    {
+                        bool daHoanUng = _hoanUngBLL.CheckBGKDaHoanUng(currentBGK.GiaoKhoanNghiemThuVatTuID.Value);
+                        if (daHoanUng)
+                        {
+                            MessageBox.Show($"⚠️ Bản nghiệm thu này đã hoàn ứng!\n\n" +
+                                $"Số BGK: {currentBGK.SoBGK}\n" +
+                                $"Số nghiệm thu: {currentBGK.SoNghiemThu}-{nam}\n\n" +
+                                $"Không thể hoàn ứng lại BGK này.",
+                                "Đã hoàn ứng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            
+                            currentBGK.DaHoanUng = true;
+                            lblStatus.Text = $"⚠️ BGK {currentBGK.SoBGK} đã được hoàn ứng";
+                            lblStatus.ForeColor = Color.Orange;
+                            
+                            // Không load dữ liệu nếu đã hoàn ứng
+                            ResetBGKDisplay();
+                            return;
+                        }
+                        else
+                        {
+                            lblStatus.Text = $"✅ Đã tải BGK {currentBGK.SoBGK}";
+                            lblStatus.ForeColor = Color.Green;
+                        }
+                    }
+                    
                     LoadBGKData();
-                    lblStatus.Text = $"✅ Đã tải BGK {currentBGK.SoBGK}";
-                    lblStatus.ForeColor = Color.Green;
                 }
                 else
                 {
-                    MessageBox.Show($"Không tìm thấy BGK số {txtSoBGK.Text}-{nam}", 
+                    MessageBox.Show($"Không tìm thấy BGK số {txtSoBGK.Text}-{nam}",
                         "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     ResetBGKDisplay();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tìm BGK:\n{ex.Message}", "Lỗi", 
+                MessageBox.Show($"Lỗi khi tìm BGK:\n{ex.Message}", "Lỗi",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lblStatus.Text = $"❌ Lỗi: {ex.Message}";
                 lblStatus.ForeColor = Color.Red;
@@ -185,6 +344,26 @@ namespace QLVT.GUI
             if (currentBGK.GiaoKhoanNghiemThuVatTuID.HasValue)
             {
                 currentVatTuList = _erpBgkBLL.GetNghiemThuGiaoKhoanCTData(currentBGK.GiaoKhoanNghiemThuVatTuID.Value);
+                
+                // Lấy tồn kho cho từng vật tư và khởi tạo SoLuongHoanUngThucTe
+                foreach (var vatTu in currentVatTuList)
+                {
+                    try
+                    {
+                        vatTu.TonKho = _hoanUngBLL.GetTonKhoByErpId(vatTu.MaVTErp, currentBGK.MaNhanVienXayLap);
+                    }
+                    catch
+                    {
+                        vatTu.TonKho = 0;
+                    }
+                    
+                    // Khởi tạo SoLuongHoanUngThucTe bằng SoLuongHoanUng để có thể edit
+                    if (!vatTu.SoLuongHoanUngThucTe.HasValue)
+                    {
+                        vatTu.SoLuongHoanUngThucTe = vatTu.SoLuongHoanUng;
+                    }
+                }
+                
                 dgvChiTiet.DataSource = currentVatTuList;
             }
 
@@ -200,7 +379,7 @@ namespace QLVT.GUI
             lblNhanVienKyThuat.Text = currentBGK.NhanVienKyThuat ?? "-";
             lblNhanVienXayLap.Text = currentBGK.NhanVienXayLap ?? "-";
             lblNoiDung.Text = currentBGK.NoiDung ?? "-";
-            
+
             // Hiển thị đầy đủ thông tin nghiệm thu với số lần
             var soNghiemThuText = $"{currentBGK.SoNghiemThu}-{currentBGK.NamNghiemThu}";
             if (currentBGK.SoLanNghiemThu.HasValue)
@@ -208,7 +387,7 @@ namespace QLVT.GUI
                 soNghiemThuText += $" (Lần {currentBGK.SoLanNghiemThu})";
             }
             lblSoNghiemThu.Text = soNghiemThuText;
-            
+
             if (currentBGK.DaHoanUng == true)
             {
                 lblTrangThai.Text = "Đã hoàn ứng";
@@ -227,7 +406,7 @@ namespace QLVT.GUI
         {
             currentBGK = null;
             currentVatTuList = null;
-            
+
             lblSoBGK.Text = "-";
             lblNhanVienKyThuat.Text = "-";
             lblNhanVienXayLap.Text = "-";
@@ -236,7 +415,7 @@ namespace QLVT.GUI
             lblTrangThai.Text = "-";
             lblTrangThai.ForeColor = Color.Black;
             lblNgayHoanUng.Text = "-";
-            
+
             dgvChiTiet.DataSource = null;
             btnXacNhan.Enabled = false;
         }
@@ -247,23 +426,36 @@ namespace QLVT.GUI
             {
                 if (currentBGK == null)
                 {
-                    MessageBox.Show("Chưa có BGK nào để xác nhận!", "Thông báo", 
+                    MessageBox.Show("Chưa có BGK nào để xác nhận!", "Thông báo",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (currentVatTuList == null || currentVatTuList.Count == 0)
+                {
+                    MessageBox.Show("Không có vật tư nào để hoàn ứng!", "Thông báo",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 if (currentBGK.DaHoanUng == true)
                 {
-                    MessageBox.Show("BGK này đã được hoàn ứng!", "Thông báo", 
+                    MessageBox.Show("BGK này đã được hoàn ứng!", "Thông báo",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 var confirmResult = MessageBox.Show(
-                    $"Xác nhận hoàn ứng BGK {currentBGK.SoBGK}?\n" +
+                    $"Xác nhận hoàn ứng BGK {currentBGK.SoBGK}?\n\n" +
+                    $"Số nghiệm thu: {currentBGK.SoNghiemThu}-{currentBGK.NamNghiemThu}\n" +
                     $"Nhân viên kỹ thuật: {currentBGK.NhanVienKyThuat}\n" +
                     $"Nhân viên xây lắp: {currentBGK.NhanVienXayLap}\n" +
-                    $"Nội dung: {currentBGK.NoiDung}",
+                    $"Số vật tư: {currentVatTuList.Count}\n\n" +
+                    $"Hệ thống sẽ:\n" +
+                    $"1. Lưu thông tin BGK vào database\n" +
+                    $"2. Lưu chi tiết vật tư hoàn ứng\n" +
+                    $"3. Tạo giao dịch hoàn ứng\n" +
+                    $"4. Cập nhật tồn kho",
                     "Xác nhận hoàn ứng", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (confirmResult == DialogResult.Yes)
@@ -272,26 +464,52 @@ namespace QLVT.GUI
                     lblStatus.ForeColor = Color.Blue;
                     btnXacNhan.Enabled = false;
 
-                    // Cập nhật trạng thái hoàn ứng trong ERP
-                    _erpBgkBLL.UpdateNghiemThuGiaoKhoanHoanUng(
-                        currentBGK.GiaoKhoanNghiemThuVatTuID!.Value,
-                        DateTime.Now,
-                        true,
-                        DateTime.Now);
+                    try
+                    {
+                        // Gọi BLL để xử lý hoàn ứng với transaction
+                        DateTime ngayHoanUng = dtpNgayHoanUng.Value;
+                        bool result = _hoanUngBLL.BGK_XacNhanHoanUngDonLe(
+                            currentBGK, 
+                            currentVatTuList, 
+                            ngayHoanUng
+                        );
 
-                    MessageBox.Show($"✅ Hoàn ứng BGK thành công!", 
-                        "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    
-                    lblStatus.Text = $"✅ Hoàn ứng thành công BGK {currentBGK.SoBGK}";
-                    lblStatus.ForeColor = Color.Green;
-                    
-                    // Reload để cập nhật trạng thái
-                    LoadBGKData();
+                        if (result)
+                        {
+                            MessageBox.Show($"✅ Hoàn ứng BGK thành công!\n\n" +
+                                $"Số BGK: {currentBGK.SoBGK}\n" +
+                                $"Số vật tư: {currentVatTuList.Count}\n" +
+                                $"Ngày hoàn ứng: {ngayHoanUng:dd/MM/yyyy}",
+                                "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            lblStatus.Text = $"✅ Hoàn ứng thành công BGK {currentBGK.SoBGK}";
+                            lblStatus.ForeColor = Color.Green;
+
+                            // Clear form và grid sau khi hoàn ứng thành công
+                            ClearForm();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Hoàn ứng thất bại!", "Lỗi",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            lblStatus.Text = "❌ Hoàn ứng thất bại";
+                            lblStatus.ForeColor = Color.Red;
+                            btnXacNhan.Enabled = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi khi xử lý hoàn ứng:\n\n{ex.Message}", "Lỗi",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        lblStatus.Text = $"❌ Lỗi: {ex.Message}";
+                        lblStatus.ForeColor = Color.Red;
+                        btnXacNhan.Enabled = true;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xử lý hoàn ứng:\n{ex.Message}", "Lỗi", 
+                MessageBox.Show($"Lỗi không mong đợi:\n{ex.Message}", "Lỗi",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lblStatus.Text = $"❌ Lỗi: {ex.Message}";
                 lblStatus.ForeColor = Color.Red;
@@ -302,9 +520,9 @@ namespace QLVT.GUI
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             CheckERPConnection();
-            
-            if (!string.IsNullOrEmpty(txtSoBGK.Text.Trim()) && 
-                !string.IsNullOrEmpty(txtNam.Text.Trim()) && 
+
+            if (!string.IsNullOrEmpty(txtSoBGK.Text.Trim()) &&
+                !string.IsNullOrEmpty(txtNam.Text.Trim()) &&
                 int.TryParse(txtNam.Text.Trim(), out int nam))
             {
                 btnTimBGK_Click(sender, e);
@@ -318,7 +536,7 @@ namespace QLVT.GUI
             {
                 e.Handled = true;
             }
-            
+
             // Enter để tìm BGK
             if (e.KeyChar == (char)Keys.Enter)
             {
@@ -333,12 +551,53 @@ namespace QLVT.GUI
             {
                 e.Handled = true;
             }
-            
+
             // Enter để tìm BGK
             if (e.KeyChar == (char)Keys.Enter)
             {
                 btnTimBGK_Click(sender, e);
             }
+        }
+
+        private void HoanUngBGKUserControl_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// Clear form và grid về trạng thái ban đầu
+        /// </summary>
+        private void ClearForm()
+        {
+            // Clear text boxes
+            txtSoBGK.Clear();
+            txtNam.Clear();
+            
+            // Clear BGK info labels
+            lblSoBGK.Text = "";
+            lblTrangThai.Text = "";
+            lblNhanVienKyThuat.Text = "";
+            lblNhanVienXayLap.Text = "";
+            lblNoiDung.Text = "";
+            lblSoNghiemThu.Text = "";
+            
+            // Clear grid
+            dgvChiTiet.DataSource = null;
+            dgvChiTiet.Rows.Clear();
+            
+            // Clear data
+            currentBGK = null;
+            currentVatTuList = null;
+            
+            // Reset status
+            lblStatus.Text = "Nhập số BGK và năm để tìm kiếm";
+            lblStatus.ForeColor = Color.Black;
+            
+            // Reset buttons
+            btnXacNhan.Enabled = false;
+            
+            // Focus vào ô nhập số BGK
+            txtSoBGK.Focus();
         }
     }
 }
