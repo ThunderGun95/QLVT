@@ -8,6 +8,7 @@ using QLVT.BLL;
 using QLVT.Models;
 using QLVT.ERP.BLL;
 using QLVT.ERP.Models;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
@@ -27,12 +28,28 @@ namespace QLVT.GUI
             _erpBgkBLL = new ERPBgkBLL();
             _hoanUngBLL = new HoanUngBLL();
             SetupDataGridView();
+            SetupButtonHoverEffects();
             // Khởi tạo trạng thái ban đầu
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
-            lblConnectionStatus.ForeColor = Color.Blue;
+            lblConnectionStatus.ForeColor = UIColorPalette.StatusProcessing;
 
             // Kiểm tra kết nối ERP khi load
             CheckERPConnection();
+        }
+
+        private void SetupButtonHoverEffects()
+        {
+            // Hover effect cho btnTimBGK (Primary Blue)
+            btnTimBGK.MouseEnter += (s, e) => btnTimBGK.BackColor = UIColorPalette.ButtonPrimary.Hover;
+            btnTimBGK.MouseLeave += (s, e) => btnTimBGK.BackColor = UIColorPalette.ButtonPrimary.Base;
+
+            // Hover effect cho btnRefresh (Success Green)
+            btnRefresh.MouseEnter += (s, e) => btnRefresh.BackColor = UIColorPalette.ButtonSuccess.Hover;
+            btnRefresh.MouseLeave += (s, e) => btnRefresh.BackColor = UIColorPalette.ButtonSuccess.Base;
+
+            // Hover effect cho btnXacNhan (Warning Orange)
+            btnXacNhan.MouseEnter += (s, e) => btnXacNhan.BackColor = UIColorPalette.ButtonWarning.Hover;
+            btnXacNhan.MouseLeave += (s, e) => btnXacNhan.BackColor = UIColorPalette.ButtonWarning.Base;
         }
 
         private void CheckERPConnection()
@@ -44,12 +61,12 @@ namespace QLVT.GUI
                 if (isConnected)
                 {
                     lblConnectionStatus.Text = "✅ Kết nối ERP thành công";
-                    lblConnectionStatus.ForeColor = Color.Green;
+                    lblConnectionStatus.ForeColor = UIColorPalette.StatusSuccess;
                 }
                 else
                 {
                     lblConnectionStatus.Text = "❌ Không thể kết nối ERP";
-                    lblConnectionStatus.ForeColor = Color.Red;
+                    lblConnectionStatus.ForeColor = UIColorPalette.StatusError;
                     txtSoBGK.Enabled = false;
                     btnTimBGK.Enabled = false;
                 }
@@ -57,7 +74,7 @@ namespace QLVT.GUI
             catch (Exception)
             {
                 lblConnectionStatus.Text = "❌ Lỗi kết nối ERP";
-                lblConnectionStatus.ForeColor = Color.Red;
+                lblConnectionStatus.ForeColor = UIColorPalette.StatusError;
                 txtSoBGK.Enabled = false;
                 btnTimBGK.Enabled = false;
             }
@@ -70,14 +87,24 @@ namespace QLVT.GUI
             dgvChiTiet.AllowUserToDeleteRows = false;
             dgvChiTiet.ReadOnly = false; // Cho phép chỉnh sửa
             dgvChiTiet.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dgvChiTiet.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            
+            // Thiết lập font truyền thống cho dữ liệu trong grid
+            dgvChiTiet.DefaultCellStyle.Font = UIFonts.GridData;
+            dgvChiTiet.RowTemplate.DefaultCellStyle.Font = UIFonts.GridData;
+            
+            // Căn giữa header cho tất cả các cột
+            dgvChiTiet.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             // Tạo các cột
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "STT",
                 HeaderText = "STT",
-                Width = 50,
-                ReadOnly = true
+                Width = 60,
+                FillWeight = 5,
+                ReadOnly = true,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
@@ -85,8 +112,10 @@ namespace QLVT.GUI
                 Name = "VatTuHangHoa",
                 HeaderText = "Mã VT",
                 DataPropertyName = "VatTuHangHoa",
-                Width = 100,
-                ReadOnly = true
+                Width = 120,
+                FillWeight = 15,
+                ReadOnly = true,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
             });
 
             dgvChiTiet.Columns.Add(new DataGridViewTextBoxColumn
@@ -94,7 +123,8 @@ namespace QLVT.GUI
                 Name = "TenVatTu",
                 HeaderText = "Tên vật tư",
                 DataPropertyName = "TenVatTu",
-                Width = 200,
+                Width = 400,
+                FillWeight = 45,
                 ReadOnly = true
             });
 
@@ -103,7 +133,8 @@ namespace QLVT.GUI
                 Name = "DonViTinh",
                 HeaderText = "ĐVT",
                 DataPropertyName = "DonViTinh",
-                Width = 60,
+                Width = 80,
+                FillWeight = 10,
                 ReadOnly = true
             });
 
@@ -112,7 +143,8 @@ namespace QLVT.GUI
                 Name = "SoLuongHoanUng",
                 HeaderText = "SL hoàn ứng",
                 DataPropertyName = "SoLuongHoanUngThucTe", // Bind trực tiếp vào SoLuongHoanUngThucTe
-                Width = 100,
+                Width = 120,
+                FillWeight = 15,
                 ReadOnly = false, // Cho phép sửa
                 DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
             });
@@ -122,7 +154,8 @@ namespace QLVT.GUI
                 Name = "TonKho",
                 HeaderText = "Tồn kho",
                 DataPropertyName = "TonKho",
-                Width = 100,
+                Width = 120,
+                FillWeight = 15,
                 ReadOnly = true,
                 DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", Alignment = DataGridViewContentAlignment.MiddleRight }
             });
@@ -156,13 +189,13 @@ namespace QLVT.GUI
                 // Nếu số lượng hoàn ứng > tồn kho, đánh dấu màu hồng
                 if (soLuongHoanUng > tonKho)
                 {
-                    row.DefaultCellStyle.BackColor = Color.LightPink;
-                    row.DefaultCellStyle.ForeColor = Color.DarkRed;
+                    row.DefaultCellStyle.BackColor = UIColorPalette.StatusWarningBackground;
+                    row.DefaultCellStyle.ForeColor = UIColorPalette.StatusWarningText;
                 }
                 else
                 {
-                    row.DefaultCellStyle.BackColor = Color.White;
-                    row.DefaultCellStyle.ForeColor = Color.Black;
+                    row.DefaultCellStyle.BackColor = UIColorPalette.BackgroundWhite;
+                    row.DefaultCellStyle.ForeColor = UIColorPalette.TextBlack;
                 }
             }
             catch
@@ -278,7 +311,7 @@ namespace QLVT.GUI
                 }
 
                 lblStatus.Text = "Đang tìm BGK...";
-                lblStatus.ForeColor = Color.Blue;
+                lblStatus.ForeColor = UIColorPalette.StatusProcessing;
 
                 // Tìm BGK theo số nghiệm thu và năm
                 var bgkList = _erpBgkBLL.GetNghiemThuGiaoKhoanData(int.Parse(txtSoBGK.Text), nam);
@@ -301,7 +334,7 @@ namespace QLVT.GUI
                             
                             currentBGK.DaHoanUng = true;
                             lblStatus.Text = $"⚠️ BGK {currentBGK.SoBGK} đã được hoàn ứng";
-                            lblStatus.ForeColor = Color.Orange;
+                            lblStatus.ForeColor = UIColorPalette.WarningOrange;
                             
                             // Không load dữ liệu nếu đã hoàn ứng
                             ResetBGKDisplay();
@@ -310,7 +343,7 @@ namespace QLVT.GUI
                         else
                         {
                             lblStatus.Text = $"✅ Đã tải BGK {currentBGK.SoBGK}";
-                            lblStatus.ForeColor = Color.Green;
+                            lblStatus.ForeColor = UIColorPalette.StatusSuccess;
                         }
                     }
                     
@@ -328,7 +361,7 @@ namespace QLVT.GUI
                 MessageBox.Show($"Lỗi khi tìm BGK:\n{ex.Message}", "Lỗi",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lblStatus.Text = $"❌ Lỗi: {ex.Message}";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = UIColorPalette.StatusError;
                 ResetBGKDisplay();
             }
         }
@@ -391,14 +424,12 @@ namespace QLVT.GUI
             if (currentBGK.DaHoanUng == true)
             {
                 lblTrangThai.Text = "Đã hoàn ứng";
-                lblTrangThai.ForeColor = Color.Green;
-                lblNgayHoanUng.Text = currentBGK.NgayHoanUng?.ToString("dd/MM/yyyy") ?? "-";
+                lblTrangThai.ForeColor = UIColorPalette.StatusSuccess;
             }
             else
             {
                 lblTrangThai.Text = "Chưa hoàn ứng";
-                lblTrangThai.ForeColor = Color.Red;
-                lblNgayHoanUng.Text = "-";
+                lblTrangThai.ForeColor = UIColorPalette.StatusError;
             }
         }
 
@@ -413,8 +444,7 @@ namespace QLVT.GUI
             lblNoiDung.Text = "-";
             lblSoNghiemThu.Text = "-";
             lblTrangThai.Text = "-";
-            lblTrangThai.ForeColor = Color.Black;
-            lblNgayHoanUng.Text = "-";
+            lblTrangThai.ForeColor = UIColorPalette.TextBlack;
 
             dgvChiTiet.DataSource = null;
             btnXacNhan.Enabled = false;
@@ -461,13 +491,13 @@ namespace QLVT.GUI
                 if (confirmResult == DialogResult.Yes)
                 {
                     lblStatus.Text = "⏳ Đang xử lý hoàn ứng...";
-                    lblStatus.ForeColor = Color.Blue;
+                    lblStatus.ForeColor = UIColorPalette.StatusProcessing;
                     btnXacNhan.Enabled = false;
 
                     try
                     {
                         // Gọi BLL để xử lý hoàn ứng với transaction
-                        DateTime ngayHoanUng = dtpNgayHoanUng.Value;
+                        DateTime ngayHoanUng = DateTime.Now; // Sử dụng ngày hiện tại
                         bool result = _hoanUngBLL.BGK_XacNhanHoanUngDonLe(
                             currentBGK, 
                             currentVatTuList, 
@@ -483,7 +513,7 @@ namespace QLVT.GUI
                                 "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                             lblStatus.Text = $"✅ Hoàn ứng thành công BGK {currentBGK.SoBGK}";
-                            lblStatus.ForeColor = Color.Green;
+                            lblStatus.ForeColor = UIColorPalette.StatusSuccess;
 
                             // Clear form và grid sau khi hoàn ứng thành công
                             ClearForm();
@@ -493,7 +523,7 @@ namespace QLVT.GUI
                             MessageBox.Show("Hoàn ứng thất bại!", "Lỗi",
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
                             lblStatus.Text = "❌ Hoàn ứng thất bại";
-                            lblStatus.ForeColor = Color.Red;
+                            lblStatus.ForeColor = UIColorPalette.StatusError;
                             btnXacNhan.Enabled = true;
                         }
                     }
@@ -502,7 +532,7 @@ namespace QLVT.GUI
                         MessageBox.Show($"Lỗi khi xử lý hoàn ứng:\n\n{ex.Message}", "Lỗi",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                         lblStatus.Text = $"❌ Lỗi: {ex.Message}";
-                        lblStatus.ForeColor = Color.Red;
+                        lblStatus.ForeColor = UIColorPalette.StatusError;
                         btnXacNhan.Enabled = true;
                     }
                 }
@@ -512,7 +542,7 @@ namespace QLVT.GUI
                 MessageBox.Show($"Lỗi không mong đợi:\n{ex.Message}", "Lỗi",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lblStatus.Text = $"❌ Lỗi: {ex.Message}";
-                lblStatus.ForeColor = Color.Red;
+                lblStatus.ForeColor = UIColorPalette.StatusError;
                 btnXacNhan.Enabled = currentBGK?.DaHoanUng != true;
             }
         }
@@ -591,7 +621,7 @@ namespace QLVT.GUI
             
             // Reset status
             lblStatus.Text = "Nhập số BGK và năm để tìm kiếm";
-            lblStatus.ForeColor = Color.Black;
+            lblStatus.ForeColor = UIColorPalette.TextBlack;
             
             // Reset buttons
             btnXacNhan.Enabled = false;

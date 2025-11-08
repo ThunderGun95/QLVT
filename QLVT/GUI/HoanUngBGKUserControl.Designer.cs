@@ -27,8 +27,6 @@ namespace QLVT.GUI
         private Label lblConnectionStatus;
         private GroupBox grpChiTiet;
         private DataGridView dgvChiTiet;
-        private DateTimePicker dtpNgayHoanUng;
-        private Label lblNgayHoanUng;
         private Button btnXacNhan;
         private Label lblStatus;
 
@@ -49,6 +47,7 @@ namespace QLVT.GUI
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             lblTitle = new Label();
             grpTimKiem = new GroupBox();
             lblSoBGKTimLabel = new Label();
@@ -73,8 +72,6 @@ namespace QLVT.GUI
             lblSoNghiemThu = new Label();
             grpChiTiet = new GroupBox();
             dgvChiTiet = new DataGridView();
-            lblNgayHoanUng = new Label();
-            dtpNgayHoanUng = new DateTimePicker();
             btnXacNhan = new Button();
             lblStatus = new Label();
             grpTimKiem.SuspendLayout();
@@ -85,19 +82,21 @@ namespace QLVT.GUI
             // 
             // lblTitle
             // 
-            lblTitle.BackColor = Color.Navy;
+            lblTitle.BackColor = Color.FromArgb(41, 128, 185);
             lblTitle.Dock = DockStyle.Top;
-            lblTitle.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Bold);
+            lblTitle.Font = new Font("Arial", 17F, FontStyle.Bold);
             lblTitle.ForeColor = Color.White;
             lblTitle.Location = new Point(0, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(1200, 40);
+            lblTitle.Padding = new Padding(0, 5, 0, 5);
+            lblTitle.Size = new Size(1200, 50);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "HOÀN ỨNG BGK";
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // grpTimKiem
             // 
+            grpTimKiem.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             grpTimKiem.Controls.Add(lblSoBGKTimLabel);
             grpTimKiem.Controls.Add(txtSoBGK);
             grpTimKiem.Controls.Add(lblSeparator);
@@ -105,90 +104,101 @@ namespace QLVT.GUI
             grpTimKiem.Controls.Add(btnTimBGK);
             grpTimKiem.Controls.Add(btnRefresh);
             grpTimKiem.Controls.Add(lblConnectionStatus);
-            grpTimKiem.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpTimKiem.Location = new Point(20, 50);
+            grpTimKiem.Font = new Font("Arial", 11F, FontStyle.Bold);
+            grpTimKiem.ForeColor = Color.FromArgb(52, 73, 94);
+            grpTimKiem.Location = new Point(20, 65);
             grpTimKiem.Name = "grpTimKiem";
-            grpTimKiem.Size = new Size(1160, 80);
+            grpTimKiem.Padding = new Padding(10);
+            grpTimKiem.Size = new Size(1160, 90);
             grpTimKiem.TabIndex = 1;
             grpTimKiem.TabStop = false;
-            grpTimKiem.Text = "Tìm kiếm BGK";
+            grpTimKiem.Text = "🔍 Tìm kiếm BGK";
             // 
             // lblSoBGKTimLabel
             // 
             lblSoBGKTimLabel.AutoSize = true;
-            lblSoBGKTimLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblSoBGKTimLabel.Location = new Point(20, 25);
+            lblSoBGKTimLabel.Font = new Font("Arial", 10.5F);
+            lblSoBGKTimLabel.ForeColor = Color.FromArgb(52, 73, 94);
+            lblSoBGKTimLabel.Location = new Point(25, 32);
             lblSoBGKTimLabel.Name = "lblSoBGKTimLabel";
-            lblSoBGKTimLabel.Size = new Size(53, 15);
+            lblSoBGKTimLabel.Size = new Size(54, 17);
             lblSoBGKTimLabel.TabIndex = 0;
             lblSoBGKTimLabel.Text = "Số BGK:";
             // 
             // txtSoBGK
             // 
-            txtSoBGK.Font = new Font("Microsoft Sans Serif", 9F);
-            txtSoBGK.Location = new Point(80, 22);
+            txtSoBGK.Font = new Font("Arial", 11F);
+            txtSoBGK.Location = new Point(95, 28);
             txtSoBGK.Name = "txtSoBGK";
-            txtSoBGK.Size = new Size(100, 21);
+            txtSoBGK.Size = new Size(110, 25);
             txtSoBGK.TabIndex = 1;
             txtSoBGK.KeyPress += txtSoBGK_KeyPress;
             // 
             // lblSeparator
             // 
             lblSeparator.AutoSize = true;
-            lblSeparator.Font = new Font("Microsoft Sans Serif", 9F);
-            lblSeparator.Location = new Point(185, 25);
+            lblSeparator.Font = new Font("Arial", 12F, FontStyle.Bold);
+            lblSeparator.ForeColor = Color.FromArgb(52, 73, 94);
+            lblSeparator.Location = new Point(210, 30);
             lblSeparator.Name = "lblSeparator";
-            lblSeparator.Size = new Size(10, 15);
+            lblSeparator.Size = new Size(16, 20);
             lblSeparator.TabIndex = 2;
             lblSeparator.Text = "/";
             // 
             // txtNam
             // 
-            txtNam.Font = new Font("Microsoft Sans Serif", 9F);
-            txtNam.Location = new Point(205, 22);
+            txtNam.Font = new Font("Arial", 11F);
+            txtNam.Location = new Point(225, 28);
             txtNam.Name = "txtNam";
-            txtNam.Size = new Size(60, 21);
+            txtNam.Size = new Size(75, 25);
             txtNam.TabIndex = 3;
             txtNam.Text = "2025";
             txtNam.KeyPress += txtNam_KeyPress;
             // 
             // btnTimBGK
             // 
-            btnTimBGK.BackColor = Color.LightBlue;
-            btnTimBGK.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            btnTimBGK.Location = new Point(280, 20);
+            btnTimBGK.BackColor = Color.FromArgb(52, 152, 219);
+            btnTimBGK.FlatAppearance.BorderSize = 0;
+            btnTimBGK.FlatStyle = FlatStyle.Flat;
+            btnTimBGK.Font = new Font("Arial", 10.5F, FontStyle.Bold);
+            btnTimBGK.ForeColor = Color.White;
+            btnTimBGK.Location = new Point(320, 26);
             btnTimBGK.Name = "btnTimBGK";
-            btnTimBGK.Size = new Size(80, 25);
+            btnTimBGK.Size = new Size(100, 30);
             btnTimBGK.TabIndex = 4;
-            btnTimBGK.Text = "Tìm BGK";
+            btnTimBGK.Text = "🔎 Tìm kiếm";
             btnTimBGK.UseVisualStyleBackColor = false;
             btnTimBGK.Click += btnTimBGK_Click;
             // 
             // btnRefresh
             // 
-            btnRefresh.BackColor = Color.LightGreen;
-            btnRefresh.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            btnRefresh.Location = new Point(370, 20);
+            btnRefresh.BackColor = Color.FromArgb(46, 204, 113);
+            btnRefresh.FlatAppearance.BorderSize = 0;
+            btnRefresh.FlatStyle = FlatStyle.Flat;
+            btnRefresh.Font = new Font("Arial", 10.5F, FontStyle.Bold);
+            btnRefresh.ForeColor = Color.White;
+            btnRefresh.Location = new Point(430, 26);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(80, 25);
+            btnRefresh.Size = new Size(100, 30);
             btnRefresh.TabIndex = 5;
-            btnRefresh.Text = "Làm mới";
+            btnRefresh.Text = "🔄 Làm mới";
             btnRefresh.UseVisualStyleBackColor = false;
             btnRefresh.Click += btnRefresh_Click;
             // 
             // lblConnectionStatus
             // 
             lblConnectionStatus.AutoSize = true;
-            lblConnectionStatus.Font = new Font("Microsoft Sans Serif", 9F);
-            lblConnectionStatus.ForeColor = Color.Blue;
-            lblConnectionStatus.Location = new Point(20, 50);
+            lblConnectionStatus.Font = new Font("Arial", 10F);
+            lblConnectionStatus.ForeColor = Color.FromArgb(52, 152, 219);
+            lblConnectionStatus.Location = new Point(25, 60);
             lblConnectionStatus.Name = "lblConnectionStatus";
-            lblConnectionStatus.Size = new Size(178, 15);
+            lblConnectionStatus.Size = new Size(167, 15);
             lblConnectionStatus.TabIndex = 6;
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
             // 
             // grpBGKInfo
             // 
+            grpBGKInfo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             grpBGKInfo.Controls.Add(lblSoBGKLabel);
             grpBGKInfo.Controls.Add(lblSoBGK);
             grpBGKInfo.Controls.Add(lblTrangThaiLabel);
@@ -201,201 +211,218 @@ namespace QLVT.GUI
             grpBGKInfo.Controls.Add(lblNoiDung);
             grpBGKInfo.Controls.Add(lblSoNghiemThuLabel);
             grpBGKInfo.Controls.Add(lblSoNghiemThu);
-            grpBGKInfo.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpBGKInfo.Location = new Point(20, 140);
+            grpBGKInfo.Font = new Font("Arial", 11F, FontStyle.Bold);
+            grpBGKInfo.ForeColor = Color.FromArgb(52, 73, 94);
+            grpBGKInfo.Location = new Point(20, 165);
             grpBGKInfo.Name = "grpBGKInfo";
-            grpBGKInfo.Size = new Size(1160, 110);
+            grpBGKInfo.Padding = new Padding(10);
+            grpBGKInfo.Size = new Size(1160, 120);
             grpBGKInfo.TabIndex = 2;
             grpBGKInfo.TabStop = false;
-            grpBGKInfo.Text = "Thông tin BGK";
+            grpBGKInfo.Text = "📋 Thông tin BGK";
             // 
             // lblSoBGKLabel
             // 
             lblSoBGKLabel.AutoSize = true;
-            lblSoBGKLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblSoBGKLabel.Location = new Point(20, 25);
+            lblSoBGKLabel.Font = new Font("Arial", 10.5F);
+            lblSoBGKLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblSoBGKLabel.Location = new Point(25, 32);
             lblSoBGKLabel.Name = "lblSoBGKLabel";
-            lblSoBGKLabel.Size = new Size(53, 15);
+            lblSoBGKLabel.Size = new Size(54, 17);
             lblSoBGKLabel.TabIndex = 0;
             lblSoBGKLabel.Text = "Số BGK:";
             // 
             // lblSoBGK
             // 
             lblSoBGK.AutoSize = true;
-            lblSoBGK.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblSoBGK.ForeColor = Color.Blue;
-            lblSoBGK.Location = new Point(80, 25);
+            lblSoBGK.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblSoBGK.ForeColor = Color.FromArgb(41, 128, 185);
+            lblSoBGK.Location = new Point(120, 32);
             lblSoBGK.Name = "lblSoBGK";
-            lblSoBGK.Size = new Size(0, 15);
+            lblSoBGK.Size = new Size(15, 19);
             lblSoBGK.TabIndex = 1;
+            lblSoBGK.Text = "-";
             // 
             // lblTrangThaiLabel
             // 
             lblTrangThaiLabel.AutoSize = true;
-            lblTrangThaiLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblTrangThaiLabel.Location = new Point(250, 25);
+            lblTrangThaiLabel.Font = new Font("Arial", 10.5F);
+            lblTrangThaiLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblTrangThaiLabel.Location = new Point(350, 32);
             lblTrangThaiLabel.Name = "lblTrangThaiLabel";
-            lblTrangThaiLabel.Size = new Size(65, 15);
+            lblTrangThaiLabel.Size = new Size(69, 17);
             lblTrangThaiLabel.TabIndex = 8;
             lblTrangThaiLabel.Text = "Trạng thái:";
             // 
             // lblTrangThai
             // 
             lblTrangThai.AutoSize = true;
-            lblTrangThai.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblTrangThai.ForeColor = Color.Orange;
-            lblTrangThai.Location = new Point(325, 25);
+            lblTrangThai.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblTrangThai.ForeColor = Color.FromArgb(230, 126, 34);
+            lblTrangThai.Location = new Point(440, 32);
             lblTrangThai.Name = "lblTrangThai";
-            lblTrangThai.Size = new Size(0, 15);
+            lblTrangThai.Size = new Size(15, 19);
             lblTrangThai.TabIndex = 9;
+            lblTrangThai.Text = "-";
             // 
             // lblNhanVienKyThuatLabel
             // 
             lblNhanVienKyThuatLabel.AutoSize = true;
-            lblNhanVienKyThuatLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNhanVienKyThuatLabel.Location = new Point(470, 25);
+            lblNhanVienKyThuatLabel.Font = new Font("Arial", 10.5F);
+            lblNhanVienKyThuatLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblNhanVienKyThuatLabel.Location = new Point(600, 32);
             lblNhanVienKyThuatLabel.Name = "lblNhanVienKyThuatLabel";
-            lblNhanVienKyThuatLabel.Size = new Size(72, 15);
+            lblNhanVienKyThuatLabel.Size = new Size(80, 17);
             lblNhanVienKyThuatLabel.TabIndex = 10;
             lblNhanVienKyThuatLabel.Text = "NV Kỹ thuật:";
             // 
             // lblNhanVienKyThuat
             // 
             lblNhanVienKyThuat.AutoSize = true;
-            lblNhanVienKyThuat.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblNhanVienKyThuat.ForeColor = Color.Black;
-            lblNhanVienKyThuat.Location = new Point(580, 25);
+            lblNhanVienKyThuat.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblNhanVienKyThuat.ForeColor = Color.FromArgb(52, 73, 94);
+            lblNhanVienKyThuat.Location = new Point(695, 32);
             lblNhanVienKyThuat.Name = "lblNhanVienKyThuat";
-            lblNhanVienKyThuat.Size = new Size(0, 15);
+            lblNhanVienKyThuat.Size = new Size(15, 19);
             lblNhanVienKyThuat.TabIndex = 11;
+            lblNhanVienKyThuat.Text = "-";
             // 
             // lblNhanVienXayLapLabel
             // 
             lblNhanVienXayLapLabel.AutoSize = true;
-            lblNhanVienXayLapLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNhanVienXayLapLabel.Location = new Point(20, 50);
+            lblNhanVienXayLapLabel.Font = new Font("Arial", 10.5F);
+            lblNhanVienXayLapLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblNhanVienXayLapLabel.Location = new Point(25, 62);
             lblNhanVienXayLapLabel.Name = "lblNhanVienXayLapLabel";
-            lblNhanVienXayLapLabel.Size = new Size(69, 15);
+            lblNhanVienXayLapLabel.Size = new Size(76, 17);
             lblNhanVienXayLapLabel.TabIndex = 12;
             lblNhanVienXayLapLabel.Text = "NV Xây lắp:";
             // 
             // lblNhanVienXayLap
             // 
             lblNhanVienXayLap.AutoSize = true;
-            lblNhanVienXayLap.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblNhanVienXayLap.ForeColor = Color.Black;
-            lblNhanVienXayLap.Location = new Point(125, 50);
+            lblNhanVienXayLap.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblNhanVienXayLap.ForeColor = Color.FromArgb(52, 73, 94);
+            lblNhanVienXayLap.Location = new Point(120, 62);
             lblNhanVienXayLap.Name = "lblNhanVienXayLap";
-            lblNhanVienXayLap.Size = new Size(0, 15);
+            lblNhanVienXayLap.Size = new Size(15, 19);
             lblNhanVienXayLap.TabIndex = 13;
+            lblNhanVienXayLap.Text = "-";
             // 
             // lblNoiDungLabel
             // 
             lblNoiDungLabel.AutoSize = true;
-            lblNoiDungLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNoiDungLabel.Location = new Point(20, 75);
+            lblNoiDungLabel.Font = new Font("Arial", 10.5F);
+            lblNoiDungLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblNoiDungLabel.Location = new Point(25, 92);
             lblNoiDungLabel.Name = "lblNoiDungLabel";
-            lblNoiDungLabel.Size = new Size(60, 15);
+            lblNoiDungLabel.Size = new Size(66, 17);
             lblNoiDungLabel.TabIndex = 14;
             lblNoiDungLabel.Text = "Nội dung:";
             // 
             // lblNoiDung
             // 
             lblNoiDung.AutoSize = true;
-            lblNoiDung.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblNoiDung.ForeColor = Color.Black;
-            lblNoiDung.Location = new Point(95, 75);
+            lblNoiDung.Font = new Font("Arial", 10.5F);
+            lblNoiDung.ForeColor = Color.FromArgb(52, 73, 94);
+            lblNoiDung.Location = new Point(120, 92);
+            lblNoiDung.MaximumSize = new Size(1000, 0);
             lblNoiDung.Name = "lblNoiDung";
-            lblNoiDung.Size = new Size(0, 15);
+            lblNoiDung.Size = new Size(13, 17);
             lblNoiDung.TabIndex = 15;
+            lblNoiDung.Text = "-";
             // 
             // lblSoNghiemThuLabel
             // 
             lblSoNghiemThuLabel.AutoSize = true;
-            lblSoNghiemThuLabel.Font = new Font("Microsoft Sans Serif", 9F);
-            lblSoNghiemThuLabel.Location = new Point(250, 50);
+            lblSoNghiemThuLabel.Font = new Font("Arial", 10.5F);
+            lblSoNghiemThuLabel.ForeColor = Color.FromArgb(127, 140, 141);
+            lblSoNghiemThuLabel.Location = new Point(350, 62);
             lblSoNghiemThuLabel.Name = "lblSoNghiemThuLabel";
-            lblSoNghiemThuLabel.Size = new Size(90, 15);
+            lblSoNghiemThuLabel.Size = new Size(95, 17);
             lblSoNghiemThuLabel.TabIndex = 16;
             lblSoNghiemThuLabel.Text = "Số nghiệm thu:";
             // 
             // lblSoNghiemThu
             // 
             lblSoNghiemThu.AutoSize = true;
-            lblSoNghiemThu.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            lblSoNghiemThu.ForeColor = Color.Blue;
-            lblSoNghiemThu.Location = new Point(340, 50);
+            lblSoNghiemThu.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblSoNghiemThu.ForeColor = Color.FromArgb(41, 128, 185);
+            lblSoNghiemThu.Location = new Point(460, 62);
             lblSoNghiemThu.Name = "lblSoNghiemThu";
-            lblSoNghiemThu.Size = new Size(0, 15);
+            lblSoNghiemThu.Size = new Size(15, 19);
             lblSoNghiemThu.TabIndex = 17;
+            lblSoNghiemThu.Text = "-";
             // 
             // grpChiTiet
             // 
+            grpChiTiet.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             grpChiTiet.Controls.Add(dgvChiTiet);
-            grpChiTiet.Controls.Add(lblNgayHoanUng);
-            grpChiTiet.Controls.Add(dtpNgayHoanUng);
             grpChiTiet.Controls.Add(btnXacNhan);
-            grpChiTiet.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpChiTiet.Location = new Point(20, 260);
+            grpChiTiet.Font = new Font("Arial", 11F, FontStyle.Bold);
+            grpChiTiet.ForeColor = Color.FromArgb(52, 73, 94);
+            grpChiTiet.Location = new Point(20, 295);
             grpChiTiet.Name = "grpChiTiet";
-            grpChiTiet.Size = new Size(1160, 430);
+            grpChiTiet.Padding = new Padding(10);
+            grpChiTiet.Size = new Size(1160, 415);
             grpChiTiet.TabIndex = 3;
             grpChiTiet.TabStop = false;
-            grpChiTiet.Text = "Danh sách vật tư hoàn ứng";
+            grpChiTiet.Text = "📦 Danh sách vật tư hoàn ứng";
             // 
             // dgvChiTiet
             // 
             dgvChiTiet.AllowUserToAddRows = false;
             dgvChiTiet.AllowUserToDeleteRows = false;
+            dgvChiTiet.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvChiTiet.BackgroundColor = Color.White;
-            dgvChiTiet.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvChiTiet.Location = new Point(20, 25);
+            dgvChiTiet.BorderStyle = BorderStyle.None;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.FromArgb(52, 73, 94);
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.White;
+            dataGridViewCellStyle1.Padding = new Padding(5);
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvChiTiet.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dgvChiTiet.ColumnHeadersHeight = 35;
+            dgvChiTiet.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dgvChiTiet.EnableHeadersVisualStyles = false;
+            dgvChiTiet.GridColor = Color.FromArgb(189, 195, 199);
+            dgvChiTiet.Location = new Point(20, 30);
             dgvChiTiet.MultiSelect = false;
             dgvChiTiet.Name = "dgvChiTiet";
+            dgvChiTiet.RowHeadersVisible = false;
+            dgvChiTiet.RowTemplate.Height = 28;
             dgvChiTiet.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvChiTiet.Size = new Size(1120, 350);
+            dgvChiTiet.Size = new Size(1120, 330);
             dgvChiTiet.TabIndex = 0;
-            // 
-            // lblNgayHoanUng
-            // 
-            lblNgayHoanUng.AutoSize = true;
-            lblNgayHoanUng.Font = new Font("Microsoft Sans Serif", 9F);
-            lblNgayHoanUng.Location = new Point(20, 390);
-            lblNgayHoanUng.Name = "lblNgayHoanUng";
-            lblNgayHoanUng.Size = new Size(93, 15);
-            lblNgayHoanUng.TabIndex = 1;
-            lblNgayHoanUng.Text = "Ngày hoàn ứng:";
-            // 
-            // dtpNgayHoanUng
-            // 
-            dtpNgayHoanUng.Font = new Font("Microsoft Sans Serif", 9F);
-            dtpNgayHoanUng.Format = DateTimePickerFormat.Short;
-            dtpNgayHoanUng.Location = new Point(130, 387);
-            dtpNgayHoanUng.Name = "dtpNgayHoanUng";
-            dtpNgayHoanUng.Size = new Size(120, 21);
-            dtpNgayHoanUng.TabIndex = 2;
             // 
             // btnXacNhan
             // 
-            btnXacNhan.BackColor = Color.Orange;
-            btnXacNhan.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            btnXacNhan.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnXacNhan.BackColor = Color.FromArgb(230, 126, 34);
+            btnXacNhan.FlatAppearance.BorderSize = 0;
+            btnXacNhan.FlatStyle = FlatStyle.Flat;
+            btnXacNhan.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             btnXacNhan.ForeColor = Color.White;
-            btnXacNhan.Location = new Point(270, 385);
+            btnXacNhan.Location = new Point(20, 367);
             btnXacNhan.Name = "btnXacNhan";
-            btnXacNhan.Size = new Size(150, 30);
-            btnXacNhan.TabIndex = 3;
-            btnXacNhan.Text = "Xác nhận hoàn ứng";
+            btnXacNhan.Size = new Size(200, 40);
+            btnXacNhan.TabIndex = 1;
+            btnXacNhan.Text = "✅ Xác nhận hoàn ứng";
             btnXacNhan.UseVisualStyleBackColor = false;
             btnXacNhan.Click += btnXacNhan_Click;
             // 
             // lblStatus
             // 
+            lblStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             lblStatus.AutoSize = true;
-            lblStatus.Font = new Font("Microsoft Sans Serif", 9F);
-            lblStatus.ForeColor = Color.Green;
-            lblStatus.Location = new Point(20, 700);
+            lblStatus.Font = new Font("Arial", 10.5F);
+            lblStatus.ForeColor = Color.FromArgb(46, 204, 113);
+            lblStatus.Location = new Point(25, 722);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(59, 15);
+            lblStatus.Size = new Size(61, 17);
             lblStatus.TabIndex = 4;
             lblStatus.Text = "Sẵn sàng";
             // 
@@ -403,21 +430,20 @@ namespace QLVT.GUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.White;
+            BackColor = Color.FromArgb(236, 240, 241);
             Controls.Add(lblStatus);
             Controls.Add(grpChiTiet);
             Controls.Add(grpBGKInfo);
             Controls.Add(grpTimKiem);
             Controls.Add(lblTitle);
             Name = "HoanUngBGKUserControl";
-            Size = new Size(1200, 720);
+            Size = new Size(1200, 753);
             Load += HoanUngBGKUserControl_Load;
             grpTimKiem.ResumeLayout(false);
             grpTimKiem.PerformLayout();
             grpBGKInfo.ResumeLayout(false);
             grpBGKInfo.PerformLayout();
             grpChiTiet.ResumeLayout(false);
-            grpChiTiet.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).EndInit();
             ResumeLayout(false);
             PerformLayout();
