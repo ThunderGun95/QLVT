@@ -9,6 +9,7 @@ namespace QLVT.GUI
         public ChangePasswordForm()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             authBLL = new AuthenticationBLL();
         }
 

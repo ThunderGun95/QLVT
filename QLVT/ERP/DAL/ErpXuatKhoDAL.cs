@@ -22,11 +22,14 @@ namespace QLVT.ERP.DAL
                     
                     // Query để lấy thông tin header phiếu xuất
                     string sql = @"
-                        SELECT MaPhieuXuatKhoVatTu, SoPhieuXuatKho, NAM,  nv.MaNhanVien, nv.HoVaTen as TenNguoiNhan, ThoiGianTKXK
+                        SELECT MaPhieuXuatKhoVatTu, SoPhieuXuatKho, NAM,  nv.MaNhanVien, nv.HoVaTen as TenNguoiNhan, ThoiGianXK
                         FROM vt.PhieuXuatKhoVatTus px
                             LEFT JOIN ViewNhanViens nv on nv.UserID = px.MaNguoiNhan
                          WHERE TTXK = 'TT_A'
-                            AND SoPhieuXuatKho = @soPhieu AND NAM = @nam";
+                            AND ThoiGianXK > '2025/01/01'
+                            AND SoPhieuXuatKho = @soPhieu AND NAM = @nam
+                            AND nv.MaNhanVien in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh')
+                            ";
 
 
                     ERP_PhieuXuatKho? order = null;
@@ -47,8 +50,8 @@ namespace QLVT.ERP.DAL
                                     NAM = Convert.ToInt32(reader["NAM"]),
                                     TenNhanVien = reader["TenNguoiNhan"]?.ToString() ?? string.Empty,
                                     MaNhanVien = reader["MaNhanVien"]?.ToString() ?? string.Empty,
-                                    ThoiGianHoanThanhXuatKho = reader["ThoiGianTKXK"] != DBNull.Value ? 
-                                             Convert.ToDateTime(reader["ThoiGianTKXK"]) : DateTime.MinValue
+                                    ThoiGianHoanThanhXuatKho = reader["ThoiGianXK"] != DBNull.Value ? 
+                                             Convert.ToDateTime(reader["ThoiGianXK"]) : DateTime.MinValue
                                 };
                             }
                         }
@@ -59,14 +62,14 @@ namespace QLVT.ERP.DAL
 
                     // Query để lấy chi tiết phiếu xuất kèm thông tin kho
                     string detailSql = @"
-                        SELECT vtxk.MaPhieuXuatKhoVatTu, vtxk.MaVatTuHangHoa, vt.TenVatTu, vt.DacTinhKyThuat, vt.DonViTinh, 
+                        SELECT vtxk.MaPhieuXuatKhoVatTu, vtxk.MaVatTuHangHoa, MucDichSuDung, vt.TenVatTu, vt.DacTinhKyThuat, vt.DonViTinh, 
                                 vtxk.MaKhoVatTu, kho.TenKho, SUm(SoLuongXuatKho) as SoLuongXuatKho
                         FROM vt.PhieuXuatKhoVatTuCTs vtxk
                              INNER JOIN vt.ViewVatTuHangHoas vt on vt.MaVatTuHangHoa = vtxk.MaVatTuHangHoa
                              INNER JOIN vt.KhoVatTus kho on kho.MaKhoVatTu = vtxk.MaKhoVatTu
                         WHERE MaPhieuXuatKhoVatTu = @maPhieu AND vtxk.IsDeleted = 0
                         GROUP BY vtxk.MaPhieuXuatKhoVatTu, vtxk.MaVatTuHangHoa, vt.TenVatTu, vt.DacTinhKyThuat, vt.DonViTinh, 
-                            vtxk.MaKhoVatTu, kho.TenKho";
+                            vtxk.MaKhoVatTu, kho.TenKho, MucDichSuDung";
 
                     using (var command = new SqlCommand(detailSql, connection))
                     {
@@ -81,6 +84,7 @@ namespace QLVT.ERP.DAL
                                     MaPhieuXuatKhoVatTu = Convert.ToInt32(reader["MaPhieuXuatKhoVatTu"]),
                                     MaVatTuHangHoa = reader["MaVatTuHangHoa"]?.ToString() ?? string.Empty,
                                     TenVatTu = reader["TenVatTu"]?.ToString() ?? string.Empty,
+                                    MucDichSuDung = reader["MucDichSuDung"]?.ToString() ?? string.Empty,
                                     SoLuongXuatKho = reader["SoLuongXuatKho"] != DBNull.Value ? Convert.ToDecimal(reader["SoLuongXuatKho"]) : 0m,
                                     DonViTinh = reader["DonViTinh"]?.ToString() ?? string.Empty,
                                     MaKhoXuat = reader["MaKhoVatTu"]?.ToString() ?? string.Empty,

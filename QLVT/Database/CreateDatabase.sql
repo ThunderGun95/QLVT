@@ -493,6 +493,7 @@ BEGIN
         MADDK NVARCHAR(15) NOT NULL,
         MaVTErp INT NOT NULL,
         SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
+        SoLuongHoanUngThucTe DECIMAL(18,2),
         CreatedDate DATETIME DEFAULT GETDATE(),
         
         FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)
@@ -544,6 +545,7 @@ BEGIN
         MADON NVARCHAR(15) NOT NULL,
         MaVTErp INT NOT NULL,
         SoLuongHoanUng DECIMAL(18,2) NOT NULL DEFAULT 0,
+        SoLuongHoanUngThucTe DECIMAL(18,2),
         CreatedDate DATETIME DEFAULT GETDATE(),
         
         FOREIGN KEY (MaVTErp) REFERENCES Supplies(ErpId)

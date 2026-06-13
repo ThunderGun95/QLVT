@@ -18,6 +18,7 @@ namespace QLVT.GUI
         public XuatKhoUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             xuatKhoBLL = new XuatKhoManualBLL();
             chiTietList = new List<PhieuXuatKhoChiTiet>();
             searchResults = new List<VatTuSearchResult>();

@@ -6,7 +6,7 @@ namespace QLVT.Utils
     {
         // Connection string đến database ERP - có thể config từ file
         private static readonly string ExternalConnectionString =
-            "Server=192.168.1.4,1938; Database=EOSNA; User ID=sa;Password=CNNAP@ssw0rdCNNA;Max Pool Size=100;Min Pool Size=5; TrustServerCertificate=True;MultipleActiveResultSets=True";
+            "Server=192.168.2.55,8893; Database=EOSNA; User ID=DEVManh;Password=ManhDev$2026;Max Pool Size=100;Min Pool Size=5; TrustServerCertificate=True;MultipleActiveResultSets=True";
 
         /// <summary>
         /// Tạo kết nối đến database ERP

@@ -55,8 +55,8 @@ namespace QLVT.GUI
             // 
             // lblTitle
             // 
-            lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.FromArgb(0, 122, 204);
+            lblTitle.Font = QLVT.Utils.UIFonts.TitleLarge;
+            lblTitle.ForeColor = Color.FromArgb(52, 152, 219);
             lblTitle.Location = new Point(20, 20);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(300, 30);
@@ -72,7 +72,7 @@ namespace QLVT.GUI
             grpHoSoInfo.Controls.Add(lblViTriDiemChay);
             grpHoSoInfo.Controls.Add(lblNVTaiCongLabel);
             grpHoSoInfo.Controls.Add(lblNVTaiCong);
-            grpHoSoInfo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpHoSoInfo.Font = QLVT.Utils.UIFonts.HeaderStandard;
             grpHoSoInfo.Location = new Point(20, 60);
             grpHoSoInfo.Name = "grpHoSoInfo";
             grpHoSoInfo.Size = new Size(830, 120);
@@ -82,7 +82,7 @@ namespace QLVT.GUI
             // 
             // lblMaDonLabel
             // 
-            lblMaDonLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblMaDonLabel.Font = QLVT.Utils.UIFonts.HeaderStandard;
             lblMaDonLabel.Location = new Point(15, 25);
             lblMaDonLabel.Name = "lblMaDonLabel";
             lblMaDonLabel.Size = new Size(80, 20);
@@ -91,7 +91,7 @@ namespace QLVT.GUI
             // 
             // lblMaDon
             // 
-            lblMaDon.Font = new Font("Segoe UI", 9F);
+            lblMaDon.Font = QLVT.Utils.UIFonts.TextStandard;
             lblMaDon.Location = new Point(112, 25);
             lblMaDon.Name = "lblMaDon";
             lblMaDon.Size = new Size(120, 20);
@@ -99,7 +99,7 @@ namespace QLVT.GUI
             // 
             // lblViTriDiemChayLabel
             // 
-            lblViTriDiemChayLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblViTriDiemChayLabel.Font = QLVT.Utils.UIFonts.HeaderStandard;
             lblViTriDiemChayLabel.Location = new Point(16, 50);
             lblViTriDiemChayLabel.Name = "lblViTriDiemChayLabel";
             lblViTriDiemChayLabel.Size = new Size(90, 20);
@@ -108,7 +108,7 @@ namespace QLVT.GUI
             // 
             // lblViTriDiemChay
             // 
-            lblViTriDiemChay.Font = new Font("Segoe UI", 9F);
+            lblViTriDiemChay.Font = QLVT.Utils.UIFonts.TextStandard;
             lblViTriDiemChay.Location = new Point(112, 50);
             lblViTriDiemChay.Name = "lblViTriDiemChay";
             lblViTriDiemChay.Size = new Size(200, 20);
@@ -116,7 +116,7 @@ namespace QLVT.GUI
             // 
             // lblNVTaiCongLabel
             // 
-            lblNVTaiCongLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblNVTaiCongLabel.Font = QLVT.Utils.UIFonts.HeaderStandard;
             lblNVTaiCongLabel.Location = new Point(16, 75);
             lblNVTaiCongLabel.Name = "lblNVTaiCongLabel";
             lblNVTaiCongLabel.Size = new Size(90, 20);
@@ -125,7 +125,7 @@ namespace QLVT.GUI
             // 
             // lblNVTaiCong
             // 
-            lblNVTaiCong.Font = new Font("Segoe UI", 9F);
+            lblNVTaiCong.Font = QLVT.Utils.UIFonts.TextStandard;
             lblNVTaiCong.Location = new Point(112, 75);
             lblNVTaiCong.Name = "lblNVTaiCong";
             lblNVTaiCong.Size = new Size(200, 20);
@@ -136,7 +136,7 @@ namespace QLVT.GUI
             grpChiTiet.Controls.Add(lblTongSoLuong);
             grpChiTiet.Controls.Add(dgvChiTiet);
             grpChiTiet.Controls.Add(lblSoLoaiVT);
-            grpChiTiet.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpChiTiet.Font = QLVT.Utils.UIFonts.HeaderStandard;
             grpChiTiet.Location = new Point(20, 190);
             grpChiTiet.Name = "grpChiTiet";
             grpChiTiet.Size = new Size(830, 350);
@@ -146,8 +146,8 @@ namespace QLVT.GUI
             // 
             // lblTongSoLuong
             // 
-            lblTongSoLuong.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblTongSoLuong.ForeColor = Color.FromArgb(0, 122, 204);
+            lblTongSoLuong.Font = QLVT.Utils.UIFonts.HeaderStandard;
+            lblTongSoLuong.ForeColor = Color.FromArgb(52, 152, 219);
             lblTongSoLuong.Location = new Point(15, 25);
             lblTongSoLuong.Name = "lblTongSoLuong";
             lblTongSoLuong.Size = new Size(400, 20);
@@ -202,7 +202,7 @@ namespace QLVT.GUI
             // 
             // lblSoLoaiVT
             // 
-            lblSoLoaiVT.Font = new Font("Segoe UI", 9F);
+            lblSoLoaiVT.Font = QLVT.Utils.UIFonts.TextStandard;
             lblSoLoaiVT.Location = new Point(450, 25);
             lblSoLoaiVT.Name = "lblSoLoaiVT";
             lblSoLoaiVT.Size = new Size(200, 20);
@@ -213,7 +213,7 @@ namespace QLVT.GUI
             // 
             btnHoanUng.BackColor = Color.FromArgb(220, 53, 69);
             btnHoanUng.FlatStyle = FlatStyle.Flat;
-            btnHoanUng.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnHoanUng.Font = QLVT.Utils.UIFonts.HeaderStandard;
             btnHoanUng.ForeColor = Color.White;
             btnHoanUng.Location = new Point(670, 550);
             btnHoanUng.Name = "btnHoanUng";
@@ -227,7 +227,7 @@ namespace QLVT.GUI
             // 
             btnDong.BackColor = Color.FromArgb(108, 117, 125);
             btnDong.FlatStyle = FlatStyle.Flat;
-            btnDong.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnDong.Font = QLVT.Utils.UIFonts.HeaderStandard;
             btnDong.ForeColor = Color.White;
             btnDong.Location = new Point(770, 550);
             btnDong.Name = "btnDong";
@@ -248,7 +248,7 @@ namespace QLVT.GUI
             Controls.Add(grpChiTiet);
             Controls.Add(btnHoanUng);
             Controls.Add(btnDong);
-            Font = new Font("Segoe UI", 9F);
+            Font = QLVT.Utils.UIFonts.TextStandard;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -267,3 +267,4 @@ namespace QLVT.GUI
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
     }
 }
+

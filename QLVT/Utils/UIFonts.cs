@@ -4,14 +4,14 @@ namespace QLVT.Utils
 {
     /// <summary>
     /// Centralized font definitions for consistent typography across the application
-    /// Using traditional Arial font for better readability
+    /// Using Segoe UI for a modern Windows desktop look.
     /// </summary>
     public static class UIFonts
     {
         /// <summary>
         /// Primary font family used throughout the application (Traditional)
         /// </summary>
-        public const string FontFamily = "Arial";
+        public const string FontFamily = "Segoe UI";
         
         
         // ===== FONT SIZES (Increased by 1pt for better readability) =====
@@ -19,37 +19,42 @@ namespace QLVT.Utils
         /// <summary>
         /// Extra Large - For main titles and headers (17pt, Bold)
         /// </summary>
-        public static readonly Font TitleLarge = new Font(FontFamily, 17F, FontStyle.Bold);
+        public static readonly Font TitleLarge = new Font(FontFamily, 18F, FontStyle.Bold);
         
         /// <summary>
         /// Large - For section headers (13pt, Bold)
         /// </summary>
-        public static readonly Font TitleMedium = new Font(FontFamily, 13F, FontStyle.Bold);
+        public static readonly Font TitleMedium = new Font(FontFamily, 12F, FontStyle.Bold);
         
         /// <summary>
         /// Standard - For section headers in GroupBox (11pt, Bold)
         /// </summary>
-        public static readonly Font HeaderStandard = new Font(FontFamily, 11F, FontStyle.Bold);
+        public static readonly Font HeaderStandard = new Font(FontFamily, 9F, FontStyle.Bold);
         
         /// <summary>
         /// Standard - For buttons (10.5pt, Bold)
         /// </summary>
-        public static readonly Font ButtonStandard = new Font(FontFamily, 10.5F, FontStyle.Bold);
+        public static readonly Font ButtonStandard = new Font(FontFamily, 9F, FontStyle.Bold);
         
         /// <summary>
         /// Standard - For labels, textboxes, regular text (10.5pt, Regular)
         /// </summary>
-        public static readonly Font TextStandard = new Font(FontFamily, 10.5F, FontStyle.Regular);
+        public static readonly Font TextStandard = new Font(FontFamily, 9F, FontStyle.Regular);
         
         /// <summary>
         /// Standard - For DataGridView data (10.5pt, Regular) - KHÔNG in đậm
         /// </summary>
-        public static readonly Font GridData = new Font(FontFamily, 10.5F, FontStyle.Regular);
+        public static readonly Font GridData = new Font(FontFamily, 9.5F, FontStyle.Regular);
+        
+        /// <summary>
+        /// Standard - For DataGridView headers (10.5pt, Bold) - In đậm để phân biệt với dữ liệu
+        /// </summary>
+        public static readonly Font GridHeader = new Font(FontFamily, 9.5F, FontStyle.Bold);
         
         /// <summary>
         /// Small - For status messages, hints (10pt, Regular)
         /// </summary>
-        public static readonly Font TextSmall = new Font(FontFamily, 10F, FontStyle.Regular);
+        public static readonly Font TextSmall = new Font(FontFamily, 9F, FontStyle.Regular);
         
         
         // ===== HELPER METHODS =====

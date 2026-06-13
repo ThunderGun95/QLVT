@@ -31,6 +31,7 @@ namespace QLVT.GUI
             searchResults = new List<VatTuSearchResult>();
             
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             LoadInitialData();
         }
 

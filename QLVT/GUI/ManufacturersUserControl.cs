@@ -11,6 +11,7 @@ namespace QLVT.GUI
         public ManufacturersUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _manufacturerBLL = new ManufacturerBLL();
             _allManufacturers = new List<Manufacturer>();
             LoadManufacturers();

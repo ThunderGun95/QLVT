@@ -20,6 +20,7 @@ namespace QLVT.GUI
         {
             warehouses = warehouseList;
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             LoadWarehouses();
         }
 

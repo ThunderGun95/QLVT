@@ -19,6 +19,7 @@ namespace QLVT.GUI
         public ExcelImportForm()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             warehouseDAL = new WarehouseDAL();
             LoadWarehouses();
             // ClosedXML không cần license setup

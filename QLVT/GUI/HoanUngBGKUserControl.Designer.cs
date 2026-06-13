@@ -121,36 +121,36 @@ namespace QLVT.GUI
             lblSoBGKTimLabel.ForeColor = Color.FromArgb(52, 73, 94);
             lblSoBGKTimLabel.Location = new Point(25, 32);
             lblSoBGKTimLabel.Name = "lblSoBGKTimLabel";
-            lblSoBGKTimLabel.Size = new Size(54, 17);
+            lblSoBGKTimLabel.Size = new Size(61, 16);
             lblSoBGKTimLabel.TabIndex = 0;
             lblSoBGKTimLabel.Text = "Số BGK:";
             // 
             // txtSoBGK
             // 
-            txtSoBGK.Font = new Font("Arial", 11F);
+            txtSoBGK.Font = new Font("Arial", 11F, FontStyle.Bold);
             txtSoBGK.Location = new Point(95, 28);
             txtSoBGK.Name = "txtSoBGK";
-            txtSoBGK.Size = new Size(110, 25);
+            txtSoBGK.Size = new Size(110, 24);
             txtSoBGK.TabIndex = 1;
             txtSoBGK.KeyPress += txtSoBGK_KeyPress;
             // 
             // lblSeparator
             // 
             lblSeparator.AutoSize = true;
-            lblSeparator.Font = new Font("Arial", 12F, FontStyle.Bold);
+            lblSeparator.Font = new Font("Arial", 11F, FontStyle.Bold);
             lblSeparator.ForeColor = Color.FromArgb(52, 73, 94);
             lblSeparator.Location = new Point(210, 30);
             lblSeparator.Name = "lblSeparator";
-            lblSeparator.Size = new Size(16, 20);
+            lblSeparator.Size = new Size(12, 18);
             lblSeparator.TabIndex = 2;
             lblSeparator.Text = "/";
             // 
             // txtNam
             // 
-            txtNam.Font = new Font("Arial", 11F);
+            txtNam.Font = new Font("Arial", 11F, FontStyle.Bold);
             txtNam.Location = new Point(225, 28);
             txtNam.Name = "txtNam";
-            txtNam.Size = new Size(75, 25);
+            txtNam.Size = new Size(75, 24);
             txtNam.TabIndex = 3;
             txtNam.Text = "2025";
             txtNam.KeyPress += txtNam_KeyPress;
@@ -192,7 +192,7 @@ namespace QLVT.GUI
             lblConnectionStatus.ForeColor = Color.FromArgb(52, 152, 219);
             lblConnectionStatus.Location = new Point(25, 60);
             lblConnectionStatus.Name = "lblConnectionStatus";
-            lblConnectionStatus.Size = new Size(167, 15);
+            lblConnectionStatus.Size = new Size(202, 16);
             lblConnectionStatus.TabIndex = 6;
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
             // 
@@ -228,7 +228,7 @@ namespace QLVT.GUI
             lblSoBGKLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblSoBGKLabel.Location = new Point(25, 32);
             lblSoBGKLabel.Name = "lblSoBGKLabel";
-            lblSoBGKLabel.Size = new Size(54, 17);
+            lblSoBGKLabel.Size = new Size(61, 16);
             lblSoBGKLabel.TabIndex = 0;
             lblSoBGKLabel.Text = "Số BGK:";
             // 
@@ -239,7 +239,7 @@ namespace QLVT.GUI
             lblSoBGK.ForeColor = Color.FromArgb(41, 128, 185);
             lblSoBGK.Location = new Point(120, 32);
             lblSoBGK.Name = "lblSoBGK";
-            lblSoBGK.Size = new Size(15, 19);
+            lblSoBGK.Size = new Size(13, 18);
             lblSoBGK.TabIndex = 1;
             lblSoBGK.Text = "-";
             // 
@@ -250,7 +250,7 @@ namespace QLVT.GUI
             lblTrangThaiLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblTrangThaiLabel.Location = new Point(350, 32);
             lblTrangThaiLabel.Name = "lblTrangThaiLabel";
-            lblTrangThaiLabel.Size = new Size(69, 17);
+            lblTrangThaiLabel.Size = new Size(75, 16);
             lblTrangThaiLabel.TabIndex = 8;
             lblTrangThaiLabel.Text = "Trạng thái:";
             // 
@@ -261,7 +261,7 @@ namespace QLVT.GUI
             lblTrangThai.ForeColor = Color.FromArgb(230, 126, 34);
             lblTrangThai.Location = new Point(440, 32);
             lblTrangThai.Name = "lblTrangThai";
-            lblTrangThai.Size = new Size(15, 19);
+            lblTrangThai.Size = new Size(13, 18);
             lblTrangThai.TabIndex = 9;
             lblTrangThai.Text = "-";
             // 
@@ -272,7 +272,7 @@ namespace QLVT.GUI
             lblNhanVienKyThuatLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblNhanVienKyThuatLabel.Location = new Point(600, 32);
             lblNhanVienKyThuatLabel.Name = "lblNhanVienKyThuatLabel";
-            lblNhanVienKyThuatLabel.Size = new Size(80, 17);
+            lblNhanVienKyThuatLabel.Size = new Size(85, 16);
             lblNhanVienKyThuatLabel.TabIndex = 10;
             lblNhanVienKyThuatLabel.Text = "NV Kỹ thuật:";
             // 
@@ -283,7 +283,7 @@ namespace QLVT.GUI
             lblNhanVienKyThuat.ForeColor = Color.FromArgb(52, 73, 94);
             lblNhanVienKyThuat.Location = new Point(695, 32);
             lblNhanVienKyThuat.Name = "lblNhanVienKyThuat";
-            lblNhanVienKyThuat.Size = new Size(15, 19);
+            lblNhanVienKyThuat.Size = new Size(13, 18);
             lblNhanVienKyThuat.TabIndex = 11;
             lblNhanVienKyThuat.Text = "-";
             // 
@@ -294,7 +294,7 @@ namespace QLVT.GUI
             lblNhanVienXayLapLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblNhanVienXayLapLabel.Location = new Point(25, 62);
             lblNhanVienXayLapLabel.Name = "lblNhanVienXayLapLabel";
-            lblNhanVienXayLapLabel.Size = new Size(76, 17);
+            lblNhanVienXayLapLabel.Size = new Size(79, 16);
             lblNhanVienXayLapLabel.TabIndex = 12;
             lblNhanVienXayLapLabel.Text = "NV Xây lắp:";
             // 
@@ -305,7 +305,7 @@ namespace QLVT.GUI
             lblNhanVienXayLap.ForeColor = Color.FromArgb(52, 73, 94);
             lblNhanVienXayLap.Location = new Point(120, 62);
             lblNhanVienXayLap.Name = "lblNhanVienXayLap";
-            lblNhanVienXayLap.Size = new Size(15, 19);
+            lblNhanVienXayLap.Size = new Size(13, 18);
             lblNhanVienXayLap.TabIndex = 13;
             lblNhanVienXayLap.Text = "-";
             // 
@@ -316,7 +316,7 @@ namespace QLVT.GUI
             lblNoiDungLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblNoiDungLabel.Location = new Point(25, 92);
             lblNoiDungLabel.Name = "lblNoiDungLabel";
-            lblNoiDungLabel.Size = new Size(66, 17);
+            lblNoiDungLabel.Size = new Size(67, 16);
             lblNoiDungLabel.TabIndex = 14;
             lblNoiDungLabel.Text = "Nội dung:";
             // 
@@ -328,7 +328,7 @@ namespace QLVT.GUI
             lblNoiDung.Location = new Point(120, 92);
             lblNoiDung.MaximumSize = new Size(1000, 0);
             lblNoiDung.Name = "lblNoiDung";
-            lblNoiDung.Size = new Size(13, 17);
+            lblNoiDung.Size = new Size(12, 16);
             lblNoiDung.TabIndex = 15;
             lblNoiDung.Text = "-";
             // 
@@ -339,7 +339,7 @@ namespace QLVT.GUI
             lblSoNghiemThuLabel.ForeColor = Color.FromArgb(127, 140, 141);
             lblSoNghiemThuLabel.Location = new Point(350, 62);
             lblSoNghiemThuLabel.Name = "lblSoNghiemThuLabel";
-            lblSoNghiemThuLabel.Size = new Size(95, 17);
+            lblSoNghiemThuLabel.Size = new Size(102, 16);
             lblSoNghiemThuLabel.TabIndex = 16;
             lblSoNghiemThuLabel.Text = "Số nghiệm thu:";
             // 
@@ -350,7 +350,7 @@ namespace QLVT.GUI
             lblSoNghiemThu.ForeColor = Color.FromArgb(41, 128, 185);
             lblSoNghiemThu.Location = new Point(460, 62);
             lblSoNghiemThu.Name = "lblSoNghiemThu";
-            lblSoNghiemThu.Size = new Size(15, 19);
+            lblSoNghiemThu.Size = new Size(13, 18);
             lblSoNghiemThu.TabIndex = 17;
             lblSoNghiemThu.Text = "-";
             // 
@@ -380,7 +380,6 @@ namespace QLVT.GUI
             dataGridViewCellStyle1.BackColor = Color.FromArgb(52, 73, 94);
             dataGridViewCellStyle1.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             dataGridViewCellStyle1.ForeColor = Color.White;
-            dataGridViewCellStyle1.Padding = new Padding(5);
             dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
             dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
@@ -422,7 +421,7 @@ namespace QLVT.GUI
             lblStatus.ForeColor = Color.FromArgb(46, 204, 113);
             lblStatus.Location = new Point(25, 722);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(61, 17);
+            lblStatus.Size = new Size(67, 16);
             lblStatus.TabIndex = 4;
             lblStatus.Text = "Sẵn sàng";
             // 
@@ -452,3 +451,4 @@ namespace QLVT.GUI
         #endregion
     }
 }
+

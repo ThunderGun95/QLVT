@@ -22,6 +22,7 @@ namespace QLVT.GUI
         public NhapKhoErpUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             nhapKhoErpBLL = new NhapKhoBLL();
             warehouseDAL = new WarehouseDAL();
             SetupDataGridView();
@@ -167,7 +168,7 @@ namespace QLVT.GUI
             LoadImportOrder(soPhieu, year);
         }
 
-        private void LoadImportOrder(string soPhieu, int nam)
+        private async void LoadImportOrder(string soPhieu, int nam)
         {
             try
             {
@@ -186,7 +187,7 @@ namespace QLVT.GUI
                 }
 
                 // Hiển thị thông tin phiếu
-                DisplayOrderInfo(currentOrder);
+                await DisplayOrderInfo(currentOrder);
 
                 // Hiển thị chi tiết
                 dgvChiTiet.DataSource = currentOrder.ChiTiet;

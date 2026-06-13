@@ -11,6 +11,7 @@ namespace QLVT.GUI
         public UnitsUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _unitBLL = new UnitBLL();
             _allUnits = new List<Unit>();
             LoadUnits();

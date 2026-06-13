@@ -26,6 +26,7 @@ namespace QLVT.GUI
         public OpeningInventoryUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             openingInventoryBLL = new OpeningInventoryBLL();
             transactionDAL = new TransactionDAL();
             warehouseDAL = new WarehouseDAL();

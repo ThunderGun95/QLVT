@@ -168,9 +168,9 @@ namespace QLVT.DAL
                 {
                     connection.Open();
                     var query = @"
-                        SELECT ISNULL(TonKho, 0) 
+                        SELECT ISNULL(SUM(TonKho), 0)
                         FROM ViewTonKhoVatTu 
-                        WHERE SupplyErpId = @SupplyErpId AND MaNV = @manv AND KhoUuTien = 1";
+                        WHERE SupplyErpId = @SupplyErpId AND MaNV = @manv";
 
                     using (var command = new SqlCommand(query, connection))
                     {
@@ -184,6 +184,52 @@ namespace QLVT.DAL
             catch (Exception ex)
             {
                 throw new Exception($"Lỗi lấy tồn kho cho vật tư ErpId {supplyErpId}: {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
+        /// Lấy chi tiết tồn kho của một vật tư
+        /// </summary>
+        public async Task<List<Inventory>> GetListTonKhoChiTietByErpId(int supplyErpId, string manv)
+        {
+            var inventories = new List<Inventory>();
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    var query = @"
+                        SELECT Id, WarehouseId, SupplyErpId, TonKho
+                        FROM ViewTonKhoVatTu 
+                        WHERE SupplyErpId = @SupplyErpId AND MaNV = @manv
+                        ORDER BY KhoUuTien desc";
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@SupplyErpId", supplyErpId);
+                        command.Parameters.AddWithValue("@manv", manv);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                inventories.Add(new Inventory
+                                {
+                                    Id = reader.GetInt32(0),
+                                    WarehouseId = reader.GetInt32(1),
+                                    SupplyErpId = reader.GetInt32(2),
+                                    SoLuongTon = reader.GetDecimal(3)
+                                });
+                            }
+                        }
+                    }
+                }
+                return inventories;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi lấy chi tiết tồn kho cho vật tư ErpId {supplyErpId}: {ex.Message}");
             }
         }
     }

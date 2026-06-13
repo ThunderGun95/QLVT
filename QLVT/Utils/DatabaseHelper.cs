@@ -6,8 +6,8 @@ namespace QLVT.Utils
     public static class DatabaseHelper
     {
         // Connection string - trong thực tế nên để trong config file
-        private static readonly string ConnectionString = 
-            "Server=localhost;Database=QLVT_DB;User ID=sa;Password=123456;Integrated Security=true;TrustServerCertificate=true;";
+        private static readonly string ConnectionString =
+            "Server=(localdb)\\MSSQLLocalDB;Database=QLVT_DB;User ID=sa;Password=123456;Integrated Security=true;TrustServerCertificate=true;";
 
         /// <summary>
         /// Tạo kết nối đến database

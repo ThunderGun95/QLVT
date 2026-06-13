@@ -27,6 +27,7 @@ namespace QLVT.GUI
         public XuatKhoErpBatchUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             xuatKhoBLL = new XuatKhoBLL();
             warehouseDAL = new WarehouseDAL();
             SetupBackgroundWorker();

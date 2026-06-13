@@ -43,15 +43,16 @@ namespace QLVT.GUI
             lblNVTaiCong = new Label();
             grpChiTiet = new GroupBox();
             dgvChiTiet = new DataGridView();
-            lblTongSoLuong = new Label();
-            lblSoLoaiVT = new Label();
-            btnDong = new Button();
-            btnHoanUng = new Button();
             dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
             dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
+            lblTongSoLuong = new Label();
+            lblSoLoaiVT = new Label();
+            btnDong = new Button();
+            btnHoanUng = new Button();
+            btnHoanUngAm = new Button();
             grpHoSoInfo.SuspendLayout();
             grpChiTiet.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).BeginInit();
@@ -59,8 +60,8 @@ namespace QLVT.GUI
             // 
             // lblTitle
             // 
-            lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.FromArgb(0, 122, 204);
+            lblTitle.Font = new Font("Arial", 17F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(52, 152, 219);
             lblTitle.Location = new Point(20, 20);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(300, 30);
@@ -78,7 +79,7 @@ namespace QLVT.GUI
             grpHoSoInfo.Controls.Add(lblDiaChi);
             grpHoSoInfo.Controls.Add(lblNVTaiCongLabel);
             grpHoSoInfo.Controls.Add(lblNVTaiCong);
-            grpHoSoInfo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpHoSoInfo.Font = new Font("Arial", 11F, FontStyle.Bold);
             grpHoSoInfo.Location = new Point(20, 60);
             grpHoSoInfo.Name = "grpHoSoInfo";
             grpHoSoInfo.Size = new Size(830, 100);
@@ -88,7 +89,7 @@ namespace QLVT.GUI
             // 
             // lblMaDDKLabel
             // 
-            lblMaDDKLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblMaDDKLabel.Font = new Font("Arial", 11F, FontStyle.Bold);
             lblMaDDKLabel.Location = new Point(15, 25);
             lblMaDDKLabel.Name = "lblMaDDKLabel";
             lblMaDDKLabel.Size = new Size(80, 20);
@@ -97,7 +98,7 @@ namespace QLVT.GUI
             // 
             // lblMaDDK
             // 
-            lblMaDDK.Font = new Font("Segoe UI", 9F);
+            lblMaDDK.Font = new Font("Arial", 10.5F);
             lblMaDDK.Location = new Point(100, 25);
             lblMaDDK.Name = "lblMaDDK";
             lblMaDDK.Size = new Size(120, 20);
@@ -105,7 +106,7 @@ namespace QLVT.GUI
             // 
             // lblTenKHLabel
             // 
-            lblTenKHLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblTenKHLabel.Font = new Font("Arial", 11F, FontStyle.Bold);
             lblTenKHLabel.Location = new Point(240, 25);
             lblTenKHLabel.Name = "lblTenKHLabel";
             lblTenKHLabel.Size = new Size(100, 20);
@@ -114,7 +115,7 @@ namespace QLVT.GUI
             // 
             // lblTenKH
             // 
-            lblTenKH.Font = new Font("Segoe UI", 9F);
+            lblTenKH.Font = new Font("Arial", 10.5F);
             lblTenKH.Location = new Point(345, 25);
             lblTenKH.Name = "lblTenKH";
             lblTenKH.Size = new Size(250, 20);
@@ -122,7 +123,7 @@ namespace QLVT.GUI
             // 
             // lblDiaChiLabel
             // 
-            lblDiaChiLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblDiaChiLabel.Font = new Font("Arial", 11F, FontStyle.Bold);
             lblDiaChiLabel.Location = new Point(15, 50);
             lblDiaChiLabel.Name = "lblDiaChiLabel";
             lblDiaChiLabel.Size = new Size(80, 20);
@@ -131,7 +132,7 @@ namespace QLVT.GUI
             // 
             // lblDiaChi
             // 
-            lblDiaChi.Font = new Font("Segoe UI", 9F);
+            lblDiaChi.Font = new Font("Arial", 10.5F);
             lblDiaChi.Location = new Point(100, 50);
             lblDiaChi.Name = "lblDiaChi";
             lblDiaChi.Size = new Size(400, 20);
@@ -139,7 +140,7 @@ namespace QLVT.GUI
             // 
             // lblNVTaiCongLabel
             // 
-            lblNVTaiCongLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblNVTaiCongLabel.Font = new Font("Arial", 11F, FontStyle.Bold);
             lblNVTaiCongLabel.Location = new Point(15, 75);
             lblNVTaiCongLabel.Name = "lblNVTaiCongLabel";
             lblNVTaiCongLabel.Size = new Size(90, 20);
@@ -148,7 +149,7 @@ namespace QLVT.GUI
             // 
             // lblNVTaiCong
             // 
-            lblNVTaiCong.Font = new Font("Segoe UI", 9F);
+            lblNVTaiCong.Font = new Font("Arial", 10.5F);
             lblNVTaiCong.Location = new Point(110, 75);
             lblNVTaiCong.Name = "lblNVTaiCong";
             lblNVTaiCong.Size = new Size(200, 20);
@@ -159,7 +160,7 @@ namespace QLVT.GUI
             grpChiTiet.Controls.Add(dgvChiTiet);
             grpChiTiet.Controls.Add(lblTongSoLuong);
             grpChiTiet.Controls.Add(lblSoLoaiVT);
-            grpChiTiet.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpChiTiet.Font = new Font("Arial", 11F, FontStyle.Bold);
             grpChiTiet.Location = new Point(20, 180);
             grpChiTiet.Name = "grpChiTiet";
             grpChiTiet.Size = new Size(830, 354);
@@ -181,54 +182,6 @@ namespace QLVT.GUI
             dgvChiTiet.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvChiTiet.Size = new Size(800, 292);
             dgvChiTiet.TabIndex = 0;
-            // 
-            // lblTongSoLuong
-            // 
-            lblTongSoLuong.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblTongSoLuong.ForeColor = Color.Blue;
-            lblTongSoLuong.Location = new Point(15, 25);
-            lblTongSoLuong.Name = "lblTongSoLuong";
-            lblTongSoLuong.Size = new Size(200, 20);
-            lblTongSoLuong.TabIndex = 1;
-            lblTongSoLuong.Text = "Tổng số lượng: 0";
-            // 
-            // lblSoLoaiVT
-            // 
-            lblSoLoaiVT.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblSoLoaiVT.ForeColor = Color.Green;
-            lblSoLoaiVT.Location = new Point(250, 25);
-            lblSoLoaiVT.Name = "lblSoLoaiVT";
-            lblSoLoaiVT.Size = new Size(200, 20);
-            lblSoLoaiVT.TabIndex = 2;
-            lblSoLoaiVT.Text = "Số loại vật tư: 0";
-            // 
-            // btnDong
-            // 
-            btnDong.BackColor = Color.FromArgb(108, 117, 125);
-            btnDong.FlatStyle = FlatStyle.Flat;
-            btnDong.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnDong.ForeColor = Color.White;
-            btnDong.Location = new Point(690, 550);
-            btnDong.Name = "btnDong";
-            btnDong.Size = new Size(80, 35);
-            btnDong.TabIndex = 6;
-            btnDong.Text = "Đóng";
-            btnDong.UseVisualStyleBackColor = false;
-            btnDong.Click += BtnDong_Click;
-            // 
-            // btnHoanUng
-            // 
-            btnHoanUng.BackColor = Color.FromArgb(220, 53, 69);
-            btnHoanUng.FlatStyle = FlatStyle.Flat;
-            btnHoanUng.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnHoanUng.ForeColor = Color.White;
-            btnHoanUng.Location = new Point(580, 550);
-            btnHoanUng.Name = "btnHoanUng";
-            btnHoanUng.Size = new Size(100, 35);
-            btnHoanUng.TabIndex = 5;
-            btnHoanUng.Text = "Hoàn ứng";
-            btnHoanUng.UseVisualStyleBackColor = false;
-            btnHoanUng.Click += BtnHoanUng_Click;
             // 
             // dataGridViewTextBoxColumn1
             // 
@@ -261,24 +214,87 @@ namespace QLVT.GUI
             dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
             dataGridViewTextBoxColumn5.ReadOnly = true;
             // 
+            // lblTongSoLuong
+            // 
+            lblTongSoLuong.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblTongSoLuong.ForeColor = Color.Blue;
+            lblTongSoLuong.Location = new Point(15, 25);
+            lblTongSoLuong.Name = "lblTongSoLuong";
+            lblTongSoLuong.Size = new Size(200, 20);
+            lblTongSoLuong.TabIndex = 1;
+            lblTongSoLuong.Text = "Tổng số lượng: 0";
+            // 
+            // lblSoLoaiVT
+            // 
+            lblSoLoaiVT.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblSoLoaiVT.ForeColor = Color.Green;
+            lblSoLoaiVT.Location = new Point(250, 25);
+            lblSoLoaiVT.Name = "lblSoLoaiVT";
+            lblSoLoaiVT.Size = new Size(200, 20);
+            lblSoLoaiVT.TabIndex = 2;
+            lblSoLoaiVT.Text = "Số loại vật tư: 0";
+            // 
+            // btnDong
+            // 
+            btnDong.BackColor = Color.FromArgb(108, 117, 125);
+            btnDong.FlatStyle = FlatStyle.Flat;
+            btnDong.Font = new Font("Arial", 11F, FontStyle.Bold);
+            btnDong.ForeColor = Color.White;
+            btnDong.Location = new Point(720, 550);
+            btnDong.Name = "btnDong";
+            btnDong.Size = new Size(80, 35);
+            btnDong.TabIndex = 6;
+            btnDong.Text = "Đóng";
+            btnDong.UseVisualStyleBackColor = false;
+            btnDong.Click += BtnDong_Click;
+            // 
+            // btnHoanUng
+            // 
+            btnHoanUng.BackColor = Color.FromArgb(220, 53, 69);
+            btnHoanUng.FlatStyle = FlatStyle.Flat;
+            btnHoanUng.Font = new Font("Arial", 11F, FontStyle.Bold);
+            btnHoanUng.ForeColor = Color.White;
+            btnHoanUng.Location = new Point(610, 550);
+            btnHoanUng.Name = "btnHoanUng";
+            btnHoanUng.Size = new Size(100, 35);
+            btnHoanUng.TabIndex = 5;
+            btnHoanUng.Text = "Hoàn ứng";
+            btnHoanUng.UseVisualStyleBackColor = false;
+            btnHoanUng.Click += BtnHoanUng_Click;
+            // 
+            // btnHoanUngAm
+            // 
+            btnHoanUngAm.BackColor = Color.FromArgb(220, 53, 69);
+            btnHoanUngAm.FlatStyle = FlatStyle.Flat;
+            btnHoanUngAm.Font = new Font("Arial", 11F, FontStyle.Bold);
+            btnHoanUngAm.ForeColor = Color.White;
+            btnHoanUngAm.Location = new Point(35, 550);
+            btnHoanUngAm.Name = "btnHoanUngAm";
+            btnHoanUngAm.Size = new Size(149, 35);
+            btnHoanUngAm.TabIndex = 7;
+            btnHoanUngAm.Text = "Hoàn ứng âm";
+            btnHoanUngAm.UseVisualStyleBackColor = false;
+            btnHoanUngAm.Click += btnHoanUngAm_Click;
+            // 
             // ChiTietVatTuMC4Form
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 16F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
             ClientSize = new Size(870, 600);
+            Controls.Add(btnHoanUngAm);
             Controls.Add(lblTitle);
             Controls.Add(grpHoSoInfo);
             Controls.Add(grpChiTiet);
             Controls.Add(btnDong);
             Controls.Add(btnHoanUng);
-            Font = new Font("Segoe UI", 9F);
+            Font = new Font("Arial", 10.5F);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ChiTietVatTuMC4Form";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Chi tiết vật tư MC4";
+            Text = "s";
             grpHoSoInfo.ResumeLayout(false);
             grpChiTiet.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).EndInit();
@@ -289,5 +305,7 @@ namespace QLVT.GUI
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private Button btnHoanUngAm;
     }
 }
+

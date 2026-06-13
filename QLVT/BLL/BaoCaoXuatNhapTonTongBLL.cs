@@ -89,14 +89,16 @@ namespace QLVT.BLL
                             // Headers
                             int headerRow = 5;
                             worksheet.Cell(headerRow, 1).Value = "STT";
-                            worksheet.Cell(headerRow, 2).Value = "Mã vật tư";
-                            worksheet.Cell(headerRow, 3).Value = "Tên vật tư";
-                            worksheet.Cell(headerRow, 4).Value = "Đơn vị tính";
-                            worksheet.Cell(headerRow, 5).Value = "Tên kho";
-                            worksheet.Cell(headerRow, 6).Value = "Tồn đầu kỳ";
-                            worksheet.Cell(headerRow, 7).Value = "Số nhập";
-                            worksheet.Cell(headerRow, 8).Value = "Số xuất";
-                            worksheet.Cell(headerRow, 9).Value = "Tồn cuối kỳ";
+                            worksheet.Cell(headerRow, 2).Value = "Mã Erp";
+                            worksheet.Cell(headerRow, 3).Value = "Mã vật tư";
+                            worksheet.Cell(headerRow, 4).Value = "Tên vật tư";
+                            worksheet.Cell(headerRow, 5).Value = "Đơn vị tính";
+                            worksheet.Cell(headerRow, 6).Value = "Mã kho";
+                            worksheet.Cell(headerRow, 7).Value = "Tên kho";
+                            worksheet.Cell(headerRow, 8).Value = "Tồn đầu kỳ";
+                            worksheet.Cell(headerRow, 9).Value = "Số nhập";
+                            worksheet.Cell(headerRow, 10).Value = "Số xuất";
+                            worksheet.Cell(headerRow, 11).Value = "Tồn cuối kỳ";
 
                             // Header styling
                             var headerRange = worksheet.Range(headerRow, 1, headerRow, 9);
@@ -112,14 +114,16 @@ namespace QLVT.BLL
                             foreach (var item in data)
                             {
                                 worksheet.Cell(currentRow, 1).Value = item.STT;
-                                worksheet.Cell(currentRow, 2).Value = item.CodeVatTu;
-                                worksheet.Cell(currentRow, 3).Value = item.TenVatTu;
-                                worksheet.Cell(currentRow, 4).Value = item.DonViTinh;
-                                worksheet.Cell(currentRow, 5).Value = item.TenKho;
-                                worksheet.Cell(currentRow, 6).Value = item.TonDauKy;
-                                worksheet.Cell(currentRow, 7).Value = item.SoNhap;
-                                worksheet.Cell(currentRow, 8).Value = item.SoXuat;
-                                worksheet.Cell(currentRow, 9).Value = item.TonCuoiKy;
+                                worksheet.Cell(currentRow, 2).Value = item.SupplyErpId;
+                                worksheet.Cell(currentRow, 3).Value = item.CodeVatTu;
+                                worksheet.Cell(currentRow, 4).Value = item.TenVatTu;
+                                worksheet.Cell(currentRow, 5).Value = item.DonViTinh;
+                                worksheet.Cell(currentRow, 6).Value = item.WarehouseId;
+                                worksheet.Cell(currentRow, 7).Value = item.TenKho;
+                                worksheet.Cell(currentRow, 8).Value = item.TonDauKy;
+                                worksheet.Cell(currentRow, 9).Value = item.SoNhap;
+                                worksheet.Cell(currentRow, 10).Value = item.SoXuat;
+                                worksheet.Cell(currentRow, 11).Value = item.TonCuoiKy;
 
                                 currentRow++;
                             }

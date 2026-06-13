@@ -19,13 +19,18 @@ namespace QLVT.GUI
         private List<TransactionSummaryReportItem> _currentSummaryData;
         private List<Warehouse> _warehouses;
         private BaoCaoXuatNhapTonChiTietForm? _activeDetailForm; // Track active detail window
-        private WarehouseComboBox warehouseComboBox;
+        private TextBox txtWarehouse; // Use simple TextBox like BaoCaoTonKho
         private Label lblVatTu;
         private VatTuTextBox vatTuTextBox;
+        
+        // Custom warehouse dropdown
+        private ListBox warehouseListBox = new ListBox();
+        private bool suppressTextChanged = false;
 
         public BaoCaoXuatNhapTonUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _summaryBll = new BaoCaoXuatNhapTonTongBLL();
             _currentSummaryData = new List<TransactionSummaryReportItem>();
             _warehouses = new List<Warehouse>();
@@ -38,7 +43,7 @@ namespace QLVT.GUI
             try
             {
                 SetupDataGridView();
-                SetupWarehouseComboBox();
+                SetupWarehouseTextBox();
                 SetupVatTuTextBox();
                 await LoadWarehouses();
                 LoadDefaultFilter();
@@ -92,19 +97,20 @@ namespace QLVT.GUI
             }
         }
 
-        private void SetupWarehouseComboBox()
+        private void SetupWarehouseTextBox()
         {
-            // Create WarehouseComboBox component with constructor parameters (width, height, addAll)
-            warehouseComboBox = new WarehouseComboBox(160, 25, true)
+            // Create simple TextBox like in BaoCaoTonKhoUserControl
+            txtWarehouse = new TextBox
             {
-                Location = new Point(380, 45)  // Đặt dưới label "Kho:" ở (380, 25)
+                Location = new Point(20, 95),  // Dưới label "Kho:" ở (20, 75)
+                Size = new Size(330, 25),
+                AutoCompleteMode = AutoCompleteMode.None
             };
             
             // Add to filters group
-            grpFilters.Controls.Add(warehouseComboBox);
+            grpFilters.Controls.Add(txtWarehouse);
             
-            // Setup event handlers
-            warehouseComboBox.WarehouseSelected += WarehouseComboBox_WarehouseSelected;
+            // Setup event handlers will be done in LoadWarehouses
         }
 
         private void SetupVatTuTextBox()
@@ -113,16 +119,16 @@ namespace QLVT.GUI
             lblVatTu = new Label
             {
                 Text = "Vật tư:",
-                Location = new Point(560, 25), // Align with other labels at Y=25
+                Location = new Point(380, 75), // Cạnh Kho, cùng dòng với label Kho
                 Size = new Size(50, 13),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0)
             };
             
-            // Create VatTuTextBox component - aligned with other controls at Y=45
-            vatTuTextBox = new VatTuTextBox(200, 20)
+            // Create VatTuTextBox component - aligned with other controls
+            vatTuTextBox = new VatTuTextBox(330, 20)
             {
-                Location = new Point(560, 45), // Align with other controls at Y=45
+                Location = new Point(380, 95), // Dưới label "Vật tư:"
                 PlaceholderText = "Nhập mã hoặc tên vật tư..."
             };
             
@@ -185,12 +191,14 @@ namespace QLVT.GUI
                 // Hiển thị thông báo đang tải
                 UpdateStatusLabel($"Đang mở chi tiết vật tư: {selectedItem.TenVatTu}...");
                 
-                
                 // Mở form báo cáo chi tiết mới với dữ liệu được điền sẵn
+                // Truyền tên kho từ txtWarehouse nếu có, ngược lại dùng tên kho từ selected item
+                var warehouseName = !string.IsNullOrWhiteSpace(txtWarehouse.Text) ? txtWarehouse.Text : selectedItem.TenKho;
+                
                 _activeDetailForm = new BaoCaoXuatNhapTonChiTietForm(
                     filter.TuNgay,          // Từ ngày
                     filter.DenNgay,         // Đến ngày  
-                    selectedItem.TenKho,    // Tên kho
+                    warehouseName,          // Tên kho
                     selectedItem.CodeVatTu  // Mã vật tư
                 );
                 
@@ -232,7 +240,15 @@ namespace QLVT.GUI
             try
             {
                 _warehouses = await _summaryBll.GetWarehousesAsync();
-                // WarehouseComboBox will load its own data using NhapKhoManualBLL
+                
+                // Setup events like BaoCaoTonKho
+                txtWarehouse.TextChanged += TxtWarehouse_TextChanged;
+                txtWarehouse.KeyDown += TxtWarehouse_KeyDown;
+                txtWarehouse.KeyPress += TxtWarehouse_KeyPress;
+                txtWarehouse.Leave += TxtWarehouse_Leave;
+                
+                // Thêm gợi ý mặc định "Tất cả"
+                txtWarehouse.PlaceholderText = "Nhập tên kho hoặc 'Tất cả'...";
             }
             catch (Exception ex)
             {
@@ -240,18 +256,12 @@ namespace QLVT.GUI
             }
         }
 
-        private void WarehouseComboBox_WarehouseSelected(object sender, WarehouseSelectedEventArgs e)
-        {
-            // Warehouse selected from NhapKho-style component
-            UpdateStatusLabel($"Đã chọn kho: {e.SelectedWarehouse.TenKho}");
-        }
-
         private void LoadDefaultFilter()
         {
             // Tạo filter mặc định cho báo cáo tổng hợp
             dtpFromDate.Value = DateTime.Now.AddDays(-30);
             dtpToDate.Value = DateTime.Now;
-            warehouseComboBox?.ClearSelection(); // Default to "All warehouses"
+            txtWarehouse.Text = ""; // Default to empty (all warehouses)
             vatTuTextBox?.Clear(); // Sử dụng VatTuTextBox thay vì txtSupplyFilter
         }
 
@@ -351,11 +361,33 @@ namespace QLVT.GUI
                 }
             }
 
-            // Warehouse - get from WarehouseComboBox component
-            if (warehouseComboBox.SelectedWarehouseId > 0)
+            // Xác định warehouse ID từ tên kho được nhập (như BaoCaoTonKho)
+            int? warehouseId = null;
+            var warehouseText = txtWarehouse.Text.Trim();
+            
+            // Kiểm tra nếu người dùng nhập "Tất cả" hoặc để trống thì không lọc theo kho
+            if (!string.IsNullOrEmpty(warehouseText) && 
+                !warehouseText.Equals("Tất cả", StringComparison.OrdinalIgnoreCase) &&
+                !warehouseText.Equals("All", StringComparison.OrdinalIgnoreCase))
             {
-                filter.WarehouseId = warehouseComboBox.SelectedWarehouseId;
+                // Tìm kho khớp chính xác trước
+                var exactWarehouse = _warehouses.FirstOrDefault(w => 
+                    w.TenKho.Equals(warehouseText, StringComparison.OrdinalIgnoreCase));
+                
+                if (exactWarehouse != null)
+                {
+                    warehouseId = exactWarehouse.Id;
+                }
+                else
+                {
+                    // Nếu không khớp chính xác, tìm kho đầu tiên có chứa text
+                    var partialWarehouse = _warehouses.FirstOrDefault(w => 
+                        w.TenKho.Contains(warehouseText, StringComparison.OrdinalIgnoreCase));
+                    warehouseId = partialWarehouse?.Id;
+                }
             }
+            
+            filter.WarehouseId = warehouseId;
 
             return filter;
         }
@@ -386,5 +418,157 @@ namespace QLVT.GUI
             lblStatus.Text = $"Trạng thái: {message}";
             Application.DoEvents();
         }
+
+        #region Custom Warehouse AutoComplete (from BaoCaoTonKho)
+
+        private void TxtWarehouse_TextChanged(object sender, EventArgs e)
+        {
+            if (suppressTextChanged) return;
+
+            var searchText = txtWarehouse.Text;
+            
+            if (string.IsNullOrEmpty(searchText))
+            {
+                HideWarehouseDropdown();
+                return;
+            }
+
+            var matchingItems = new List<string>();
+            
+            // Thêm tùy chọn "Tất cả" nếu người dùng nhập từ khóa phù hợp
+            if ("Tất cả".Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                "tat ca".Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                "all".Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            {
+                matchingItems.Add("Tất cả");
+            }
+
+            // Tìm các kho có chứa text (không phân biệt hoa thường)
+            var matchingWarehouses = _warehouses
+                .Where(w => w.TenKho.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                .Select(w => w.TenKho)
+                .ToList();
+                
+            matchingItems.AddRange(matchingWarehouses);
+
+            if (matchingItems.Any())
+            {
+                ShowWarehouseDropdown(matchingItems);
+            }
+            else
+            {
+                HideWarehouseDropdown();
+            }
+        }
+
+        private void TxtWarehouse_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (warehouseListBox.Visible)
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Down:
+                        if (warehouseListBox.SelectedIndex < warehouseListBox.Items.Count - 1)
+                            warehouseListBox.SelectedIndex++;
+                        e.Handled = true;
+                        break;
+                    case Keys.Up:
+                        if (warehouseListBox.SelectedIndex > 0)
+                            warehouseListBox.SelectedIndex--;
+                        e.Handled = true;
+                        break;
+                    case Keys.Enter:
+                        if (warehouseListBox.SelectedIndex >= 0)
+                        {
+                            SelectWarehouse(warehouseListBox.SelectedItem?.ToString() ?? "");
+                        }
+                        e.Handled = true;
+                        break;
+                    case Keys.Escape:
+                        HideWarehouseDropdown();
+                        e.Handled = true;
+                        break;
+                }
+            }
+        }
+
+        private void TxtWarehouse_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                btnCreateReport_Click(sender, e);
+            }
+        }
+
+        private void TxtWarehouse_Leave(object sender, EventArgs e)
+        {
+            // Delay để cho phép click vào listbox
+            Task.Delay(200).ContinueWith(_ =>
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    if (!warehouseListBox.Focused)
+                    {
+                        HideWarehouseDropdown();
+                    }
+                });
+            });
+        }
+
+        private void ShowWarehouseDropdown(List<string> items)
+        {
+            if (!this.Controls.Contains(warehouseListBox))
+            {
+                this.Controls.Add(warehouseListBox);
+                warehouseListBox.BringToFront();
+                
+                warehouseListBox.Click += (s, e) =>
+                {
+                    if (warehouseListBox.SelectedItem != null)
+                    {
+                        SelectWarehouse(warehouseListBox.SelectedItem.ToString() ?? "");
+                    }
+                };
+            }
+
+            warehouseListBox.Items.Clear();
+            warehouseListBox.Items.AddRange(items.ToArray());
+            
+            // Positioning - need to adjust based on grpFilters
+            var txtLocation = txtWarehouse.PointToScreen(Point.Empty);
+            var parentLocation = this.PointToScreen(Point.Empty);
+            
+            warehouseListBox.Location = new Point(
+                txtLocation.X - parentLocation.X,
+                txtLocation.Y - parentLocation.Y + txtWarehouse.Height
+            );
+            warehouseListBox.Width = txtWarehouse.Width;
+            warehouseListBox.Height = Math.Min(150, items.Count * 20 + 4);
+            
+            warehouseListBox.Visible = true;
+            
+            if (items.Count > 0)
+            {
+                warehouseListBox.SelectedIndex = 0;
+            }
+        }
+
+        private void HideWarehouseDropdown()
+        {
+            warehouseListBox.Visible = false;
+        }
+
+        private void SelectWarehouse(string warehouseName)
+        {
+            suppressTextChanged = true;
+            txtWarehouse.Text = warehouseName;
+            suppressTextChanged = false;
+            
+            HideWarehouseDropdown();
+            txtWarehouse.SelectionStart = txtWarehouse.Text.Length;
+            UpdateStatusLabel($"Đã chọn kho: {warehouseName}");
+        }
+
+        #endregion
     }
 }

@@ -7,11 +7,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.ERP.Models;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
     public partial class HoanUngMC4BatchUserControl : UserControl
     {
+        private const double WaitingListWidthRatio = 0.50;
+        private const int LayoutMargin = 20;
+        private const int LayoutGap = 20;
+
         private readonly HoanUngBLL hoanUngBLL;
         private List<DonDangKyModel> danhSachDonChoHoanUng = new();
         private List<DonDangKyModel> danhSachDonDaChon = new();
@@ -22,10 +27,106 @@ namespace QLVT.GUI
         {
             InitializeComponent();
             hoanUngBLL = new HoanUngBLL();
+            ApplyModernStyle();
+            ArrangeResponsiveLayout();
             SetupDataGridViews();
             LoadDanhSachDonChoHoanUng();
             CheckERPConnection();
             InitializeBackgroundWorker();
+            Resize += (_, _) => ArrangeResponsiveLayout();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblTitle.Text = "HOÀN ỨNG HÀNG LOẠT - MẠNG CẤP 4";
+            UIStyleHelper.ApplyTitleBarStyle(lblTitle);
+
+            UIStyleHelper.ApplyStatusLabelStyle(lblConnectionStatus, StatusType.Processing);
+            lblConnectionStatus.Text = "Đang kiểm tra kết nối ERP...";
+            lblConnectionStatus.Size = new Size(260, 22);
+
+            lblHuongDan.Text = "Double-click để chọn hoặc bỏ chọn đơn, hoặc dùng nút chọn tất cả";
+            lblHuongDan.Font = UIFonts.TextSmall;
+            lblHuongDan.ForeColor = UIColorPalette.TextMuted;
+
+            grpChoHoanUng.Text = "Danh sách đơn chờ hoàn ứng";
+            grpDaChon.Text = "Danh sách đơn đã chọn";
+            grpTienDo.Text = "Tiến độ xử lý và kết quả";
+            UIStyleHelper.ApplyGroupBoxStyle(grpChoHoanUng);
+            UIStyleHelper.ApplyGroupBoxStyle(grpDaChon);
+            UIStyleHelper.ApplyGroupBoxStyle(grpTienDo);
+
+            UIStyleHelper.ApplySecondaryButtonStyle(btnRefresh, new Size(92, 30));
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnChonTatCa, new Size(132, 32));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnBoChonTatCa, new Size(132, 32));
+            UIStyleHelper.ApplyWarningButtonStyle(btnBatDauHoanUng, new Size(178, 38));
+            btnRefresh.Text = "Làm mới";
+            btnChonTatCa.Text = "Chọn tất cả";
+            btnBoChonTatCa.Text = "Bỏ chọn tất cả";
+            btnBatDauHoanUng.Text = "Bắt đầu hoàn ứng";
+
+            lblTongSoChoHoanUng.Font = UIFonts.HeaderStandard;
+            lblTongSoChoHoanUng.ForeColor = UIColorPalette.StatusProcessing;
+            lblTongSoDaChon.Font = UIFonts.HeaderStandard;
+            lblTongSoDaChon.ForeColor = UIColorPalette.SuccessGreen;
+            lblTienDo.Font = UIFonts.HeaderStandard;
+            lblTienDo.ForeColor = UIColorPalette.WarningOrange;
+
+            txtKetQua.BackColor = UIColorPalette.BackgroundWhite;
+            txtKetQua.ForeColor = UIColorPalette.TextDark;
+            txtKetQua.Font = new Font("Consolas", 9F, FontStyle.Regular);
+            txtKetQua.BorderStyle = BorderStyle.FixedSingle;
+        }
+
+        private void ArrangeResponsiveLayout()
+        {
+            if (ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
+
+            int contentWidth = Math.Max(900, ClientSize.Width - (LayoutMargin * 2));
+            int toolbarTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+            int listTop = toolbarTop + 36;
+            int listHeight = Math.Max(230, Math.Min(330, ClientSize.Height / 2 - 70));
+            int availableListWidth = contentWidth - LayoutGap;
+            int waitingWidth = (int)(availableListWidth * WaitingListWidthRatio);
+            int selectedWidth = availableListWidth - waitingWidth;
+
+            lblConnectionStatus.Location = new Point(LayoutMargin, toolbarTop + 4);
+            btnRefresh.Location = new Point(385, toolbarTop);
+            lblHuongDan.Location = new Point(585, toolbarTop + 5);
+
+            grpChoHoanUng.Location = new Point(LayoutMargin, listTop);
+            grpChoHoanUng.Size = new Size(waitingWidth, listHeight);
+
+            grpDaChon.Location = new Point(LayoutMargin + waitingWidth + LayoutGap, listTop);
+            grpDaChon.Size = new Size(selectedWidth, listHeight);
+
+            ResizeGridInsideGroup(dgvChoHoanUng, grpChoHoanUng);
+            ResizeGridInsideGroup(dgvDaChon, grpDaChon);
+
+            int actionTop = grpChoHoanUng.Bottom + 14;
+            btnChonTatCa.Location = new Point(LayoutMargin + waitingWidth - btnChonTatCa.Width - btnBoChonTatCa.Width - 12, actionTop);
+            btnBoChonTatCa.Location = new Point(btnChonTatCa.Right + 12, actionTop);
+            btnBatDauHoanUng.Location = new Point(grpDaChon.Left + selectedWidth - btnBatDauHoanUng.Width, actionTop - 3);
+
+            int progressTop = actionTop + 52;
+            int progressHeight = Math.Max(170, ClientSize.Height - progressTop - LayoutMargin);
+            grpTienDo.Location = new Point(LayoutMargin, progressTop);
+            grpTienDo.Size = new Size(contentWidth, progressHeight);
+
+            lblTienDo.Location = new Point(15, 25);
+            progressBar.Location = new Point(15, 50);
+            progressBar.Size = new Size(grpTienDo.ClientSize.Width - 30, 24);
+            txtKetQua.Location = new Point(15, 84);
+            txtKetQua.Size = new Size(grpTienDo.ClientSize.Width - 30, grpTienDo.ClientSize.Height - 100);
+        }
+
+        private static void ResizeGridInsideGroup(DataGridView grid, GroupBox groupBox)
+        {
+            grid.Location = new Point(15, 45);
+            grid.Size = new Size(groupBox.ClientSize.Width - 30, groupBox.ClientSize.Height - 60);
+            grid.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         }
 
         private void CheckERPConnection()
@@ -33,13 +134,13 @@ namespace QLVT.GUI
             try
             {
                 bool connected = hoanUngBLL.TestERPConnection();
-                lblConnectionStatus.Text = connected ? "✅ Kết nối ERP thành công" : "❌ Không thể kết nối ERP";
-                lblConnectionStatus.ForeColor = connected ? Color.Green : Color.Red;
+                lblConnectionStatus.Text = connected ? "Kết nối ERP thành công" : "Không thể kết nối ERP";
+                lblConnectionStatus.ForeColor = connected ? UIColorPalette.StatusSuccess : UIColorPalette.StatusError;
             }
             catch (Exception ex)
             {
-                lblConnectionStatus.Text = "❌ Lỗi kết nối ERP";
-                lblConnectionStatus.ForeColor = Color.Red;
+                lblConnectionStatus.Text = "Lỗi kết nối ERP";
+                lblConnectionStatus.ForeColor = UIColorPalette.StatusError;
                 MessageBox.Show($"Lỗi kiểm tra kết nối ERP: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -65,50 +166,58 @@ namespace QLVT.GUI
 
         private void SetupDgvChoHoanUng()
         {
-            dgvChoHoanUng.AllowUserToAddRows = false;
-            dgvChoHoanUng.AllowUserToDeleteRows = false;
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChoHoanUng);
             dgvChoHoanUng.ReadOnly = true;
-            dgvChoHoanUng.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvChoHoanUng.MultiSelect = true;
-            dgvChoHoanUng.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvChoHoanUng.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvChoHoanUng.Columns.Clear();
 
             dgvChoHoanUng.Columns.Add("MADDK", "Mã DDK");
             dgvChoHoanUng.Columns.Add("TENKH", "Tên khách hàng");
             dgvChoHoanUng.Columns.Add("DiaChi", "Địa chỉ");
-            dgvChoHoanUng.Columns.Add("NhanVienXayLap", "NV Thi công");
+            dgvChoHoanUng.Columns.Add("NhanVienXayLap", "NV thi công");
             dgvChoHoanUng.Columns.Add("NgayHoanUng", "Ngày hoàn ứng");
 
-            dgvChoHoanUng.Columns["MADDK"].Width = 100;
-            dgvChoHoanUng.Columns["TENKH"].Width = 200;
-            dgvChoHoanUng.Columns["DiaChi"].Width = 300;
-            dgvChoHoanUng.Columns["NhanVienXayLap"].Width = 150;
-            dgvChoHoanUng.Columns["NgayHoanUng"].Width = 120;
+            ApplyMC4ColumnRatio(dgvChoHoanUng);
+            dgvChoHoanUng.Columns["DiaChi"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvChoHoanUng.Columns["TENKH"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvChoHoanUng.Columns["MADDK"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvChoHoanUng.Columns["NgayHoanUng"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             dgvChoHoanUng.DoubleClick += DgvChoHoanUng_DoubleClick;
         }
 
         private void SetupDgvDaChon()
         {
-            dgvDaChon.AllowUserToAddRows = false;
-            dgvDaChon.AllowUserToDeleteRows = false;
+            UIStyleHelper.ApplyDataGridViewStyle(dgvDaChon);
             dgvDaChon.ReadOnly = true;
-            dgvDaChon.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvDaChon.MultiSelect = true;
-            dgvDaChon.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvDaChon.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dgvDaChon.Columns.Clear();
 
             dgvDaChon.Columns.Add("MADDK", "Mã DDK");
             dgvDaChon.Columns.Add("TENKH", "Tên khách hàng");
             dgvDaChon.Columns.Add("DiaChi", "Địa chỉ");
-            dgvDaChon.Columns.Add("NhanVienXayLap", "NV Thi công");
+            dgvDaChon.Columns.Add("NhanVienXayLap", "NV thi công");
             dgvDaChon.Columns.Add("NgayHoanUng", "Ngày hoàn ứng");
 
-            dgvDaChon.Columns["MADDK"].Width = 100;
-            dgvDaChon.Columns["TENKH"].Width = 200;
-            dgvDaChon.Columns["DiaChi"].Width = 300;
-            dgvDaChon.Columns["NhanVienXayLap"].Width = 150;
-            dgvDaChon.Columns["NgayHoanUng"].Width = 120;
+            ApplyMC4ColumnRatio(dgvDaChon);
+            dgvDaChon.Columns["DiaChi"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvDaChon.Columns["TENKH"].DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dgvDaChon.Columns["MADDK"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvDaChon.Columns["NgayHoanUng"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             dgvDaChon.DoubleClick += DgvDaChon_DoubleClick;
+        }
+
+        private static void ApplyMC4ColumnRatio(DataGridView dgv)
+        {
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgv.Columns["MADDK"].FillWeight = 13;
+            dgv.Columns["TENKH"].FillWeight = 22;
+            dgv.Columns["DiaChi"].FillWeight = 37;
+            dgv.Columns["NhanVienXayLap"].FillWeight = 17;
+            dgv.Columns["NgayHoanUng"].FillWeight = 11;
         }
 
         private void LoadDanhSachDonChoHoanUng()
@@ -140,8 +249,8 @@ namespace QLVT.GUI
                 );
 
                 var row = dgvChoHoanUng.Rows[dgvChoHoanUng.Rows.Count - 1];
-                row.DefaultCellStyle.BackColor = Color.LightYellow;
-                row.DefaultCellStyle.ForeColor = Color.DarkBlue;
+                row.DefaultCellStyle.BackColor = UIColorPalette.BackgroundWhite;
+                row.DefaultCellStyle.ForeColor = UIColorPalette.TextDark;
             }
         }
 
@@ -160,8 +269,8 @@ namespace QLVT.GUI
                 );
 
                 var row = dgvDaChon.Rows[dgvDaChon.Rows.Count - 1];
-                row.DefaultCellStyle.BackColor = Color.LightGreen;
-                row.DefaultCellStyle.ForeColor = Color.DarkGreen;
+                row.DefaultCellStyle.BackColor = Color.FromArgb(232, 246, 239);
+                row.DefaultCellStyle.ForeColor = UIColorPalette.TextDark;
             }
         }
 
@@ -295,13 +404,29 @@ namespace QLVT.GUI
         {
             if (e.Argument is not List<string> danhSachMaDDK) return;
 
-            var progress = new Progress<(int current, int total, string maddk)>(update =>
+            var worker = sender as BackgroundWorker;
+            var progress = new ImmediateProgress<(int current, int total, string maddk)>(update =>
             {
-                batchWorker?.ReportProgress(update.current, update);
+                worker?.ReportProgress(update.current, update);
             });
 
-            var ketQua = hoanUngBLL.MC4_HoanUngHangLoat(danhSachMaDDK, progress);
+            var ketQua = hoanUngBLL.MC4_HoanUngHangLoat(danhSachMaDDK, progress).GetAwaiter().GetResult();
             e.Result = ketQua;
+        }
+
+        private sealed class ImmediateProgress<T> : IProgress<T>
+        {
+            private readonly Action<T> handler;
+
+            public ImmediateProgress(Action<T> handler)
+            {
+                this.handler = handler;
+            }
+
+            public void Report(T value)
+            {
+                handler(value);
+            }
         }
 
         private void BatchWorker_ProgressChanged(object? sender, ProgressChangedEventArgs e)
@@ -329,29 +454,29 @@ namespace QLVT.GUI
 
             if (e.Error != null)
             {
-                lblTienDo.Text = "❌ Có lỗi xảy ra!";
-                txtKetQua.AppendText($"\r\n❌ LỖI: {e.Error.Message}\r\n");
+                lblTienDo.Text = "Có lỗi xảy ra";
+                txtKetQua.AppendText($"\r\nLỖI: {e.Error.Message}\r\n");
                 MessageBox.Show($"Lỗi trong quá trình hoàn ứng hàng loạt:\n{e.Error.Message}", 
                     "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else if (e.Result is (int thanhCong, int thatBai, List<string> loi))
             {
                 // Hiển thị kết quả
-                txtKetQua.AppendText($"\r\n{'='*50}\r\n");
-                txtKetQua.AppendText($"📊 KẾT QUẢ HOÀN ỨNG HÀNG LOẠT:\r\n");
-                txtKetQua.AppendText($"✅ Thành công: {thanhCong} đơn\r\n");
-                txtKetQua.AppendText($"❌ Thất bại: {thatBai} đơn\r\n");
+                txtKetQua.AppendText($"\r\n{new string('=', 50)}\r\n");
+                txtKetQua.AppendText($"KẾT QUẢ HOÀN ỨNG HÀNG LOẠT:\r\n");
+                txtKetQua.AppendText($"Thành công: {thanhCong} đơn\r\n");
+                txtKetQua.AppendText($"Thất bại: {thatBai} đơn\r\n");
 
                 if (loi.Count > 0)
                 {
-                    txtKetQua.AppendText($"\r\n📋 CHI TIẾT LỖI:\r\n");
+                    txtKetQua.AppendText($"\r\nCHI TIẾT LỖI:\r\n");
                     foreach (var loiItem in loi)
                     {
                         txtKetQua.AppendText($"• {loiItem}\r\n");
                     }
                 }
 
-                lblTienDo.Text = $"✅ Hoàn thành: {thanhCong} thành công, {thatBai} thất bại";
+                lblTienDo.Text = $"Hoàn thành: {thanhCong} thành công, {thatBai} thất bại";
 
                 // Show summary message
                 string thongBao = $"Hoàn ứng hàng loạt hoàn thành!\n\n" +

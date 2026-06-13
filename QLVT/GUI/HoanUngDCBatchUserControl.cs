@@ -6,11 +6,15 @@ using System.Linq;
 using System.Windows.Forms;
 using QLVT.BLL;
 using QLVT.ERP.Models;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
     public partial class HoanUngDCBatchUserControl : UserControl
     {
+        private readonly Label lblPageTitle = new();
+        private const int LayoutMargin = 20;
+
         private readonly HoanUngBLL hoanUngBLL;
         private List<SuaChuaModel> danhSachDonChoHoanUng = new();
         private List<SuaChuaModel> danhSachDonDaChon = new();
@@ -21,9 +25,60 @@ namespace QLVT.GUI
         {
             InitializeComponent();
             hoanUngBLL = new HoanUngBLL();
+            ApplyModernStyle();
+            ArrangeModernLayout();
             SetupDataGridViews();
             CheckERPConnection();
             InitializeBackgroundWorker();
+            Resize += (_, _) => ArrangeModernLayout();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblPageTitle.Text = "HOÀN ỨNG HÀNG LOẠT - SỬA CHỮA SỰ CỐ";
+            UIStyleHelper.ApplyTitleBarStyle(lblPageTitle);
+            Controls.Add(lblPageTitle);
+            lblPageTitle.BringToFront();
+
+            tableLayoutPanel1.Dock = DockStyle.None;
+            tableLayoutPanel1.BackColor = UIColorPalette.BackgroundLight;
+            tableLayoutPanel1.ColumnStyles[0].Width = 50F;
+            tableLayoutPanel1.ColumnStyles[1].Width = 50F;
+            tableLayoutPanel1.RowStyles[0].Height = 58F;
+
+            UIStyleHelper.ApplySecondaryButtonStyle(btnRefresh, new Size(92, 30));
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnChonTatCa, new Size(132, 32));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnBoChonTatCa, new Size(132, 32));
+            UIStyleHelper.ApplyWarningButtonStyle(btnBatDauHoanUng, new Size(178, 36));
+            btnRefresh.Text = "Làm mới";
+            btnChonTatCa.Text = "Chọn tất cả";
+            btnBoChonTatCa.Text = "Bỏ chọn tất cả";
+            btnBatDauHoanUng.Text = "Bắt đầu hoàn ứng";
+
+            lblTongSoChoHoanUng.Font = UIFonts.HeaderStandard;
+            lblTongSoChoHoanUng.ForeColor = UIColorPalette.StatusProcessing;
+            lblTongSoDaChon.Font = UIFonts.HeaderStandard;
+            lblTongSoDaChon.ForeColor = UIColorPalette.SuccessGreen;
+            UIStyleHelper.ApplyStatusLabelStyle(lblConnectionStatus, StatusType.Processing);
+            lblConnectionStatus.TextAlign = ContentAlignment.MiddleRight;
+
+            txtKetQua.BackColor = UIColorPalette.BackgroundWhite;
+            txtKetQua.ForeColor = UIColorPalette.TextDark;
+            txtKetQua.Font = new Font("Consolas", 9F);
+            txtKetQua.BorderStyle = BorderStyle.FixedSingle;
+        }
+
+        private void ArrangeModernLayout()
+        {
+            if (ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
+
+            int top = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+            tableLayoutPanel1.Location = new Point(LayoutMargin, top);
+            tableLayoutPanel1.Size = new Size(
+                Math.Max(900, ClientSize.Width - LayoutMargin * 2),
+                Math.Max(500, ClientSize.Height - top - LayoutMargin));
         }
 
         private void CheckERPConnection()
@@ -61,12 +116,9 @@ namespace QLVT.GUI
 
         private void SetupDgvChoHoanUng()
         {
-            dgvChoHoanUng.AllowUserToAddRows = false;
-            dgvChoHoanUng.AllowUserToDeleteRows = false;
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChoHoanUng);
             dgvChoHoanUng.ReadOnly = true;
-            dgvChoHoanUng.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvChoHoanUng.MultiSelect = true;
-            dgvChoHoanUng.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvChoHoanUng.Columns.Clear();
             dgvChoHoanUng.Columns.Add("MADON", "Mã đơn");
@@ -78,18 +130,17 @@ namespace QLVT.GUI
             dgvChoHoanUng.Columns["ViTriDiemChay"].Width = 200;
             dgvChoHoanUng.Columns["NgayHoanThanh"].Width = 150;
             dgvChoHoanUng.Columns["NhanVienXayLap"].Width = 150;
+            dgvChoHoanUng.Columns["MADON"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvChoHoanUng.Columns["NgayHoanThanh"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             dgvChoHoanUng.DoubleClick += DgvChoHoanUng_DoubleClick;
         }
 
         private void SetupDgvDaChon()
         {
-            dgvDaChon.AllowUserToAddRows = false;
-            dgvDaChon.AllowUserToDeleteRows = false;
+            UIStyleHelper.ApplyDataGridViewStyle(dgvDaChon);
             dgvDaChon.ReadOnly = true;
-            dgvDaChon.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvDaChon.MultiSelect = true;
-            dgvDaChon.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvDaChon.Columns.Clear();
             dgvDaChon.Columns.Add("MADON", "Mã đơn");
@@ -101,6 +152,8 @@ namespace QLVT.GUI
             dgvDaChon.Columns["ViTriDiemChay"].Width = 200;
             dgvDaChon.Columns["NgayHoanThanh"].Width = 150;
             dgvDaChon.Columns["NhanVienXayLap"].Width = 150;
+            dgvDaChon.Columns["MADON"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvDaChon.Columns["NgayHoanThanh"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             dgvDaChon.DoubleClick += DgvDaChon_DoubleClick;
         }
@@ -133,8 +186,8 @@ namespace QLVT.GUI
                 );
 
                 var row = dgvChoHoanUng.Rows[dgvChoHoanUng.Rows.Count - 1];
-                row.DefaultCellStyle.BackColor = Color.LightYellow;
-                row.DefaultCellStyle.ForeColor = Color.DarkBlue;
+                row.DefaultCellStyle.BackColor = UIColorPalette.BackgroundWhite;
+                row.DefaultCellStyle.ForeColor = UIColorPalette.TextDark;
             }
         }
 
@@ -152,8 +205,8 @@ namespace QLVT.GUI
                 );
 
                 var row = dgvDaChon.Rows[dgvDaChon.Rows.Count - 1];
-                row.DefaultCellStyle.BackColor = Color.LightGreen;
-                row.DefaultCellStyle.ForeColor = Color.DarkGreen;
+                row.DefaultCellStyle.BackColor = Color.FromArgb(232, 246, 239);
+                row.DefaultCellStyle.ForeColor = UIColorPalette.TextDark;
             }
         }
 
@@ -282,13 +335,29 @@ namespace QLVT.GUI
         {
             if (e.Argument is not List<string> danhSachMaDon) return;
 
-            var progress = new Progress<(int current, int total, string maDon)>(update =>
+            var worker = sender as BackgroundWorker;
+            var progress = new ImmediateProgress<(int current, int total, string maDon)>(update =>
             {
-                batchWorker?.ReportProgress(update.current, update);
+                worker?.ReportProgress(update.current, update);
             });
 
             var ketQua = hoanUngBLL.DC_HoanUngHangLoat(danhSachMaDon, progress);
             e.Result = ketQua;
+        }
+
+        private sealed class ImmediateProgress<T> : IProgress<T>
+        {
+            private readonly Action<T> handler;
+
+            public ImmediateProgress(Action<T> handler)
+            {
+                this.handler = handler;
+            }
+
+            public void Report(T value)
+            {
+                handler(value);
+            }
         }
 
         private void BatchWorker_ProgressChanged(object? sender, ProgressChangedEventArgs e)

@@ -18,8 +18,34 @@ namespace QLVT.GUI
         public MainForm()
         {
             InitializeComponent();
+            ApplyShellStyle();
             menuBLL = new MenuBLL();
             authBLL = new AuthenticationBLL();
+        }
+
+        private void ApplyShellStyle()
+        {
+            BackColor = UIColorPalette.BackgroundLight;
+            Font = UIFonts.TextStandard;
+
+            menuStrip.BackColor = UIColorPalette.BackgroundWhite;
+            menuStrip.ForeColor = UIColorPalette.TextDark;
+            menuStrip.Font = UIFonts.TextStandard;
+            menuStrip.Padding = new Padding(10, 4, 10, 4);
+            menuStrip.Renderer = new ToolStripProfessionalRenderer(new ModernMenuColorTable());
+
+            statusStrip.BackColor = UIColorPalette.BackgroundWhite;
+            statusStrip.ForeColor = UIColorPalette.TextMuted;
+            statusStrip.Font = UIFonts.TextSmall;
+            statusStrip.SizingGrip = false;
+            statusStrip.Padding = new Padding(10, 2, 10, 2);
+
+            pnlMain.BackColor = UIColorPalette.BackgroundLight;
+            lblWelcome.Text = "QLVT\nHệ thống quản lý vật tư";
+            lblWelcome.Font = UIFonts.TitleLarge;
+            lblWelcome.ForeColor = UIColorPalette.TextDark;
+            lblWelcome.BackColor = UIColorPalette.BackgroundLight;
+            lblWelcome.TextAlign = ContentAlignment.MiddleCenter;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -96,7 +122,9 @@ namespace QLVT.GUI
                 FormFactory.OpenUserControl("OpeningInventoryUserControl", pnlMain, "Nhập tồn đầu kỳ", UpdateStatusText)));
             tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("📦 Nhập kho vật tư", null, (s, e) => 
                 FormFactory.OpenUserControl("NhapKhoErpTaskUserControl", pnlMain, "Nhập kho vật tư", UpdateStatusText)));
-            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("📤 Xuất kho vật tư", null, (s, e) => 
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("� Nhập kho hàng loạt", null, (s, e) => 
+                FormFactory.OpenUserControl("NhapKhoErpBatchUserControl", pnlMain, "Nhập kho hàng loạt từ ERP", UpdateStatusText)));
+            tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("�📤 Xuất kho vật tư", null, (s, e) => 
                 FormFactory.OpenUserControl("XuatKhoErpTaskUserControl", pnlMain, "Xuất kho vật tư", UpdateStatusText)));
             tacVuMenu.DropDownItems.Add(new ToolStripMenuItem("↩️ Hoàn ứng BGK", null, (s, e) => 
                 FormFactory.OpenUserControl("HoanUngBGKUserControl", pnlMain, "Hoàn ứng BGK", UpdateStatusText)));
@@ -132,7 +160,10 @@ namespace QLVT.GUI
             var menuItem = new ToolStripMenuItem($"{menu.MenuIcon} {menu.MenuName}")
             {
                 Tag = menu,
-                Name = $"menu_{menu.MenuID}"
+                Name = $"menu_{menu.MenuID}",
+                Font = UIFonts.TextStandard,
+                ForeColor = UIColorPalette.TextDark,
+                Padding = new Padding(10, 6, 10, 6)
             };
 
             // Add event handler for menu click if it has FormName
@@ -285,5 +316,21 @@ namespace QLVT.GUI
         }
 
         #endregion
+
+        private sealed class ModernMenuColorTable : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected => Color.FromArgb(239, 246, 255);
+            public override Color MenuItemSelectedGradientBegin => Color.FromArgb(239, 246, 255);
+            public override Color MenuItemSelectedGradientEnd => Color.FromArgb(239, 246, 255);
+            public override Color MenuItemPressedGradientBegin => Color.FromArgb(219, 234, 254);
+            public override Color MenuItemPressedGradientEnd => Color.FromArgb(219, 234, 254);
+            public override Color MenuBorder => UIColorPalette.Border;
+            public override Color MenuItemBorder => Color.FromArgb(191, 219, 254);
+            public override Color ToolStripDropDownBackground => UIColorPalette.BackgroundWhite;
+            public override Color ImageMarginGradientBegin => UIColorPalette.BackgroundWhite;
+            public override Color ImageMarginGradientMiddle => UIColorPalette.BackgroundWhite;
+            public override Color ImageMarginGradientEnd => UIColorPalette.BackgroundWhite;
+            public override Color ToolStripBorder => UIColorPalette.Border;
+        }
     }
 }

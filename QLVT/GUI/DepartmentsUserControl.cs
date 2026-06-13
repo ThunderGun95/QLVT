@@ -11,6 +11,7 @@ namespace QLVT.GUI
         public DepartmentsUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _departmentBLL = new DepartmentBLL();
             _allDepartments = new List<Department>();
             LoadDepartments();

@@ -36,6 +36,7 @@ namespace QLVT.ERP.Models
         public decimal TonKho { get; set; } = 0;
         public int MaVTErp { get; set; }
         public decimal SoLuongHoanUng { get; set; } = 0;
+        public decimal SoLuongHoanUngThucTe { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 
@@ -71,6 +72,7 @@ namespace QLVT.ERP.Models
         public decimal TonKho { get; set; } = 0;
         public int MaVTErp { get; set; }
         public decimal SoLuongHoanUng { get; set; } = 0;
+        public decimal? SoLuongHoanUngThucTe { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 
@@ -114,8 +116,13 @@ namespace QLVT.ERP.Models
         public decimal? SoLuongNghiemThu { get; set; } = 0;
         public decimal? SoLuongDaHoanUng { get; set; } = 0;
         public decimal? DonGia { get; set; } = 0;
-        public decimal SoLuongHoanUng { get; set; } = 0;
+        public decimal SoLuongHoanUng { get; set; } = 0; // Số lượng từ ERP (không thay đổi)
+        public decimal? SoLuongHoanUngThucTe { get; set; } = null; // Số lượng người dùng sửa
+        public decimal TonKho { get; set; } = 0; // Thêm property tồn kho
         public DateTime CreatedDate { get; set; } = DateTime.Now;
+        
+        // Property để hiển thị số lượng (ưu tiên SoLuongHoanUngThucTe nếu có)
+        public decimal SoLuongHienThi => SoLuongHoanUngThucTe ?? SoLuongHoanUng;
     }
 
     #region Phiếu Xuất kho
@@ -141,6 +148,7 @@ namespace QLVT.ERP.Models
         public string MaVatTuHangHoa { get; set; } = "";
         public string TenVatTu { get; set; } = "";
         public string DacTinhKyThuat { get; set; } = "";
+        public string MucDichSuDung { get; set; } = "";
         public decimal SoLuongXuatKho { get; set; }
         public string DonViTinh { get; set; } = "";
         public string MaNhaSanXuat { get; set; } = "";

@@ -42,15 +42,66 @@ namespace QLVT.BLL
                 throw new Exception($"Lỗi lấy chi tiết vật tư với tồn kho: {ex.Message}", ex);
             }
         }
-        public bool MC4_XacNhanHoanUng(string maddk)
+        public async Task<bool> MC4_XacNhanHoanUng(string maddk, List<DonDangKyCTModel>? chiTietList, bool hoanAm)
         {
             var currentUser = AuthenticationBLL.GetCurrentUser();
 
             if (string.IsNullOrEmpty(maddk))
                 throw new ArgumentException("Mã DDK không được rỗng");
 
-            // Thực hiện hoàn ứng - DAL sẽ throw exception nếu có lỗi
-            return hoanUngTransactionDAL.MC4_UpdateHoanUngDonDangKy(maddk, currentUser!.Username);
+            if (chiTietList != null && chiTietList.Count == 0)
+                throw new ArgumentException("Danh sách chi tiết vật tư không được rỗng");
+
+            // Thực hiện hoàn ứng với số lượng đã chỉnh sửa
+            // DAL sẽ cập nhật SoLuongHoanUngThucTe, tạo transaction detail và cập nhật inventory
+            if (!hoanAm)
+                return await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4(maddk, currentUser!.Username, chiTietList);
+            else
+                return await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4_AmVatTu(maddk, currentUser!.Username, chiTietList);
+        }
+        public async Task<(int thanhCong, int thatBai, List<string> loi)> MC4_HoanUngHangLoat(List<string> danhSachMaDDK, IProgress<(int current, int total, string maddk)>? progress = null)
+        {
+            var currentUser = AuthenticationBLL.GetCurrentUser();
+            if (currentUser == null)
+                throw new InvalidOperationException("Người dùng chưa đăng nhập");
+
+            int thanhCong = 0;
+            int thatBai = 0;
+            List<string> danhSachLoi = new List<string>();
+
+            for (int i = 0; i < danhSachMaDDK.Count; i++)
+            {
+                string maddk = danhSachMaDDK[i];
+                
+                try
+                {
+                    // Báo cáo tiến độ
+                    progress?.Report((i + 1, danhSachMaDDK.Count, maddk));
+                    
+                    // Thực hiện hoàn ứng
+                    bool ketQua = await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4(maddk, currentUser.Username, null);
+                    
+                    if (ketQua)
+                    {
+                        thanhCong++;
+                    }
+                    else
+                    {
+                        thatBai++;
+                        danhSachLoi.Add($"Đơn {maddk}: Không thể hoàn ứng (không rõ lý do)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    thatBai++;
+                    danhSachLoi.Add($"Đơn {maddk}: {ex.Message}");
+                }
+                
+                // Cho phép UI cập nhật
+                System.Threading.Thread.Sleep(10);
+            }
+
+            return (thanhCong, thatBai, danhSachLoi);
         }
         public async Task<(int soLuongDon, int soLuongChiTiet, string thongBao)> MC4_TaiDuLieuERP()
         {
@@ -58,7 +109,8 @@ namespace QLVT.BLL
             {
                 // Bước 1: Lấy max của NgayHoanUng trong bảng ct.DonDangKy
                 DateTime? maxNgayHoanUng = hoanUngTransactionDAL.MC4_GetMaxNgayHoanUngMC4();
-                DateTime tuNgay = maxNgayHoanUng ?? DateTime.Now.AddDays(-30); // Nếu chưa có dữ liệu thì lấy 30 ngày gần nhất
+                DateTime tuNgay = DateTime.Parse("01/01/2025");
+                // DateTime tuNgay = maxNgayHoanUng ?? DateTime.Now.AddDays(-30); // Nếu chưa có dữ liệu thì lấy 30 ngày gần nhất
 
                 // Bước 2: Lấy danh sách đơn từ ERP qua hàm GetDonDangKyDataAsync
                 var danhSachDonERP = await erpConnectionDAL.GetDonDangKyDataAsync(tuNgay);
@@ -141,6 +193,110 @@ namespace QLVT.BLL
             // Thực hiện hoàn ứng với transaction-based logic tương tự HoanUngBLL
             return hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser!.Username);
         }
+        public bool DC_XacNhanHoanUng(string maDon, List<SuaChuaCTModel> chiTietList)
+        {
+            var currentUser = AuthenticationBLL.GetCurrentUser();
+
+            if (string.IsNullOrEmpty(maDon))
+                throw new ArgumentException("Mã đơn không được rỗng");
+
+            if (chiTietList == null || chiTietList.Count == 0)
+                throw new ArgumentException("Danh sách chi tiết vật tư không được rỗng");
+
+            // Thực hiện hoàn ứng với số lượng đã chỉnh sửa
+            return hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser!.Username, chiTietList);
+        }
+        public (int thanhCong, int thatBai, List<string> loi) DC_HoanUngHangLoat(List<string> danhSachMaDon, IProgress<(int current, int total, string maDon)>? progress = null)
+        {
+            var currentUser = AuthenticationBLL.GetCurrentUser();
+            if (currentUser == null)
+                throw new InvalidOperationException("Người dùng chưa đăng nhập");
+
+            int thanhCong = 0;
+            int thatBai = 0;
+            List<string> danhSachLoi = new List<string>();
+
+            for (int i = 0; i < danhSachMaDon.Count; i++)
+            {
+                string maDon = danhSachMaDon[i];
+                
+                try
+                {
+                    // Báo cáo tiến độ
+                    progress?.Report((i + 1, danhSachMaDon.Count, maDon));
+                    
+                    // Thực hiện hoàn ứng
+                    bool ketQua = hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser.Username);
+                    
+                    if (ketQua)
+                    {
+                        thanhCong++;
+                    }
+                    else
+                    {
+                        thatBai++;
+                        danhSachLoi.Add($"Đơn {maDon}: Không thể hoàn ứng (không rõ lý do)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    thatBai++;
+                    danhSachLoi.Add($"Đơn {maDon}: {ex.Message}");
+                }
+                
+                // Cho phép UI cập nhật
+                System.Threading.Thread.Sleep(10);
+            }
+
+            return (thanhCong, thatBai, danhSachLoi);
+        }
+        #endregion
+
+        #region BGK (Bàn giao kỹ thuật)
+        
+        /// <summary>
+        /// Xử lý hoàn ứng BGK đơn lẻ - Lưu vào ct.NghiemThuGiaoKhoan, ct.NghiemThuGiaoKhoanCT, Transactions, TransactionDetails và cập nhật Inventory
+        /// </summary>
+        public bool BGK_XacNhanHoanUngDonLe(
+            NghiemThuGiaoKhoanModel bgkModel,
+            List<NghiemThuGiaoKhoanCTModel> vatTuList,
+            DateTime ngayHoanUng)
+        {
+            var currentUser = AuthenticationBLL.GetCurrentUser();
+            if (currentUser == null)
+                throw new InvalidOperationException("Người dùng chưa đăng nhập");
+
+            if (bgkModel == null)
+                throw new ArgumentNullException(nameof(bgkModel));
+
+            if (vatTuList == null || vatTuList.Count == 0)
+                throw new ArgumentException("Danh sách vật tư không được rỗng");
+
+            // Gọi DAL để xử lý với transaction
+            return hoanUngTransactionDAL.BGK_ProcessHoanUngBGK(
+                bgkModel,
+                vatTuList,
+                currentUser.Username
+            );
+        }
+
+        /// <summary>
+        /// Kiểm tra BGK đã hoàn ứng trong database chưa
+        /// </summary>
+        public bool CheckBGKDaHoanUng(long giaoKhoanNghiemThuVatTuID)
+        {
+            return hoanUngTransactionDAL.CheckBGKDaHoanUng(giaoKhoanNghiemThuVatTuID);
+        }
+
+        /// <summary>
+        /// Lấy tổng tồn kho của vật tư theo ErpId
+        /// </summary>
+        public decimal GetTonKhoByErpId(int supplyErpId, string manv)
+        {
+            var inventoryDAL = new InventoryDAL();
+            return inventoryDAL.GetTonKhoByErpId(supplyErpId, manv);
+        }
+
         public async Task<(int soLuongDon, int soLuongChiTiet, string thongBao)> DC_TaiDuLieuERP()
         {
             try
@@ -195,7 +351,6 @@ namespace QLVT.BLL
                 throw new Exception(thongBaoLoi, ex);
             }
         }
-
         #endregion
 
         public bool TestERPConnection()

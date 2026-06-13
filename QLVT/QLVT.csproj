@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+    <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
   </ItemGroup>
 
 </Project>

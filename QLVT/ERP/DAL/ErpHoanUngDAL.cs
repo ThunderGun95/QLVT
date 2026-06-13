@@ -18,11 +18,12 @@ namespace QLVT.ERP.DAL
             var result = new List<NghiemThuGiaoKhoanModel>();
             
             string sql = @"
-                SELECT GiaoKhoanNghiemThuVatTuID, SoBGK, SoNghiemThu, NamNghiemThu, SoLanNghiemThu,
-                       NhanVienKyThuat, NhanVienXayLap, NoiDung, NgayNghiemThu, DonViThau, GoiThau,
-                       TongGiaTri, GhiChu, NgayHoanUng, DaHoanUng, ThoiGianXacNhanHoanUng
-                FROM ct.GiaoKhoanNghiemThuVatTus
-                WHERE SoNghiemThu = @SoNghiemThu AND NamNghiemThu = @NamNghiemThu AND IsDeleted = 0";
+                SELECT  GiaoKhoanNghiemThuVatTuID, GK.SoBanGiaoKhoan, NT.SoNghiemThu, NT.Nam, NT.SoLanNghiemThu,
+                        GK.HoTenNhanVienKyThuat, NT.MaNhanVienThiCong, GK.HoTenNhanVienThiCong, GK.NoiDung, NT.ThoiGianHoanUng
+                FROM ct.GiaoKhoanNghiemThuVatTus NT
+                INNER JOIN ct.ViewGiaoKhoans GK ON NT.GiaoKhoanID = GK.Id AND GK.IsDeleted = 0
+                WHERE NT.SoNghiemThu = @SoNghiemThu AND NT.Nam = @NamNghiemThu AND NT.IsDeleted = 0 AND TTHU = 'TT_A'
+                    AND NT.ThoiGianHoanUng > '2025/01/01'";
 
             try
             {
@@ -42,25 +43,19 @@ namespace QLVT.ERP.DAL
                                 {
                                     GiaoKhoanNghiemThuVatTuID = reader["GiaoKhoanNghiemThuVatTuID"] != DBNull.Value ? 
                                         Convert.ToInt64(reader["GiaoKhoanNghiemThuVatTuID"]) : null,
-                                    SoBGK = reader["SoBGK"]?.ToString() ?? "",
+                                    SoBGK = reader["SoBanGiaoKhoan"]?.ToString() ?? "",
                                     SoNghiemThu = reader["SoNghiemThu"] != DBNull.Value ? 
                                         Convert.ToInt32(reader["SoNghiemThu"]) : null,
-                                    NamNghiemThu = reader["NamNghiemThu"] != DBNull.Value ? 
-                                        Convert.ToInt32(reader["NamNghiemThu"]) : null,
+                                    NamNghiemThu = reader["Nam"] != DBNull.Value ? 
+                                        Convert.ToInt32(reader["Nam"]) : null,
                                     SoLanNghiemThu = reader["SoLanNghiemThu"] != DBNull.Value ? 
                                         Convert.ToInt32(reader["SoLanNghiemThu"]) : null,
-                                    NhanVienKyThuat = reader["NhanVienKyThuat"]?.ToString() ?? "",
-                                    NhanVienXayLap = reader["NhanVienXayLap"]?.ToString() ?? "",
+                                    NhanVienKyThuat = reader["HoTenNhanVienKyThuat"]?.ToString() ?? "",
+                                    MaNhanVienXayLap = reader["MaNhanVienThiCong"]?.ToString() ?? "",
+                                    NhanVienXayLap = reader["HoTenNhanVienThiCong"]?.ToString() ?? "",
                                     NoiDung = reader["NoiDung"]?.ToString() ?? "",
-                                    NgayNghiemThu = reader["NgayNghiemThu"] != DBNull.Value ? 
-                                        Convert.ToDateTime(reader["NgayNghiemThu"]) : null,
-                                    GhiChu = reader["GhiChu"]?.ToString() ?? "",
-                                    NgayHoanUng = reader["NgayHoanUng"] != DBNull.Value ? 
-                                        Convert.ToDateTime(reader["NgayHoanUng"]) : null,
-                                    DaHoanUng = reader["DaHoanUng"] != DBNull.Value ? 
-                                        Convert.ToBoolean(reader["DaHoanUng"]) : false,
-                                    ThoiGianXacNhanHoanUng = reader["ThoiGianXacNhanHoanUng"] != DBNull.Value ? 
-                                        Convert.ToDateTime(reader["ThoiGianXacNhanHoanUng"]) : null
+                                    NgayHoanUng = reader["ThoiGianHoanUng"] != DBNull.Value ? 
+                                        Convert.ToDateTime(reader["ThoiGianHoanUng"]) : null
                                 });
                             }
                         }
@@ -125,42 +120,6 @@ namespace QLVT.ERP.DAL
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Cập nhật trạng thái hoàn ứng cho nghiệm thu giao khoán
-        /// </summary>
-        public void UpdateNghiemThuGiaoKhoanHoanUng(long giaoKhoanNghiemThuVatTuID, 
-            DateTime ngayHoanUng, bool daHoanUng, DateTime thoiGianXacNhan)
-        {
-            string sql = @"
-                UPDATE ct.GiaoKhoanNghiemThuVatTus 
-                SET NgayHoanUng = @NgayHoanUng,
-                    DaHoanUng = @DaHoanUng,
-                    ThoiGianXacNhanHoanUng = @ThoiGianXacNhan,
-                    UpdatedDate = GETDATE()
-                WHERE GiaoKhoanNghiemThuVatTuID = @GiaoKhoanNghiemThuVatTuID";
-
-            try
-            {
-                using (var connection = ExternalDatabaseHelper.GetExternalConnection())
-                {
-                    connection.Open();
-                    using (var command = new SqlCommand(sql, connection))
-                    {
-                        command.Parameters.AddWithValue("@NgayHoanUng", ngayHoanUng);
-                        command.Parameters.AddWithValue("@DaHoanUng", daHoanUng);
-                        command.Parameters.AddWithValue("@ThoiGianXacNhan", thoiGianXacNhan);
-                        command.Parameters.AddWithValue("@GiaoKhoanNghiemThuVatTuID", giaoKhoanNghiemThuVatTuID);
-
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lỗi cập nhật trạng thái hoàn ứng BGK: {ex.Message}");
-            }
         }
 
         /// <summary>

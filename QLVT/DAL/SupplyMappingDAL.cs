@@ -146,5 +146,63 @@ namespace QLVT.DAL
 
             return supplies;
         }
+
+        /// <summary>
+        /// Lấy thông tin DanhMuc của các vật tư theo ErpId
+        /// </summary>
+        /// <param name="erpIds">Danh sách ErpId</param>
+        /// <returns>Danh sách vật tư với DanhMuc</returns>
+        public List<SupplyCategory> GetSuppliesCategoryByIds(List<int> erpIds)
+        {
+            var supplies = new List<SupplyCategory>();
+            
+            if (erpIds == null || erpIds.Count == 0)
+                return supplies;
+                
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    
+                    // Tạo IN clause cho danh sách ErpId
+                    var parameters = string.Join(",", erpIds.Select((id, index) => $"@erpId{index}"));
+                    
+                    string sql = $@"
+                        SELECT ErpId, Code, TenVatTu, DanhMuc
+                        FROM Supplies 
+                        WHERE ErpId IN ({parameters})";
+                    
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        // Thêm parameters
+                        for (int i = 0; i < erpIds.Count; i++)
+                        {
+                            command.Parameters.AddWithValue($"@erpId{i}", erpIds[i]);
+                        }
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                supplies.Add(new SupplyCategory
+                                {
+                                    ErpId = Convert.ToInt32(reader["ErpId"]),
+                                    Code = reader["Code"].ToString() ?? string.Empty,
+                                    TenVatTu = reader["TenVatTu"].ToString() ?? string.Empty,
+                                    DanhMuc = reader["DanhMuc"].ToString() ?? string.Empty
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy thông tin danh mục vật tư: {ex.Message}");
+            }
+
+            return supplies;
+        }
     }
 }

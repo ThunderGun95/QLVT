@@ -11,6 +11,7 @@ namespace QLVT.GUI
         public SuppliesUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _supplyBLL = new SupplyBLL();
             _allSupplies = new List<Supply>();
             LoadSupplies();

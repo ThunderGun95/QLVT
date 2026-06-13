@@ -60,12 +60,12 @@ namespace QLVT.GUI
             grpFilters.Controls.Add(lblToDate);
             grpFilters.Controls.Add(dtpToDate);
             grpFilters.Controls.Add(lblWarehouse);
-            grpFilters.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            grpFilters.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             grpFilters.Location = new Point(4, 3);
             grpFilters.Margin = new Padding(4, 3, 4, 3);
             grpFilters.Name = "grpFilters";
             grpFilters.Padding = new Padding(4, 3, 4, 3);
-            grpFilters.Size = new Size(1393, 120);
+            grpFilters.Size = new Size(1393, 140);
             grpFilters.TabIndex = 0;
             grpFilters.TabStop = false;
             grpFilters.Text = "Bộ lọc báo cáo";
@@ -119,7 +119,7 @@ namespace QLVT.GUI
             // 
             lblWarehouse.AutoSize = true;
             lblWarehouse.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblWarehouse.Location = new Point(380, 25);
+            lblWarehouse.Location = new Point(20, 75);
             lblWarehouse.Margin = new Padding(4, 0, 4, 0);
             lblWarehouse.Name = "lblWarehouse";
             lblWarehouse.Size = new Size(29, 13);
@@ -130,8 +130,8 @@ namespace QLVT.GUI
             // 
             grpActions.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             grpActions.Controls.Add(flowLayoutPanel1);
-            grpActions.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            grpActions.Location = new Point(4, 130);
+            grpActions.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            grpActions.Location = new Point(4, 150);
             grpActions.Margin = new Padding(4, 3, 4, 3);
             grpActions.Name = "grpActions";
             grpActions.Padding = new Padding(4, 3, 4, 3);
@@ -156,7 +156,7 @@ namespace QLVT.GUI
             // 
             btnCreateReport.BackColor = Color.FromArgb(0, 123, 255);
             btnCreateReport.FlatStyle = FlatStyle.Flat;
-            btnCreateReport.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnCreateReport.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnCreateReport.ForeColor = Color.White;
             btnCreateReport.Location = new Point(4, 3);
             btnCreateReport.Margin = new Padding(4, 3, 4, 3);
@@ -172,7 +172,7 @@ namespace QLVT.GUI
             btnExportCsv.BackColor = Color.FromArgb(40, 167, 69);
             btnExportCsv.Enabled = false;
             btnExportCsv.FlatStyle = FlatStyle.Flat;
-            btnExportCsv.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExportCsv.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnExportCsv.ForeColor = Color.White;
             btnExportCsv.Location = new Point(152, 3);
             btnExportCsv.Margin = new Padding(4, 3, 4, 3);
@@ -187,7 +187,7 @@ namespace QLVT.GUI
             // 
             btnClearFilter.BackColor = Color.FromArgb(108, 117, 125);
             btnClearFilter.FlatStyle = FlatStyle.Flat;
-            btnClearFilter.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnClearFilter.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnClearFilter.ForeColor = Color.White;
             btnClearFilter.Location = new Point(277, 3);
             btnClearFilter.Margin = new Padding(4, 3, 4, 3);
@@ -202,8 +202,8 @@ namespace QLVT.GUI
             // 
             grpResults.Controls.Add(dgvTransactionReport);
             grpResults.Controls.Add(lblSummary);
-            grpResults.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            grpResults.Location = new Point(12, 210);
+            grpResults.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            grpResults.Location = new Point(12, 230);
             grpResults.Name = "grpResults";
             grpResults.Size = new Size(1160, 490);
             grpResults.TabIndex = 2;
@@ -227,7 +227,7 @@ namespace QLVT.GUI
             // 
             lblSummary.BackColor = Color.LightBlue;
             lblSummary.BorderStyle = BorderStyle.FixedSingle;
-            lblSummary.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblSummary.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
             lblSummary.Location = new Point(15, 410);
             lblSummary.Name = "lblSummary";
             lblSummary.Size = new Size(1130, 25);

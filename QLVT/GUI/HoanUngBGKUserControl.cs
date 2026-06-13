@@ -27,14 +27,90 @@ namespace QLVT.GUI
             InitializeComponent();
             _erpBgkBLL = new ERPBgkBLL();
             _hoanUngBLL = new HoanUngBLL();
+            ApplyModernStyle();
             SetupDataGridView();
-            SetupButtonHoverEffects();
+            Resize += (_, _) => ArrangeModernLayout();
             // Khởi tạo trạng thái ban đầu
             lblConnectionStatus.Text = "🔄 Đang kiểm tra kết nối ERP...";
             lblConnectionStatus.ForeColor = UIColorPalette.StatusProcessing;
 
             // Kiểm tra kết nối ERP khi load
             CheckERPConnection();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblTitle.Text = "HOÀN ỨNG BGK";
+            UIStyleHelper.ApplyTitleBarStyle(lblTitle);
+
+            grpTimKiem.Text = "Tìm kiếm BGK";
+            grpBGKInfo.Text = "Thông tin BGK";
+            grpChiTiet.Text = "Danh sách vật tư hoàn ứng";
+            UIStyleHelper.ApplyGroupBoxStyle(grpTimKiem, AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right);
+            UIStyleHelper.ApplyGroupBoxStyle(grpBGKInfo, AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right);
+            UIStyleHelper.ApplyGroupBoxStyle(grpChiTiet, AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right);
+
+            foreach (var label in new[]
+            {
+                lblSoBGKTimLabel, lblSeparator, lblSoBGKLabel, lblTrangThaiLabel,
+                lblNhanVienKyThuatLabel, lblNhanVienXayLapLabel, lblNoiDungLabel,
+                lblSoNghiemThuLabel
+            })
+            {
+                UIStyleHelper.ApplyStandardLabelStyle(label);
+            }
+
+            foreach (var valueLabel in new[]
+            {
+                lblSoBGK, lblTrangThai, lblNhanVienKyThuat, lblNhanVienXayLap,
+                lblNoiDung, lblSoNghiemThu
+            })
+            {
+                valueLabel.Font = UIFonts.HeaderStandard;
+                valueLabel.ForeColor = UIColorPalette.TextDark;
+            }
+
+            UIStyleHelper.ApplyTextBoxStyle(txtSoBGK);
+            UIStyleHelper.ApplyTextBoxStyle(txtNam);
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnTimBGK, new Size(104, 30));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnRefresh, new Size(104, 30));
+            UIStyleHelper.ApplyWarningButtonStyle(btnXacNhan, new Size(190, 36));
+            btnTimBGK.Text = "Tìm kiếm";
+            btnRefresh.Text = "Làm mới";
+            btnXacNhan.Text = "Xác nhận hoàn ứng";
+
+            UIStyleHelper.ApplyStatusLabelStyle(lblConnectionStatus, StatusType.Processing);
+            lblConnectionStatus.TextAlign = ContentAlignment.MiddleLeft;
+            UIStyleHelper.ApplyStandardLabelStyle(lblStatus);
+
+            ArrangeModernLayout();
+        }
+
+        private void ArrangeModernLayout()
+        {
+            if (ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
+
+            const int margin = 20;
+            int contentWidth = Math.Max(900, ClientSize.Width - margin * 2);
+            int top = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+
+            grpTimKiem.Location = new Point(margin, top);
+            grpTimKiem.Size = new Size(contentWidth, 90);
+
+            grpBGKInfo.Location = new Point(margin, grpTimKiem.Bottom + 10);
+            grpBGKInfo.Size = new Size(contentWidth, 120);
+
+            grpChiTiet.Location = new Point(margin, grpBGKInfo.Bottom + 10);
+            grpChiTiet.Size = new Size(contentWidth, Math.Max(300, ClientSize.Height - grpChiTiet.Top - 42));
+
+            dgvChiTiet.Location = new Point(16, 28);
+            dgvChiTiet.Size = new Size(Math.Max(700, grpChiTiet.ClientSize.Width - 32), Math.Max(180, grpChiTiet.ClientSize.Height - 82));
+            btnXacNhan.Location = new Point(16, grpChiTiet.ClientSize.Height - btnXacNhan.Height - 14);
+            lblStatus.Location = new Point(margin + 4, Math.Max(grpChiTiet.Bottom + 8, ClientSize.Height - 26));
+
+            lblNoiDung.MaximumSize = new Size(Math.Max(500, contentWidth - 150), 0);
         }
 
         private void SetupButtonHoverEffects()
@@ -82,16 +158,19 @@ namespace QLVT.GUI
 
         private void SetupDataGridView()
         {
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChiTiet);
             dgvChiTiet.AutoGenerateColumns = false;
             dgvChiTiet.AllowUserToAddRows = false;
             dgvChiTiet.AllowUserToDeleteRows = false;
             dgvChiTiet.ReadOnly = false; // Cho phép chỉnh sửa
             dgvChiTiet.SelectionMode = DataGridViewSelectionMode.CellSelect;
             dgvChiTiet.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvChiTiet.MultiSelect = false;
             
             // Thiết lập font truyền thống cho dữ liệu trong grid
             dgvChiTiet.DefaultCellStyle.Font = UIFonts.GridData;
             dgvChiTiet.RowTemplate.DefaultCellStyle.Font = UIFonts.GridData;
+            dgvChiTiet.ColumnHeadersDefaultCellStyle.Font = UIFonts.GridHeader;
             
             // Căn giữa header cho tất cả các cột
             dgvChiTiet.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;

@@ -20,6 +20,7 @@ namespace QLVT.GUI
         public XuatKhoErpUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             exportBLL = new XuatKhoBLL();
             warehouseDAL = new WarehouseDAL();
             SetupDataGridView();

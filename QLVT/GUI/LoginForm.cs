@@ -10,6 +10,7 @@ namespace QLVT.GUI
         public LoginForm()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             authBLL = new AuthenticationBLL();
         }
 

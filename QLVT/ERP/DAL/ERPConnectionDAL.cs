@@ -73,8 +73,11 @@ namespace QLVT.ERP.DAL
                 WHERE mc4.TTDK = 'DK_A' and mc4.TTCT = 'CT_A' and mc4.TTTC = 'TC_A'
                   AND CONVERT(DATE, hu.ThoiGianHoanUng) > @FilterDate
                   AND YEAR(mc4.NgayTC) > 2024
-                  AND mc4.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
-                  AND mc4.IsHuy = 0
+                  AND hu.ThoiGianHoanUng < '2025/12/01'  
+                  -- AND mc4.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
+                  AND mc4.MaNhanVienXayLap in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh') 
+                  -- Thêm cái này để hoàn tổ mc4 trước
+                    AND mc4.IsHuy = 0
                 ORDER BY ThoiGianHoanUng";
 
             var parameters = new[] { new SqlParameter("@FilterDate", filterDate) };
@@ -148,9 +151,10 @@ namespace QLVT.ERP.DAL
                 INNER JOIN ViewNhanViens AS nvtc ON nvtc.MaNhanVien = sc.MaNhanVienThiCong 
                 WHERE (sc.TTHU = 'TT_A') 
                   AND year(sc.ThoiGianHoanUng) = 2025
-                  AND CONVERT(DATE, sc.ThoiGianHoanUng) > @FilterDate
+                  -- AND CONVERT(DATE, sc.ThoiGianHoanUng) > @FilterDate
                   AND sc.ThoiGianHoanUng > '2025/01/02'
-                  AND sc.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
+                    AND sc.ThoiGianHoanUng < '2025/04/01'  
+                  -- AND sc.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
                 ORDER BY sc.ThoiGianHoanUng";
 
             var parameters = new[] { new SqlParameter("@FilterDate", filterDate) };

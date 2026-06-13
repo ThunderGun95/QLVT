@@ -25,6 +25,7 @@ namespace QLVT.GUI
         public NhapKhoErpBatchUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             nhapKhoBLL = new NhapKhoBLL();
             SetupBackgroundWorker();
             CheckERPConnection();

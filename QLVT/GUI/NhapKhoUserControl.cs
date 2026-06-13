@@ -14,6 +14,7 @@ namespace QLVT.GUI
         public NhapKhoUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             nhapKhoBLL = new NhapKhoManualBLL();
             chiTietList = new BindingList<PhieuNhapKhoChiTiet>();
             InitializeData();

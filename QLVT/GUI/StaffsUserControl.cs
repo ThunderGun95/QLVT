@@ -11,6 +11,7 @@ namespace QLVT.GUI
         public StaffsUserControl()
         {
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             _staffBLL = new StaffBLL();
             _allStaffs = new List<Staff>();
             LoadStaffs();

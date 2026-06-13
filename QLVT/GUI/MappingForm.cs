@@ -28,6 +28,7 @@ namespace QLVT.GUI
             orderDetails = details;
             exportBLL = bll;
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             LoadOrderDetails();
         }
 

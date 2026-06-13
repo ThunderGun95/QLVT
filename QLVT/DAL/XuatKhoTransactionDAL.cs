@@ -41,10 +41,11 @@ namespace QLVT.DAL
                         {
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
                             command.Parameters.AddWithValue("@ngayGiaoDich", order.ThoiGianHoanThanhXuatKho);
-                            command.Parameters.AddWithValue("@maKhoNhan", employeeWarehouseId);
-                            command.Parameters.AddWithValue("@ghiChu", $"Xuất kho từ phiếu ERP: {order.SoPhieuXuatKho}-{order.NAM} - {order.TenNhanVien} (Nhiều kho nguồn)");
+                            // Kho nhận có thể là null nếu tất cả vật tư đều là VP
+                            command.Parameters.AddWithValue("@maKhoNhan", employeeWarehouseId > 0 ? (object)employeeWarehouseId : DBNull.Value);
+                            command.Parameters.AddWithValue("@ghiChu", $"Xuất kho từ phiếu ERP: {order.SoPhieuXuatKho}-{order.NAM}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
-                            command.Parameters.AddWithValue("@entityXuatKho", $"{order.SoPhieuXuatKho}-{order.NAM}");
+                            command.Parameters.AddWithValue("@entityXuatKho", $"XK:{order.SoPhieuXuatKho}-{order.NAM}");
                             
                             transactionId = Convert.ToInt32(command.ExecuteScalar());
                         }
@@ -58,25 +59,29 @@ namespace QLVT.DAL
 
                             int sourceWarehouseId = detail.SourceWarehouseId.Value;
 
+                            // Kiểm tra DanhMuc để xác định kho đích
+                            int? targetWarehouseId = DetermineTargetWarehouseId(connection, transaction, detail.MappedSupplyId!.Value, employeeWarehouseId);
+
                             // Insert transaction detail với SourceWarehouseId
                             string insertDetailSql = @"
-                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, SourceWarehouseId, CreatedBy, CreatedDate)
-                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @sourceWarehouseId, @createdBy, GETDATE())";
+                                INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, MaKhoNhap, CreatedBy, CreatedDate)
+                                VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @maKhoXuat, @maKhoNhap, @createdBy, GETDATE())";
 
                             using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@transactionId", transactionId);
                                 command.Parameters.AddWithValue("@erpId", detail.MappedSupplyId!.Value);
                                 command.Parameters.AddWithValue("@soLuong", detail.SoLuongXuatKho);
-                                command.Parameters.AddWithValue("@ghiChu", $"Xuất từ kho {detail.TenKhoXuat} ({detail.MaKhoXuat}) - VT: {detail.MaVatTuHangHoa}");
-                                command.Parameters.AddWithValue("@sourceWarehouseId", sourceWarehouseId);
+                                command.Parameters.AddWithValue("@ghiChu", $"{detail.MucDichSuDung} (phiếu {order.SoPhieuXuatKho}-{order.NAM})");
+                                command.Parameters.AddWithValue("@maKhoXuat", sourceWarehouseId);
+                                command.Parameters.AddWithValue("@maKhoNhap", (object?)targetWarehouseId ?? DBNull.Value);
                                 command.Parameters.AddWithValue("@createdBy", createdBy);
 
                                 command.ExecuteNonQuery();
                             }
 
-                            // Cập nhật inventory: Trừ từ kho nguồn cụ thể, cộng vào kho nhân viên
-                            TransferInventory(connection, transaction, sourceWarehouseId, employeeWarehouseId, detail.MappedSupplyId!.Value, detail.SoLuongXuatKho);
+                            // Cập nhật inventory: Trừ từ kho nguồn cụ thể, cộng vào kho nhân viên (nếu có)
+                            TransferInventory(connection, transaction, sourceWarehouseId, targetWarehouseId, detail.MappedSupplyId!.Value, detail.SoLuongXuatKho);
                         }
 
                         transaction.Commit();
@@ -90,6 +95,34 @@ namespace QLVT.DAL
             }
 
             return transactionId;
+        }
+
+        /// <summary>
+        /// Xác định kho đích dựa trên DanhMuc của vật tư
+        /// Nếu DanhMuc = "VP" thì kho đích sẽ là null
+        /// Ngược lại sẽ là kho nhân viên
+        /// </summary>
+        /// <param name="connection">Database connection</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="erpId">ERP ID vật tư</param>
+        /// <param name="employeeWarehouseId">ID kho nhân viên</param>
+        /// <returns>ID kho đích hoặc null nếu là VP</returns>
+        private int? DetermineTargetWarehouseId(SqlConnection connection, SqlTransaction transaction, int erpId, int employeeWarehouseId)
+        {
+            string checkCategorySql = @"
+                SELECT DanhMuc FROM Supplies 
+                WHERE ErpId = @erpId";
+
+            using (var command = new SqlCommand(checkCategorySql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@erpId", erpId);
+                
+                var result = command.ExecuteScalar();
+                string danhMuc = result?.ToString() ?? "";
+                
+                // Nếu là VP thì kho đích là null, ngược lại là kho nhân viên
+                return danhMuc == "VP" ? null : employeeWarehouseId;
+            }
         }
 
         /// <summary>
@@ -131,7 +164,7 @@ namespace QLVT.DAL
             {
                 command.Parameters.AddWithValue("@sourceWarehouseId", sourceWarehouseId);
                 command.Parameters.AddWithValue("@erpId", erpId);
-                command.Parameters.AddWithValue("@quantity", quantity);
+                command.Parameters.AddWithValue("@quantity", Math.Round(quantity,2));
                 
                 int rowsAffected = command.ExecuteNonQuery();
                 if (rowsAffected == 0)
@@ -158,7 +191,7 @@ namespace QLVT.DAL
                 {
                     command.Parameters.AddWithValue("@targetWarehouseId", targetWarehouseId);
                     command.Parameters.AddWithValue("@erpId", erpId);
-                    command.Parameters.AddWithValue("@quantity", quantity);
+                    command.Parameters.AddWithValue("@quantity", Math.Round(quantity, 2));
 
                     command.ExecuteNonQuery();
                 }

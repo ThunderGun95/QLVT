@@ -161,6 +161,113 @@ namespace QLVT.DAL
             return warehouse;
         }
 
+        public Warehouse? GetKhoUuTienByMaNV(string manv)
+        {
+            if (string.IsNullOrWhiteSpace(manv))
+                return null;
+
+            Warehouse? warehouse = null;
+
+            string sql = @"
+                SELECT w.Id, w.MaKho, w.TenKho, w.LoaiKho, w.MaNV, 
+                       s.TenNV, w.DiaChi, w.GhiChu, w.IsActive
+                FROM Warehouses w
+                LEFT JOIN Staffs s ON w.MaNV = s.MaNV
+                WHERE w.MaNV = @staffCode AND w.LoaiKho = 'CANHAN' AND w.IsActive = 1 AND w.KhoUuTien = 1";
+
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@staffCode", manv);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                warehouse = new Warehouse
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    MaKho = reader["MaKho"].ToString() ?? string.Empty,
+                                    TenKho = reader["TenKho"].ToString() ?? string.Empty,
+                                    LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
+                                    MaNV = reader["MaNV"].ToString(),
+                                    DiaChi = reader["DiaChi"].ToString(),
+                                    GhiChu = reader["GhiChu"].ToString(),
+                                    IsActive = Convert.ToBoolean(reader["IsActive"])
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy kho nhân viên {manv}: {ex.Message}");
+            }
+
+            return warehouse;
+        }
+
+        /// <summary>
+        /// Lấy kho theo mã kho
+        /// </summary>
+        /// <param name="maKho">Mã kho</param>
+        /// <returns>Thông tin kho hoặc null</returns>
+        public Warehouse? GetWarehouseByCode(string maKho)
+        {
+            if (string.IsNullOrWhiteSpace(maKho))
+                return null;
+
+            Warehouse? warehouse = null;
+
+            string sql = @"
+                SELECT w.Id, w.MaKho, w.TenKho, w.LoaiKho, w.MaNV, 
+                       s.TenNV, w.DiaChi, w.GhiChu, w.IsActive
+                FROM Warehouses w
+                LEFT JOIN Staffs s ON w.MaNV = s.MaNV
+                WHERE w.MaKho = @maKho AND w.IsActive = 1";
+
+            try
+            {
+                using (var connection = DatabaseHelper.GetConnection())
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@maKho", maKho);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                warehouse = new Warehouse
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    MaKho = reader["MaKho"].ToString() ?? string.Empty,
+                                    TenKho = reader["TenKho"].ToString() ?? string.Empty,
+                                    LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
+                                    MaNV = reader["MaNV"] == DBNull.Value ? null : reader["MaNV"].ToString(),
+                                    DiaChi = reader["DiaChi"] == DBNull.Value ? null : reader["DiaChi"].ToString(),
+                                    GhiChu = reader["GhiChu"] == DBNull.Value ? null : reader["GhiChu"].ToString(),
+                                    IsActive = Convert.ToBoolean(reader["IsActive"])
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy kho {maKho}: {ex.Message}");
+            }
+
+            return warehouse;
+        }
+
         /// <summary>
         /// Lấy danh sách kho (async version)
         /// </summary>

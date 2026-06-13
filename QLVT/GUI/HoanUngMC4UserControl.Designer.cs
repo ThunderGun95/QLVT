@@ -27,6 +27,7 @@ namespace QLVT.GUI
 
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             lblTitle = new Label();
             lblConnectionStatus = new Label();
             btnTaiDuLieuERP = new Button();
@@ -46,13 +47,13 @@ namespace QLVT.GUI
             // 
             // lblTitle
             // 
-            lblTitle.BackColor = Color.Navy;
-            lblTitle.Dock = DockStyle.Top;
-            lblTitle.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Bold);
+            lblTitle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblTitle.BackColor = Color.FromArgb(52, 152, 219);
+            lblTitle.Font = new Font("Arial", 17F, FontStyle.Bold);
             lblTitle.ForeColor = Color.White;
             lblTitle.Location = new Point(0, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(1200, 40);
+            lblTitle.Size = new Size(1200, 50);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "HOÀN ỨNG MẠNG CẤP 4";
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
@@ -60,22 +61,23 @@ namespace QLVT.GUI
             // lblConnectionStatus
             // 
             lblConnectionStatus.AutoSize = true;
-            lblConnectionStatus.Font = new Font("Microsoft Sans Serif", 9F);
-            lblConnectionStatus.Location = new Point(20, 70);
+            lblConnectionStatus.Font = new Font("Arial", 10F);
+            lblConnectionStatus.ForeColor = Color.FromArgb(52, 152, 219);
+            lblConnectionStatus.Location = new Point(20, 65);
             lblConnectionStatus.Name = "lblConnectionStatus";
-            lblConnectionStatus.Size = new Size(132, 15);
+            lblConnectionStatus.Size = new Size(153, 16);
             lblConnectionStatus.TabIndex = 1;
             lblConnectionStatus.Text = "Đang kiểm tra kết nối...";
             // 
             // btnTaiDuLieuERP
             // 
-            btnTaiDuLieuERP.BackColor = Color.FromArgb(0, 123, 255);
+            btnTaiDuLieuERP.BackColor = Color.FromArgb(52, 152, 219);
             btnTaiDuLieuERP.FlatStyle = FlatStyle.Flat;
-            btnTaiDuLieuERP.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            btnTaiDuLieuERP.Font = new Font("Arial", 10.5F, FontStyle.Bold);
             btnTaiDuLieuERP.ForeColor = Color.White;
-            btnTaiDuLieuERP.Location = new Point(400, 64);
+            btnTaiDuLieuERP.Location = new Point(400, 60);
             btnTaiDuLieuERP.Name = "btnTaiDuLieuERP";
-            btnTaiDuLieuERP.Size = new Size(150, 27);
+            btnTaiDuLieuERP.Size = new Size(150, 30);
             btnTaiDuLieuERP.TabIndex = 2;
             btnTaiDuLieuERP.Text = "📥 Tải dữ liệu ERP";
             btnTaiDuLieuERP.UseVisualStyleBackColor = false;
@@ -83,13 +85,13 @@ namespace QLVT.GUI
             // 
             // btnRefresh
             // 
-            btnRefresh.BackColor = Color.FromArgb(108, 117, 125);
+            btnRefresh.BackColor = Color.FromArgb(46, 204, 113);
             btnRefresh.FlatStyle = FlatStyle.Flat;
-            btnRefresh.Font = new Font("Microsoft Sans Serif", 9F);
+            btnRefresh.Font = new Font("Arial", 10.5F, FontStyle.Bold);
             btnRefresh.ForeColor = Color.White;
-            btnRefresh.Location = new Point(560, 64);
+            btnRefresh.Location = new Point(560, 60);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(100, 27);
+            btnRefresh.Size = new Size(100, 30);
             btnRefresh.TabIndex = 3;
             btnRefresh.Text = "🔄 Làm mới";
             btnRefresh.UseVisualStyleBackColor = false;
@@ -97,46 +99,49 @@ namespace QLVT.GUI
             // 
             // grpTimKiem
             // 
+            grpTimKiem.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             grpTimKiem.Controls.Add(lblTimKiem);
             grpTimKiem.Controls.Add(txtTimKiem);
             grpTimKiem.Controls.Add(btnTimKiem);
             grpTimKiem.Controls.Add(btnXoaTimKiem);
-            grpTimKiem.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
-            grpTimKiem.Location = new Point(700, 55);
+            grpTimKiem.Font = new Font("Arial", 11F, FontStyle.Bold);
+            grpTimKiem.ForeColor = Color.FromArgb(52, 73, 94);
+            grpTimKiem.Location = new Point(700, 50);
             grpTimKiem.Name = "grpTimKiem";
-            grpTimKiem.Size = new Size(480, 45);
+            grpTimKiem.Size = new Size(480, 50);
             grpTimKiem.TabIndex = 5;
             grpTimKiem.TabStop = false;
-            grpTimKiem.Text = "Tìm kiếm";
+            grpTimKiem.Text = "🔍 Tìm kiếm";
             // 
             // lblTimKiem
             // 
             lblTimKiem.AutoSize = true;
-            lblTimKiem.Font = new Font("Microsoft Sans Serif", 8F);
-            lblTimKiem.Location = new Point(10, 20);
+            lblTimKiem.Font = new Font("Arial", 10.5F);
+            lblTimKiem.ForeColor = Color.FromArgb(52, 73, 94);
+            lblTimKiem.Location = new Point(10, 23);
             lblTimKiem.Name = "lblTimKiem";
-            lblTimKiem.Size = new Size(89, 13);
+            lblTimKiem.Size = new Size(110, 16);
             lblTimKiem.TabIndex = 0;
             lblTimKiem.Text = "Mã đơn/Tên KH:";
             // 
             // txtTimKiem
             // 
-            txtTimKiem.Font = new Font("Microsoft Sans Serif", 8F);
-            txtTimKiem.Location = new Point(105, 17);
+            txtTimKiem.Font = new Font("Arial", 10.5F);
+            txtTimKiem.Location = new Point(125, 20);
             txtTimKiem.Name = "txtTimKiem";
-            txtTimKiem.Size = new Size(250, 20);
+            txtTimKiem.Size = new Size(230, 24);
             txtTimKiem.TabIndex = 1;
             txtTimKiem.KeyPress += TxtTimKiem_KeyPress;
             // 
             // btnTimKiem
             // 
-            btnTimKiem.BackColor = Color.FromArgb(40, 167, 69);
+            btnTimKiem.BackColor = Color.FromArgb(46, 204, 113);
             btnTimKiem.FlatStyle = FlatStyle.Flat;
-            btnTimKiem.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Bold);
+            btnTimKiem.Font = new Font("Arial", 10.5F, FontStyle.Bold);
             btnTimKiem.ForeColor = Color.White;
-            btnTimKiem.Location = new Point(365, 15);
+            btnTimKiem.Location = new Point(365, 18);
             btnTimKiem.Name = "btnTimKiem";
-            btnTimKiem.Size = new Size(50, 25);
+            btnTimKiem.Size = new Size(50, 27);
             btnTimKiem.TabIndex = 2;
             btnTimKiem.Text = "🔍";
             btnTimKiem.UseVisualStyleBackColor = false;
@@ -146,11 +151,11 @@ namespace QLVT.GUI
             // 
             btnXoaTimKiem.BackColor = Color.FromArgb(220, 53, 69);
             btnXoaTimKiem.FlatStyle = FlatStyle.Flat;
-            btnXoaTimKiem.Font = new Font("Microsoft Sans Serif", 8F, FontStyle.Bold);
+            btnXoaTimKiem.Font = new Font("Arial", 10.5F, FontStyle.Bold);
             btnXoaTimKiem.ForeColor = Color.White;
-            btnXoaTimKiem.Location = new Point(425, 15);
+            btnXoaTimKiem.Location = new Point(425, 18);
             btnXoaTimKiem.Name = "btnXoaTimKiem";
-            btnXoaTimKiem.Size = new Size(50, 25);
+            btnXoaTimKiem.Size = new Size(50, 27);
             btnXoaTimKiem.TabIndex = 3;
             btnXoaTimKiem.Text = "✖";
             btnXoaTimKiem.UseVisualStyleBackColor = false;
@@ -158,31 +163,47 @@ namespace QLVT.GUI
             // 
             // grpDanhSach
             // 
+            grpDanhSach.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             grpDanhSach.Controls.Add(lblThongKe);
             grpDanhSach.Controls.Add(dgvHoSoMC4);
-            grpDanhSach.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            grpDanhSach.Font = new Font("Arial", 11F, FontStyle.Bold);
+            grpDanhSach.ForeColor = Color.FromArgb(52, 73, 94);
             grpDanhSach.Location = new Point(20, 110);
             grpDanhSach.Name = "grpDanhSach";
             grpDanhSach.Size = new Size(1160, 558);
             grpDanhSach.TabIndex = 6;
             grpDanhSach.TabStop = false;
-            grpDanhSach.Text = "Danh sách hồ sơ MC4 chờ hoàn ứng";
+            grpDanhSach.Text = "📋 Danh sách hồ sơ MC4 chờ hoàn ứng";
             // 
             // lblThongKe
             // 
             lblThongKe.AutoSize = true;
-            lblThongKe.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
+            lblThongKe.Font = new Font("Arial", 11F, FontStyle.Bold);
+            lblThongKe.ForeColor = Color.FromArgb(52, 152, 219);
             lblThongKe.Location = new Point(15, 25);
             lblThongKe.Name = "lblThongKe";
-            lblThongKe.Size = new Size(107, 15);
+            lblThongKe.Size = new Size(122, 18);
             lblThongKe.TabIndex = 1;
             lblThongKe.Text = "Chưa có dữ liệu";
             // 
             // dgvHoSoMC4
             // 
+            dgvHoSoMC4.AllowUserToAddRows = false;
+            dgvHoSoMC4.AllowUserToDeleteRows = false;
+            dgvHoSoMC4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvHoSoMC4.BackgroundColor = Color.White;
             dgvHoSoMC4.BorderStyle = BorderStyle.Fixed3D;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.FromArgb(52, 73, 94);
+            dataGridViewCellStyle1.Font = new Font("Arial", 11F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.White;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dgvHoSoMC4.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvHoSoMC4.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvHoSoMC4.EnableHeadersVisualStyles = false;
+            dgvHoSoMC4.GridColor = Color.FromArgb(189, 195, 199);
             dgvHoSoMC4.Location = new Point(15, 50);
             dgvHoSoMC4.Name = "dgvHoSoMC4";
             dgvHoSoMC4.RowHeadersWidth = 30;
@@ -194,7 +215,7 @@ namespace QLVT.GUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.White;
+            BackColor = Color.FromArgb(236, 240, 241);
             Controls.Add(lblTitle);
             Controls.Add(lblConnectionStatus);
             Controls.Add(btnTaiDuLieuERP);

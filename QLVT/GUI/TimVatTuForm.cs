@@ -30,6 +30,7 @@ namespace QLVT.GUI
             allSupplies = new List<Supply>();
             
             InitializeComponent();
+            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
             LoadInitialData();
         }
 
