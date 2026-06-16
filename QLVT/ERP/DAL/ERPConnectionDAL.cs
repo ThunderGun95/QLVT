@@ -72,10 +72,11 @@ namespace QLVT.ERP.DAL
                 INNER JOIN ld.HoanUngs hu on hu.Id = dk.MaPhieuHoanUng
                 WHERE mc4.TTDK = 'DK_A' and mc4.TTCT = 'CT_A' and mc4.TTTC = 'TC_A'
                   AND CONVERT(DATE, hu.ThoiGianHoanUng) > @FilterDate
-                  AND YEAR(mc4.NgayTC) > 2024
-                  AND hu.ThoiGianHoanUng < '2025/12/01'  
+                --  AND YEAR(mc4.NgayTC) > 2024
+AND hu.ThoiGianHoanUng > '2025/01/01'  
+                  AND hu.ThoiGianHoanUng < '2025/02/01'  
                   -- AND mc4.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
-                  AND mc4.MaNhanVienXayLap in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh') 
+                  -- AND mc4.MaNhanVienXayLap in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh') 
                   -- Thêm cái này để hoàn tổ mc4 trước
                     AND mc4.IsHuy = 0
                 ORDER BY ThoiGianHoanUng";
@@ -116,7 +117,7 @@ namespace QLVT.ERP.DAL
                 INNER JOIN vt.ViewVatTuHangHoas VT on vt.MaVatTuHangHoa = vthu.MaVatTuHangHoa
                 WHERE mc4.TTDK = 'DK_A' and mc4.TTCT = 'CT_A' and mc4.TTTC = 'TC_A'
                   AND CONVERT(DATE, h.ThoiGianHoanUng) > '2025/01/01'
-                  AND YEAR(mc4.NgayTC) > 2024
+                  -- AND YEAR(mc4.NgayTC) > 2024
                   AND mc4.IsHuy = 0
                   AND mc4.MADDK = @MADDK
                 GROUP BY mc4.MADDK, VT.Id, VT.Code, Vt.TenVatTu, VT.DonViTinh";
@@ -153,7 +154,7 @@ namespace QLVT.ERP.DAL
                   AND year(sc.ThoiGianHoanUng) = 2025
                   -- AND CONVERT(DATE, sc.ThoiGianHoanUng) > @FilterDate
                   AND sc.ThoiGianHoanUng > '2025/01/02'
-                    AND sc.ThoiGianHoanUng < '2025/04/01'  
+                    AND sc.ThoiGianHoanUng < '2025/02/01'  
                   -- AND sc.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
                 ORDER BY sc.ThoiGianHoanUng";
 
@@ -184,14 +185,15 @@ namespace QLVT.ERP.DAL
         {
             var sql = @"
                 SELECT sc.MADON, VT.Id as VatTuId, VT.Code as VatTuHangHoa, 
-                       VT.TenVatTu, VT.DonViTinh, ROUND(hu.SoLuong, 2) as SoLuongHoanUng
+                       VT.TenVatTu, VT.DonViTinh, ROUND(SUM(hu.SoLuong), 2) as SoLuongHoanUng
                 FROM ct.SuaChuaSuCoNghiemThuCTs AS s 
                 INNER JOIN ld.SuaChuaSuCos AS sc ON sc.MADON = s.MADON 
                 INNER JOIN ViewNhanViens AS nvtc ON nvtc.MaNhanVien = sc.MaNhanVienThiCong 
                 INNER JOIN vt.ViewVatTuHangHoas AS vt ON vt.MaVatTuHangHoa = s.MaVatTuHangHoa 
                 INNER JOIN vt.HoanUngVatTus hu on hu.MaSuaChuaSuCoNghiemThuCT = s.Id and hu.MaPhieuXuatKhoVatTuCT is not null 
                 WHERE (sc.TTHU = 'TT_A') and s.SoLuongNghiemThu > 0 and s.IsDeleted = 0 
-                  AND sc.MADON = @MADON";
+                  AND sc.MADON = @MADON
+                GROUP BY sc.MADON, VT.Id, VT.Code, VT.TenVatTu, VT.DonViTinh";
 
             var parameters = new[] { new SqlParameter("@MADON", madon) };
             var dataTable = await ExecuteQueryAsync(sql, parameters);

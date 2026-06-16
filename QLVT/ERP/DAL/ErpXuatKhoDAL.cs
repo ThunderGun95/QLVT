@@ -22,13 +22,13 @@ namespace QLVT.ERP.DAL
                     
                     // Query để lấy thông tin header phiếu xuất
                     string sql = @"
-                        SELECT MaPhieuXuatKhoVatTu, SoPhieuXuatKho, NAM,  nv.MaNhanVien, nv.HoVaTen as TenNguoiNhan, ThoiGianXK
+                        SELECT MaPhieuXuatKhoVatTu, SoPhieuXuatKho, NAM,  nv.MaNhanVien, nv.HoVaTen as TenNguoiNhan, ThoiGianKT
                         FROM vt.PhieuXuatKhoVatTus px
                             LEFT JOIN ViewNhanViens nv on nv.UserID = px.MaNguoiNhan
                          WHERE TTXK = 'TT_A'
-                            AND ThoiGianXK > '2025/01/01'
+                            AND ThoiGianKT > '2025/01/01'
+AND ThoiGianKT < '2025/02/01' 
                             AND SoPhieuXuatKho = @soPhieu AND NAM = @nam
-                            AND nv.MaNhanVien in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh')
                             ";
 
 
@@ -50,8 +50,8 @@ namespace QLVT.ERP.DAL
                                     NAM = Convert.ToInt32(reader["NAM"]),
                                     TenNhanVien = reader["TenNguoiNhan"]?.ToString() ?? string.Empty,
                                     MaNhanVien = reader["MaNhanVien"]?.ToString() ?? string.Empty,
-                                    ThoiGianHoanThanhXuatKho = reader["ThoiGianXK"] != DBNull.Value ? 
-                                             Convert.ToDateTime(reader["ThoiGianXK"]) : DateTime.MinValue
+                                    ThoiGianHoanThanhXuatKho = reader["ThoiGianKT"] != DBNull.Value ? 
+                                             Convert.ToDateTime(reader["ThoiGianKT"]) : DateTime.MinValue
                                 };
                             }
                         }

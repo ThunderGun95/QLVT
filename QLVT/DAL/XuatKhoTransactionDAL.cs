@@ -137,6 +137,8 @@ namespace QLVT.DAL
         /// <param name="quantity">Số lượng chuyển</param>
         private void TransferInventory(SqlConnection connection, SqlTransaction transaction, int sourceWarehouseId, int? targetWarehouseId, int erpId, decimal quantity)
         {
+            decimal roundedQuantity = Math.Round(quantity, 2);
+
             // Kiểm tra tồn kho đủ không
             string checkStockSql = @"
                 SELECT ISNULL(SoLuongTon, 0) FROM Inventory 
@@ -148,27 +150,28 @@ namespace QLVT.DAL
                 command.Parameters.AddWithValue("@erpId", erpId);
                 
                 var result = command.ExecuteScalar();
-                int currentStock = result != null ? Convert.ToInt32(result) : 0;
+                decimal currentStock = result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
                 
-                if (currentStock < quantity)
-                    throw new Exception($"Kho nguồn (ID={sourceWarehouseId}) không đủ tồn kho cho vật tư ErpId={erpId}. Yêu cầu: {quantity}, Tồn kho: {currentStock}");
+                if (currentStock < roundedQuantity)
+                    throw new Exception($"Kho nguon (ID={sourceWarehouseId}) khong du ton kho cho vat tu ErpId={erpId}. Yeu cau: {roundedQuantity:N2}, Ton kho: {currentStock:N2}");
             }
 
             // 1. Trừ khỏi kho nguồn
             string updateSourceSql = @"
                 UPDATE Inventory 
                 SET SoLuongTon = SoLuongTon - @quantity, LastUpdated = GETDATE()
-                WHERE WarehouseId = @sourceWarehouseId AND SupplyErpId = @erpId";
+                WHERE WarehouseId = @sourceWarehouseId AND SupplyErpId = @erpId
+                  AND SoLuongTon >= @quantity";
 
             using (var command = new SqlCommand(updateSourceSql, connection, transaction))
             {
                 command.Parameters.AddWithValue("@sourceWarehouseId", sourceWarehouseId);
                 command.Parameters.AddWithValue("@erpId", erpId);
-                command.Parameters.AddWithValue("@quantity", Math.Round(quantity,2));
+                command.Parameters.AddWithValue("@quantity", roundedQuantity);
                 
                 int rowsAffected = command.ExecuteNonQuery();
                 if (rowsAffected == 0)
-                    throw new Exception($"Không tìm thấy record tồn kho trong kho nguồn (ID={sourceWarehouseId}) cho SupplyErpId={erpId}");
+                    throw new Exception($"Khong the tru ton kho nguon (ID={sourceWarehouseId}) cho SupplyErpId={erpId}. Ton kho co the khong du hoac da bi thay doi.");
             }
 
             if (targetWarehouseId != null)
@@ -191,7 +194,7 @@ namespace QLVT.DAL
                 {
                     command.Parameters.AddWithValue("@targetWarehouseId", targetWarehouseId);
                     command.Parameters.AddWithValue("@erpId", erpId);
-                    command.Parameters.AddWithValue("@quantity", Math.Round(quantity, 2));
+                    command.Parameters.AddWithValue("@quantity", roundedQuantity);
 
                     command.ExecuteNonQuery();
                 }

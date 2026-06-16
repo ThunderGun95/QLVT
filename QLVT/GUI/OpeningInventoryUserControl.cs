@@ -505,7 +505,7 @@ namespace QLVT.GUI
                                     using (var command = new SqlCommand(insertTransactionSql, connection, dbTransaction))
                                     {
                                         command.Parameters.AddWithValue("@soPhieu", soPhieu);
-                                        command.Parameters.AddWithValue("@ngayGiaoDich", DateTime.Today);
+                                        command.Parameters.AddWithValue("@ngayGiaoDich", "2024/12/31");
                                         command.Parameters.AddWithValue("@maKhoNhan", warehouseId.Value);
                                         command.Parameters.AddWithValue("@ghiChu", $"Tồn đầu kỳ 31/12/2024");
                                         command.Parameters.AddWithValue("@createdBy", "SYSTEM");

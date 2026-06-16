@@ -52,7 +52,6 @@ namespace QLVT.GUI
             lblSoLoaiVT = new Label();
             btnDong = new Button();
             btnHoanUng = new Button();
-            btnHoanUngAm = new Button();
             grpHoSoInfo.SuspendLayout();
             grpChiTiet.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvChiTiet).BeginInit();
@@ -262,27 +261,12 @@ namespace QLVT.GUI
             btnHoanUng.UseVisualStyleBackColor = false;
             btnHoanUng.Click += BtnHoanUng_Click;
             // 
-            // btnHoanUngAm
-            // 
-            btnHoanUngAm.BackColor = Color.FromArgb(220, 53, 69);
-            btnHoanUngAm.FlatStyle = FlatStyle.Flat;
-            btnHoanUngAm.Font = new Font("Arial", 11F, FontStyle.Bold);
-            btnHoanUngAm.ForeColor = Color.White;
-            btnHoanUngAm.Location = new Point(35, 550);
-            btnHoanUngAm.Name = "btnHoanUngAm";
-            btnHoanUngAm.Size = new Size(149, 35);
-            btnHoanUngAm.TabIndex = 7;
-            btnHoanUngAm.Text = "Hoàn ứng âm";
-            btnHoanUngAm.UseVisualStyleBackColor = false;
-            btnHoanUngAm.Click += btnHoanUngAm_Click;
-            // 
             // ChiTietVatTuMC4Form
             // 
             AutoScaleDimensions = new SizeF(8F, 16F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
             ClientSize = new Size(870, 600);
-            Controls.Add(btnHoanUngAm);
             Controls.Add(lblTitle);
             Controls.Add(grpHoSoInfo);
             Controls.Add(grpChiTiet);
@@ -305,7 +289,6 @@ namespace QLVT.GUI
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-        private Button btnHoanUngAm;
     }
 }
 

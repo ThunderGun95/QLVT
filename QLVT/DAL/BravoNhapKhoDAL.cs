@@ -72,9 +72,9 @@ namespace QLVT.DAL
                             command.Parameters.AddWithValue("@soPhieu", soPhieu);
                             command.Parameters.AddWithValue("@ngayGiaoDich", ngayGiaoDich);
                             command.Parameters.AddWithValue("@maKhoNhan", khoNhanId);
-                            command.Parameters.AddWithValue("@ghiChu", $"[Bravo NK] {noiDung}");
+                            command.Parameters.AddWithValue("@ghiChu", $"{noiDung}");
                             command.Parameters.AddWithValue("@createdBy", createdBy);
-                            command.Parameters.AddWithValue("@entityNhapKho", $"BRAVO-NK:{soPhieu}");
+                            command.Parameters.AddWithValue("@entityNhapKho", $"NK:{soPhieu}");
 
                             transactionId = Convert.ToInt32(command.ExecuteScalar());
                         }

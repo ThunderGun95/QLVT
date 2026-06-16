@@ -23,6 +23,7 @@ namespace QLVT.ERP.DAL
                 LEFT JOIN ViewNhanViens nv on nv.UserID = nk.MaNhanVienMua
                 LEFT JOIN PHONGBAN pb on pb.MAPB = nv.MAPB
                 WHERE LOAIPHIEU = 'BIEU01' AND TrangThai = 'HoanThanh'
+                and ThoiGianHoanThanhNhapKho > '2025/01/01'
                 AND SoPhieuNhapKho = @soPhieu AND NAM = @nam";
 
             try

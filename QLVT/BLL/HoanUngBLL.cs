@@ -42,7 +42,7 @@ namespace QLVT.BLL
                 throw new Exception($"Lỗi lấy chi tiết vật tư với tồn kho: {ex.Message}", ex);
             }
         }
-        public async Task<bool> MC4_XacNhanHoanUng(string maddk, List<DonDangKyCTModel>? chiTietList, bool hoanAm)
+        public async Task<bool> MC4_XacNhanHoanUng(string maddk, List<DonDangKyCTModel>? chiTietList)
         {
             var currentUser = AuthenticationBLL.GetCurrentUser();
 
@@ -54,10 +54,7 @@ namespace QLVT.BLL
 
             // Thực hiện hoàn ứng với số lượng đã chỉnh sửa
             // DAL sẽ cập nhật SoLuongHoanUngThucTe, tạo transaction detail và cập nhật inventory
-            if (!hoanAm)
-                return await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4(maddk, currentUser!.Username, chiTietList);
-            else
-                return await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4_AmVatTu(maddk, currentUser!.Username, chiTietList);
+            return await hoanUngTransactionDAL.MC4_UpdateHoanUngMC4(maddk, currentUser!.Username, chiTietList);
         }
         public async Task<(int thanhCong, int thatBai, List<string> loi)> MC4_HoanUngHangLoat(List<string> danhSachMaDDK, IProgress<(int current, int total, string maddk)>? progress = null)
         {

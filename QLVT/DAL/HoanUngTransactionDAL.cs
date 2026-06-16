@@ -200,144 +200,6 @@ namespace QLVT.DAL
                 }
             }
         }
-        public async Task<bool> MC4_UpdateHoanUngMC4_AmVatTu(string maddk, string nguoiXacNhan, List<DonDangKyCTModel>? chiTietList)
-        {
-            using (var connection = DatabaseHelper.GetConnection())
-            {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        // Bước 1: Lấy thông tin đơn đăng ký và kiểm tra tình trạng hoàn ứng
-                        var donDangKy = MC4_GetDonDangKyByMa(maddk, connection, transaction);
-                        if (donDangKy == null)
-                        {
-                            throw new Exception("Không tìm thấy hồ sơ");
-                        }
-
-                        if (donDangKy.DaHoanUng == true)
-                        {
-                            throw new Exception("Hồ sơ đã được hoàn ứng trước đó");
-                        }
-
-                        // Bước 2: Tìm kho dựa trên mã nhân viên xây lắp
-                        if (chiTietList == null)
-                        {
-                            chiTietList = MC4_GetChiTietVatTuByMaDDK(maddk, connection, transaction);
-                        }
-                        var listVatTu = new List<MapKhoHoanUng>();
-                        foreach (var chiTiet in chiTietList)
-                        {
-                            listVatTu.Add(new MapKhoHoanUng(chiTiet.MaVTErp, chiTiet.SoLuongHoanUngThucTe));
-                        }
-                        var listHoanUng = await MapKhoHoanUng_AmVatTu(listVatTu, donDangKy.MaNhanVienXayLap);
-
-                        // Bước 3: Cập nhật SoLuongHoanUngThucTe trong DonDangKyCT
-                        foreach (var chiTiet in chiTietList)
-                        {
-                            if (chiTiet.SoLuongHoanUngThucTe != chiTiet.SoLuongHoanUng)
-                            {
-                                string updateChiTietSql = @"
-                                    UPDATE ct.DonDangKyCT 
-                                    SET SoLuongHoanUngThucTe = @soLuongThucTe
-                                    WHERE MADDK = @maDDK AND MaVTErp = @maVT";
-
-                                using (var command = new SqlCommand(updateChiTietSql, connection, transaction))
-                                {
-                                    command.Parameters.AddWithValue("@maDDK", maddk);
-                                    command.Parameters.AddWithValue("@maVT", chiTiet.MaVTErp);
-                                    command.Parameters.AddWithValue("@soLuongThucTe", chiTiet.SoLuongHoanUngThucTe);
-                                    command.ExecuteNonQuery();
-                                }
-                            }
-                        }
-
-                        // Bước 4: Cập nhật trạng thái hoàn ứng trong DonDangKy
-                        string updateDonSql = @"
-                            UPDATE ct.DonDangKy 
-                            SET DaHoanUng = 1,
-                                ThoiGianXacNhanHoanUng = @thoiGianXacNhan,
-                                MaNVXacNhan = @nguoiXacNhan,
-                                UpdatedDate = @updateDate
-                            WHERE MADDK = @maDDK AND (DaHoanUng IS NULL OR DaHoanUng = 0)";
-
-                        using (var command = new SqlCommand(updateDonSql, connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@maDDK", maddk);
-                            command.Parameters.AddWithValue("@nguoiXacNhan", nguoiXacNhan);
-                            command.Parameters.AddWithValue("@thoiGianXacNhan", DateTime.Now);
-                            command.Parameters.AddWithValue("@updateDate", DateTime.Now);
-
-                            int rowsAffected = command.ExecuteNonQuery();
-                            if (rowsAffected == 0)
-                            {
-                                transaction.Rollback();
-                                return false;
-                            }
-                        }
-
-                        // Bước 3: Tạo transaction hoàn ứng
-                        string soPhieu = GenerateHoanUngTransactionNumber();
-                        string insertTransactionSql = @"
-                            INSERT INTO Transactions 
-                            (SoPhieu, NgayGiaoDich, LoaiGiaoDich, MaNV, GhiChu, CreatedBy, EntityHoanUng)
-                            VALUES 
-                            (@soPhieu, @ngayGiaoDich, 'HoanUng', @maNV, @ghiChu, @createdBy, @entityHoanUng);
-                            SELECT SCOPE_IDENTITY();";
-
-                        int transactionId;
-                        using (var command = new SqlCommand(insertTransactionSql, connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@soPhieu", soPhieu);
-                            command.Parameters.AddWithValue("@ngayGiaoDich", donDangKy.NgayHoanUng);
-                            command.Parameters.AddWithValue("@maNV", donDangKy.MaNhanVienXayLap);
-                            command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư cho đơn đăng ký: {maddk}");
-                            command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
-                            command.Parameters.AddWithValue("@entityHoanUng", maddk);
-
-                            transactionId = Convert.ToInt32(command.ExecuteScalar());
-                        }
-
-                        // Bước 4: Tạo transaction chi tiết và cập nhật tồn kho với số lượng thực tế
-                        foreach (var chiTiet in listHoanUng)
-                        {
-                            if (chiTiet.SoLuongHoanUng > 0)
-                            {
-                                // Insert transaction detail
-                                string insertDetailSql = @"
-                                    INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, CreatedBy)
-                                    VALUES (@transactionId, @erpId, @soLuong, @ghiChu, @maKhoXuat, @createdBy)";
-
-                                using (var command = new SqlCommand(insertDetailSql, connection, transaction))
-                                {
-                                    command.Parameters.AddWithValue("@transactionId", transactionId);
-                                    command.Parameters.AddWithValue("@erpId", chiTiet.MaVatTu);
-                                    command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
-                                    command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư MC4: {maddk}");
-                                    command.Parameters.AddWithValue("@maKhoXuat", chiTiet.MaKhoHoanUng);
-                                    command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
-
-                                    command.ExecuteNonQuery();
-                                }
-
-                                // Cập nhật tồn kho từ kho của nhân viên xây lắp
-                                CapNhatTonKhoHoanUng(connection, transaction, chiTiet.MaKhoHoanUng, chiTiet.MaVatTu, chiTiet.SoLuongHoanUng);
-                            }
-                        }
-
-                        transaction.Commit();
-                        return true;
-                    }
-                    catch (Exception)
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-            }
-        }
-
         #endregion
 
 
@@ -669,9 +531,16 @@ namespace QLVT.DAL
                             }
 
                             // Bước 3: Tạo transaction hoàn ứng
+                            var listVatTu = new List<MapKhoHoanUng>();
+                            foreach (var chiTiet in chiTietList)
+                            {
+                                listVatTu.Add(new MapKhoHoanUng(chiTiet.MaVTErp, chiTiet.SoLuongHoanUng));
+                            }
+                            var listHoanUng = MapKhoHoanUng(listVatTu, suaChua.MaNhanVienXayLap).GetAwaiter().GetResult();
+
                             int transactionId = CreateHoanUngTransaction(maDon, "SuaChua", nguoiXacNhan, suaChua.NgayHoanUng.GetValueOrDefault(), suaChua.MaNhanVienXayLap, wh.Id, connection, transaction);
                             // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho
-                            foreach (var chiTiet in chiTietList)
+                            foreach (var chiTiet in listHoanUng)
                             {
                                 string insertDetailSql = @"
                                     INSERT INTO TransactionDetails (TransactionId, ErpId, SoLuong, GhiChu, MaKhoXuat, CreatedBy)
@@ -680,17 +549,17 @@ namespace QLVT.DAL
                                 using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                                 {
                                     command.Parameters.AddWithValue("@transactionId", transactionId);
-                                    command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
+                                    command.Parameters.AddWithValue("@erpId", chiTiet.MaVatTu);
                                     command.Parameters.AddWithValue("@soLuong", chiTiet.SoLuongHoanUng);
                                     command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư ĐC: {maDon}");
-                                    command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
+                                    command.Parameters.AddWithValue("@maKhoXuat", chiTiet.MaKhoHoanUng);
                                     command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                     command.ExecuteNonQuery();
                                 }
 
                                 // Cập nhật tồn kho
-                                CapNhatTonKhoHoanUng(connection, transaction, wh.Id, chiTiet.MaVTErp, chiTiet.SoLuongHoanUng);
+                                CapNhatTonKhoHoanUng(connection, transaction, chiTiet.MaKhoHoanUng, chiTiet.MaVatTu, chiTiet.SoLuongHoanUng);
                             }
 
                             transaction.Commit();
@@ -786,11 +655,19 @@ namespace QLVT.DAL
 
                             // Bước 3: Tạo transaction hoàn ứng
                             int transactionId = CreateHoanUngTransaction(maDon, "SuaChua", nguoiXacNhan, suaChua.NgayHoanUng.GetValueOrDefault(), suaChua.MaNhanVienXayLap, wh.Id, connection, transaction);
-                            
-                            // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho với số lượng thực tế
+
+                            var listVatTu = new List<MapKhoHoanUng>();
                             foreach (var chiTiet in chiTietList)
                             {
                                 decimal soLuongThucTe = chiTiet.SoLuongHoanUngThucTe ?? chiTiet.SoLuongHoanUng;
+                                listVatTu.Add(new MapKhoHoanUng(chiTiet.MaVTErp, soLuongThucTe));
+                            }
+                            var listHoanUng = MapKhoHoanUng(listVatTu, suaChua.MaNhanVienXayLap).GetAwaiter().GetResult();
+                            
+                            // Bước 4: Tạo chi tiết transaction và cập nhật tồn kho với số lượng thực tế
+                            foreach (var chiTiet in listHoanUng)
+                            {
+                                decimal soLuongThucTe = chiTiet.SoLuongHoanUng;
                                 
                                 if (soLuongThucTe > 0)
                                 {
@@ -801,17 +678,17 @@ namespace QLVT.DAL
                                     using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                                     {
                                         command.Parameters.AddWithValue("@transactionId", transactionId);
-                                        command.Parameters.AddWithValue("@erpId", chiTiet.MaVTErp);
+                                        command.Parameters.AddWithValue("@erpId", chiTiet.MaVatTu);
                                         command.Parameters.AddWithValue("@soLuong", soLuongThucTe);
-                                        command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng vật tư ĐC: {maDon} - {chiTiet.TenVT}");
-                                        command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
+                                        command.Parameters.AddWithValue("@ghiChu", $"Hoan ung vat tu DC: {maDon}");
+                                        command.Parameters.AddWithValue("@maKhoXuat", chiTiet.MaKhoHoanUng);
                                         command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
 
                                         command.ExecuteNonQuery();
                                     }
 
                                     // Cập nhật tồn kho với số lượng thực tế
-                                    CapNhatTonKhoHoanUng(connection, transaction, wh.Id, chiTiet.MaVTErp, soLuongThucTe);
+                                    CapNhatTonKhoHoanUng(connection, transaction, chiTiet.MaKhoHoanUng, chiTiet.MaVatTu, soLuongThucTe);
                                 }
                             }
 
@@ -1154,14 +1031,22 @@ namespace QLVT.DAL
                                 transactionId = (int)command.ExecuteScalar();
                             }
 
-                            // Bước 5: Tạo chi tiết giao dịch trong TransactionDetails và cập nhật Inventory
+                            var listVatTu = new List<MapKhoHoanUng>();
                             foreach (var vatTu in vatTuList)
                             {
-                                // Số lượng thực tế để hoàn ứng (ưu tiên SoLuongHoanUngThucTe)
                                 decimal soLuongThucTe = vatTu.SoLuongHoanUngThucTe ?? vatTu.SoLuongHoanUng;
+                                listVatTu.Add(new MapKhoHoanUng(vatTu.MaVTErp, soLuongThucTe));
+                            }
+                            var listHoanUng = MapKhoHoanUng(listVatTu, bgkModel.MaNhanVienXayLap ?? bgkModel.NhanVienXayLap ?? "").GetAwaiter().GetResult();
+
+                            // Bước 5: Tạo chi tiết giao dịch trong TransactionDetails và cập nhật Inventory
+                            foreach (var vatTu in listHoanUng)
+                            {
+                                // Số lượng thực tế để hoàn ứng (ưu tiên SoLuongHoanUngThucTe)
+                                decimal soLuongThucTe = vatTu.SoLuongHoanUng;
 
                                 if (soLuongThucTe == 0)
-                                    break;
+                                    continue;
                                 
                                 // Insert vào TransactionDetails
                                 string insertDetailSql = @"
@@ -1173,8 +1058,8 @@ namespace QLVT.DAL
                                 using (var command = new SqlCommand(insertDetailSql, connection, transaction))
                                 {
                                     command.Parameters.AddWithValue("@transactionId", transactionId);
-                                    command.Parameters.AddWithValue("@erpId", vatTu.MaVTErp);
-                                    command.Parameters.AddWithValue("@maKhoXuat", wh.Id);
+                                    command.Parameters.AddWithValue("@erpId", vatTu.MaVatTu);
+                                    command.Parameters.AddWithValue("@maKhoXuat", vatTu.MaKhoHoanUng);
                                     command.Parameters.AddWithValue("@soLuong", soLuongThucTe);
                                     command.Parameters.AddWithValue("@ghiChu", $"Hoàn ứng BGK: {bgkModel.SoBGK}");
                                     command.Parameters.AddWithValue("@createdBy", nguoiXacNhan);
@@ -1183,7 +1068,7 @@ namespace QLVT.DAL
                                 }
 
                                 // Cập nhật Inventory (trừ tồn kho vì hoàn ứng = xuất kho)
-                                CapNhatTonKhoHoanUng(connection, transaction, wh.Id, vatTu.MaVTErp, soLuongThucTe);
+                                CapNhatTonKhoHoanUng(connection, transaction, vatTu.MaKhoHoanUng, vatTu.MaVatTu, soLuongThucTe);
                             }
 
                             transaction.Commit();
@@ -1295,6 +1180,13 @@ namespace QLVT.DAL
         }
         private void CapNhatTonKhoHoanUng(SqlConnection connection, SqlTransaction transaction, long warehouseId, int erpId, decimal quantity)
         {
+            if (quantity <= 0)
+            {
+                return;
+            }
+
+            decimal roundedQuantity = Math.Round(quantity, 2);
+
             // Kiểm tra tồn kho hiện tại tại kho này
             string checkSql = @"
                 SELECT SoLuongTon 
@@ -1307,19 +1199,29 @@ namespace QLVT.DAL
                 command.Parameters.AddWithValue("@erpId", erpId);
 
                 var result = command.ExecuteScalar();
-                decimal currentStock = result != null ? Convert.ToDecimal(result) : 0;
+                if (result == null || result == DBNull.Value)
+                {
+                    throw new Exception($"Khong tim thay ton kho cho kho {warehouseId} - VT {erpId}");
+                }
+
+                decimal currentStock = Convert.ToDecimal(result);
+                if (currentStock < roundedQuantity)
+                {
+                    throw new Exception($"Khong du ton kho cho kho {warehouseId} - VT {erpId}. Ton: {currentStock}, can hoan: {roundedQuantity}");
+                }
 
                 // Trừ tồn kho
                 string updateSql = @"
                     UPDATE Inventory 
                     SET SoLuongTon = SoLuongTon - @quantity, LastUpdated = GETDATE()
-                    WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
+                    WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId
+                        AND SoLuongTon >= @quantity";
 
                 using (var updateCommand = new SqlCommand(updateSql, connection, transaction))
                 {
                     updateCommand.Parameters.AddWithValue("@warehouseId", warehouseId);
                     updateCommand.Parameters.AddWithValue("@erpId", erpId);
-                    updateCommand.Parameters.AddWithValue("@quantity", Math.Round(quantity, 2));
+                    updateCommand.Parameters.AddWithValue("@quantity", roundedQuantity);
 
                     int rowsAffected = updateCommand.ExecuteNonQuery();
                     if (rowsAffected == 0)
@@ -1360,50 +1262,7 @@ namespace QLVT.DAL
             }
             return result;
         }
-        private async Task<List<MapKhoHoanUng>> MapKhoHoanUng_AmVatTu(List<MapKhoHoanUng> listVatTu, string maNhanVien)
-        {
-            List<MapKhoHoanUng> result = new List<MapKhoHoanUng>();
-            foreach (var chiTiet in listVatTu)
-            {
-                var tonKho = _inventoryDAL.GetTonKhoByErpId(chiTiet.MaVatTu, maNhanVien);
-                var tonKhoChiTiet = await _inventoryDAL.GetListTonKhoChiTietByErpId(chiTiet.MaVatTu, maNhanVien);
 
-                var soKho = tonKhoChiTiet.Count();
-
-                if (tonKhoChiTiet.Sum(t => t.SoLuongTon) >= chiTiet.SoLuongHoanUng)
-                {
-                    var index = 0;
-                    while (chiTiet.SoLuongHoanUng > 0)
-                    {
-                        if (tonKhoChiTiet[index].SoLuongTon < chiTiet.SoLuongHoanUng)
-                        {
-                            result.Add(new MapKhoHoanUng(chiTiet.MaVatTu, tonKhoChiTiet[index].SoLuongTon, tonKhoChiTiet[index].WarehouseId));
-                            chiTiet.SoLuongHoanUng = chiTiet.SoLuongHoanUng - tonKhoChiTiet[index].SoLuongTon;
-                            index++;
-                        }
-                        else
-                        {
-                            result.Add(new MapKhoHoanUng(chiTiet.MaVatTu, chiTiet.SoLuongHoanUng, tonKhoChiTiet[index].WarehouseId));
-                            chiTiet.SoLuongHoanUng = 0;
-                        }
-                    }
-                }
-                else
-                {
-                    var soLuongAm = chiTiet.SoLuongHoanUng - tonKhoChiTiet.Sum(t => t.SoLuongTon);
-                    chiTiet.SoLuongHoanUng = chiTiet.SoLuongHoanUng - soLuongAm;
-
-                    for (var index = soKho - 1; index >= 0; index--)
-                    {
-                        if (index == 0)
-                            result.Add(new MapKhoHoanUng(chiTiet.MaVatTu, tonKhoChiTiet[index].SoLuongTon + soLuongAm, tonKhoChiTiet[index].WarehouseId));
-                        else
-                            result.Add(new MapKhoHoanUng(chiTiet.MaVatTu, tonKhoChiTiet[index].SoLuongTon, tonKhoChiTiet[index].WarehouseId));
-                    }
-                }
-            }
-            return result;
-        }
         #endregion
     }
 }

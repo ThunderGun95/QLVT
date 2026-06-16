@@ -262,7 +262,7 @@ namespace QLVT.GUI
             {
                 try
                 {
-                    await hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK, null, false);
+                    await hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK, null);
 
                     MessageBox.Show("Hoàn ứng thành công.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadDanhSachHoSo();

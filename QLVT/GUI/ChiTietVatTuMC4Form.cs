@@ -309,7 +309,7 @@ namespace QLVT.GUI
                 try
                 {
                     // Gọi BLL để xác nhận hoàn ứng với số lượng đã chỉnh sửa
-                    await hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK, chiTietList, false);
+                    await hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK, chiTietList);
 
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.DialogResult = DialogResult.OK;
@@ -328,44 +328,5 @@ namespace QLVT.GUI
             this.Close();
         }
 
-        private async void btnHoanUngAm_Click(object sender, EventArgs e)
-        {
-            if (hoSo.DaHoanUng == true)
-            {
-                MessageBox.Show("Hồ sơ này đã được hoàn ứng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            // Tính tổng số lượng hoàn ứng thực tế
-            decimal tongSoLuongThucTe = chiTietList.Sum(ct => ct.SoLuongHoanUngThucTe);
-
-            var result = MessageBox.Show(
-                $"Xác nhận hoàn ứng âm vật tư cho hồ sơ:\n\n" +
-                $"Mã đơn: {hoSo.MADDK}\n" +
-                $"Khách hàng: {hoSo.TENKH}\n" +
-                $"NV Thi công: {hoSo.NhanVienXayLap}\n" +
-                $"Tổng số lượng: {tongSoLuongThucTe:N2}\n\n" +
-                $"Bạn có chắc chắn muốn thực hiện hoàn ứng?",
-                "Xác nhận hoàn ứng ÂM vật tư",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
-            {
-                try
-                {
-                    // Gọi BLL để xác nhận hoàn ứng với số lượng đã chỉnh sửa
-                    await hoanUngBLL.MC4_XacNhanHoanUng(hoSo.MADDK, chiTietList, true);
-
-                    MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Hoàn ứng không thành công!\n\nChi tiết lỗi: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
     }
 }

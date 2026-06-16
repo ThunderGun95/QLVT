@@ -290,36 +290,26 @@ namespace QLVT.DAL
             long supplyErpId,
             decimal quantity)
         {
+            decimal roundedQuantity = Math.Round(quantity, 2);
+
             // 1. Trừ tồn kho từ kho nguồn
             string updateSourceSql = @"
                 UPDATE Inventory 
                 SET SoLuongTon = SoLuongTon - @soLuong,
                     LastUpdated = GETDATE()
-                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
+                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId
+                  AND SoLuongTon >= @soLuong";
 
             using (var command = new SqlCommand(updateSourceSql, connection, transaction))
             {
                 command.Parameters.AddWithValue("@warehouseId", sourceWarehouseId);
                 command.Parameters.AddWithValue("@erpId", supplyErpId);
-                command.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
+                command.Parameters.AddWithValue("@soLuong", roundedQuantity);
 
                 int rowsAffected = command.ExecuteNonQuery();
-                
-                // Nếu không có bản ghi nào được update, có nghĩa là chưa có inventory record
-                // Tạo mới với số âm (cho phép xuất âm kho)
                 if (rowsAffected == 0)
                 {
-                    string insertNegativeSql = @"
-                        INSERT INTO Inventory (WarehouseId, SupplyErpId, SoLuongTon, LastUpdated)
-                        VALUES (@warehouseId, @erpId, -@soLuong, GETDATE())";
-
-                    using (var insertCommand = new SqlCommand(insertNegativeSql, connection, transaction))
-                    {
-                        insertCommand.Parameters.AddWithValue("@warehouseId", sourceWarehouseId);
-                        insertCommand.Parameters.AddWithValue("@erpId", supplyErpId);
-                        insertCommand.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
-                        insertCommand.ExecuteNonQuery();
-                    }
+                    throw new Exception($"Ton kho khong du de xuat kho Bravo. Kho nguon ID={sourceWarehouseId}, VT={supplyErpId}, so luong can xuat={roundedQuantity:N2}");
                 }
             }
 
@@ -334,7 +324,7 @@ namespace QLVT.DAL
             {
                 command.Parameters.AddWithValue("@warehouseId", targetWarehouseId);
                 command.Parameters.AddWithValue("@erpId", supplyErpId);
-                command.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
+                command.Parameters.AddWithValue("@soLuong", roundedQuantity);
 
                 int rowsAffected = command.ExecuteNonQuery();
 
@@ -349,7 +339,7 @@ namespace QLVT.DAL
                     {
                         insertCommand.Parameters.AddWithValue("@warehouseId", targetWarehouseId);
                         insertCommand.Parameters.AddWithValue("@erpId", supplyErpId);
-                        insertCommand.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
+                        insertCommand.Parameters.AddWithValue("@soLuong", roundedQuantity);
                         insertCommand.ExecuteNonQuery();
                     }
                 }
@@ -366,35 +356,26 @@ namespace QLVT.DAL
             int supplyErpId,
             decimal quantity)
         {
+            decimal roundedQuantity = Math.Round(quantity, 2);
+
             // Trừ tồn kho từ kho
             string updateSql = @"
                 UPDATE Inventory 
                 SET SoLuongTon = SoLuongTon - @soLuong,
                     LastUpdated = GETDATE()
-                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId";
+                WHERE WarehouseId = @warehouseId AND SupplyErpId = @erpId
+                  AND SoLuongTon >= @soLuong";
 
             using (var command = new SqlCommand(updateSql, connection, transaction))
             {
                 command.Parameters.AddWithValue("@warehouseId", warehouseId);
                 command.Parameters.AddWithValue("@erpId", supplyErpId);
-                command.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
+                command.Parameters.AddWithValue("@soLuong", roundedQuantity);
 
                 int rowsAffected = command.ExecuteNonQuery();
-                
-                // Nếu không có bản ghi nào được update, tạo mới với số âm
                 if (rowsAffected == 0)
                 {
-                    string insertNegativeSql = @"
-                        INSERT INTO Inventory (WarehouseId, SupplyErpId, SoLuongTon, LastUpdated)
-                        VALUES (@warehouseId, @erpId, -@soLuong, GETDATE())";
-
-                    using (var insertCommand = new SqlCommand(insertNegativeSql, connection, transaction))
-                    {
-                        insertCommand.Parameters.AddWithValue("@warehouseId", warehouseId);
-                        insertCommand.Parameters.AddWithValue("@erpId", supplyErpId);
-                        insertCommand.Parameters.AddWithValue("@soLuong", Math.Round(quantity, 2));
-                        insertCommand.ExecuteNonQuery();
-                    }
+                    throw new Exception($"Ton kho khong du de hoan ung Bravo. Kho ID={warehouseId}, VT={supplyErpId}, so luong can tru={roundedQuantity:N2}");
                 }
             }
         }
