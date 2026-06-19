@@ -10,6 +10,7 @@ namespace QLVT.GUI
         private List<SuaChuaModel> danhSachHoSo = new();
         private List<SuaChuaModel> danhSachHoSoGoc = new(); // Danh sách gốc để tìm kiếm
         private SuaChuaModel? selectedHoSo;
+        private readonly ProgressBar prgTaiDuLieuERP = new();
 
         public HoanUngDCUserControl()
         {
@@ -34,6 +35,8 @@ namespace QLVT.GUI
 
             var toolbarTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
             lblConnectionStatus.Location = new Point(6, toolbarTop + 5);
+            prgTaiDuLieuERP.Location = new Point(6, toolbarTop + 35);
+            prgTaiDuLieuERP.Size = new Size(360, 10);
             btnTaiDuLieuERP.Location = new Point(385, toolbarTop);
             btnRefresh.Location = new Point(545, toolbarTop);
             grpTimKiem.Location = new Point(Math.Max(700, Width - grpTimKiem.Width - 20), toolbarTop - 8);
@@ -41,6 +44,11 @@ namespace QLVT.GUI
             grpDanhSach.Size = new Size(Math.Max(900, Width - 12), Math.Max(300, Height - grpDanhSach.Top - 10));
 
             UIStyleHelper.ApplyStatusLabelStyle(lblConnectionStatus, StatusType.Processing);
+            prgTaiDuLieuERP.Style = ProgressBarStyle.Marquee;
+            prgTaiDuLieuERP.MarqueeAnimationSpeed = 32;
+            prgTaiDuLieuERP.Visible = false;
+            Controls.Add(prgTaiDuLieuERP);
+            prgTaiDuLieuERP.BringToFront();
             UIStyleHelper.ApplyGroupBoxStyle(grpTimKiem);
             UIStyleHelper.ApplyGroupBoxStyle(grpDanhSach);
             grpTimKiem.Text = "Tìm kiếm";
@@ -102,6 +110,12 @@ namespace QLVT.GUI
                 btnTaiDuLieuERP.Enabled = false;
                 MessageBox.Show($"Lỗi kiểm tra kết nối ERP: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void SetTaiDuLieuERPProgress(bool isLoading)
+        {
+            prgTaiDuLieuERP.Visible = isLoading;
+            prgTaiDuLieuERP.MarqueeAnimationSpeed = isLoading ? 32 : 0;
         }
 
         private void SetupDataGridView()
@@ -256,7 +270,7 @@ namespace QLVT.GUI
             }
         }
 
-        private void XacNhanHoanUng(SuaChuaModel hoSo)
+        private async void XacNhanHoanUng(SuaChuaModel hoSo)
         {
             if (hoSo.DaHoanUng == true)
             {
@@ -278,7 +292,7 @@ namespace QLVT.GUI
             {
                 try
                 {
-                    _hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON);
+                    await _hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON, null);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LoadDanhSachHoSo(); // Reload dữ liệu
@@ -299,6 +313,7 @@ namespace QLVT.GUI
                 btnTaiDuLieuERP.Text = "Đang tải...";
                 lblConnectionStatus.Text = "⏳ Đang tải dữ liệu từ ERP...";
                 lblConnectionStatus.ForeColor = UIColorPalette.WarningOrange;
+                SetTaiDuLieuERPProgress(true);
                 
                 // Xác nhận từ người dùng
                 var confirmResult = MessageBox.Show(
@@ -336,6 +351,7 @@ namespace QLVT.GUI
             {
                 btnTaiDuLieuERP.Enabled = true;
                 btnTaiDuLieuERP.Text = "Tải dữ liệu ERP";
+                SetTaiDuLieuERPProgress(false);
             }
         }
 

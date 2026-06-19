@@ -106,8 +106,7 @@ namespace QLVT.BLL
             {
                 // Bước 1: Lấy max của NgayHoanUng trong bảng ct.DonDangKy
                 DateTime? maxNgayHoanUng = hoanUngTransactionDAL.MC4_GetMaxNgayHoanUngMC4();
-                DateTime tuNgay = DateTime.Parse("01/01/2025");
-                // DateTime tuNgay = maxNgayHoanUng ?? DateTime.Now.AddDays(-30); // Nếu chưa có dữ liệu thì lấy 30 ngày gần nhất
+                DateTime tuNgay = maxNgayHoanUng ?? DateTime.Now.AddDays(-30); // Nếu chưa có dữ liệu thì lấy 30 ngày gần nhất
 
                 // Bước 2: Lấy danh sách đơn từ ERP qua hàm GetDonDangKyDataAsync
                 var danhSachDonERP = await erpConnectionDAL.GetDonDangKyDataAsync(tuNgay);
@@ -180,30 +179,20 @@ namespace QLVT.BLL
                 throw new Exception($"Lỗi lấy chi tiết vật tư với tồn kho: {ex.Message}", ex);
             }
         }
-        public bool DC_XacNhanHoanUng(string maDon)
+        public async Task<bool> DC_XacNhanHoanUng(string maDon, List<SuaChuaCTModel>? chiTietList)
         {
             var currentUser = AuthenticationBLL.GetCurrentUser();
 
             if (string.IsNullOrEmpty(maDon))
                 throw new ArgumentException("Mã đơn không được rỗng");
 
-            // Thực hiện hoàn ứng với transaction-based logic tương tự HoanUngBLL
-            return hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser!.Username);
-        }
-        public bool DC_XacNhanHoanUng(string maDon, List<SuaChuaCTModel> chiTietList)
-        {
-            var currentUser = AuthenticationBLL.GetCurrentUser();
-
-            if (string.IsNullOrEmpty(maDon))
-                throw new ArgumentException("Mã đơn không được rỗng");
-
-            if (chiTietList == null || chiTietList.Count == 0)
+            if (chiTietList != null && chiTietList.Count == 0)
                 throw new ArgumentException("Danh sách chi tiết vật tư không được rỗng");
 
             // Thực hiện hoàn ứng với số lượng đã chỉnh sửa
-            return hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser!.Username, chiTietList);
+            return await hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser!.Username, chiTietList);
         }
-        public (int thanhCong, int thatBai, List<string> loi) DC_HoanUngHangLoat(List<string> danhSachMaDon, IProgress<(int current, int total, string maDon)>? progress = null)
+        public async Task<(int thanhCong, int thatBai, List<string> loi)> DC_HoanUngHangLoat(List<string> danhSachMaDon, IProgress<(int current, int total, string maDon)>? progress = null)
         {
             var currentUser = AuthenticationBLL.GetCurrentUser();
             if (currentUser == null)
@@ -223,7 +212,7 @@ namespace QLVT.BLL
                     progress?.Report((i + 1, danhSachMaDon.Count, maDon));
                     
                     // Thực hiện hoàn ứng
-                    bool ketQua = hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser.Username);
+                    bool ketQua = await hoanUngTransactionDAL.DC_UpdateHoanUngSuaChua(maDon, currentUser.Username, null);
                     
                     if (ketQua)
                     {

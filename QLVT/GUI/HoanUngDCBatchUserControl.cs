@@ -341,7 +341,7 @@ namespace QLVT.GUI
                 worker?.ReportProgress(update.current, update);
             });
 
-            var ketQua = hoanUngBLL.DC_HoanUngHangLoat(danhSachMaDon, progress);
+            var ketQua = hoanUngBLL.DC_HoanUngHangLoat(danhSachMaDon, progress).GetAwaiter().GetResult();
             e.Result = ketQua;
         }
 

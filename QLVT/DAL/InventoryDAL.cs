@@ -198,17 +198,18 @@ namespace QLVT.DAL
             {
                 using (var connection = DatabaseHelper.GetConnection())
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     var query = @"
                         SELECT Id, WarehouseId, SupplyErpId, TonKho
                         FROM ViewTonKhoVatTu 
-                        WHERE SupplyErpId = @SupplyErpId AND MaNV = @manv
+                        WHERE SupplyErpId = @SupplyErpId AND MaNV = @manv AND TonKho > 0
                         ORDER BY KhoUuTien desc";
 
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@SupplyErpId", supplyErpId);
-                        command.Parameters.AddWithValue("@manv", manv);
+                        command.CommandTimeout = 15;
+                        command.Parameters.Add("@SupplyErpId", System.Data.SqlDbType.Int).Value = supplyErpId;
+                        command.Parameters.Add("@manv", System.Data.SqlDbType.VarChar, 50).Value = manv;
 
                         using (var reader = await command.ExecuteReaderAsync())
                         {
@@ -216,9 +217,9 @@ namespace QLVT.DAL
                             {
                                 inventories.Add(new Inventory
                                 {
-                                    Id = reader.GetInt32(0),
-                                    WarehouseId = reader.GetInt32(1),
-                                    SupplyErpId = reader.GetInt32(2),
+                                    Id = Convert.ToInt64(reader["Id"]),
+                                    WarehouseId = Convert.ToInt64(reader["WarehouseId"]),
+                                    SupplyErpId = Convert.ToInt64(reader["SupplyErpId"]),
                                     SoLuongTon = reader.GetDecimal(3)
                                 });
                             }

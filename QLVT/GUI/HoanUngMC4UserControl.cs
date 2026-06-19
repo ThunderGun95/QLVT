@@ -16,6 +16,7 @@ namespace QLVT.GUI
         private List<DonDangKyModel> danhSachHoSo = new();
         private List<DonDangKyModel> danhSachHoSoGoc = new();
         private DonDangKyModel? selectedHoSo;
+        private readonly ProgressBar prgTaiDuLieuERP = new();
 
         public HoanUngMC4UserControl()
         {
@@ -39,6 +40,8 @@ namespace QLVT.GUI
 
             var toolbarTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
             lblConnectionStatus.Location = new Point(6, toolbarTop + 5);
+            prgTaiDuLieuERP.Location = new Point(6, toolbarTop + 35);
+            prgTaiDuLieuERP.Size = new Size(360, 10);
             btnTaiDuLieuERP.Location = new Point(385, toolbarTop);
             btnRefresh.Location = new Point(545, toolbarTop);
             grpTimKiem.Location = new Point(Math.Max(700, Width - grpTimKiem.Width - 20), toolbarTop - 8);
@@ -46,6 +49,11 @@ namespace QLVT.GUI
             grpDanhSach.Size = new Size(Math.Max(900, Width - 12), Math.Max(300, Height - grpDanhSach.Top - 10));
 
             UIStyleHelper.ApplyStatusLabelStyle(lblConnectionStatus, StatusType.Processing);
+            prgTaiDuLieuERP.Style = ProgressBarStyle.Marquee;
+            prgTaiDuLieuERP.MarqueeAnimationSpeed = 32;
+            prgTaiDuLieuERP.Visible = false;
+            Controls.Add(prgTaiDuLieuERP);
+            prgTaiDuLieuERP.BringToFront();
 
             grpTimKiem.Text = "Tìm kiếm";
             grpDanhSach.Text = "Danh sách hồ sơ MC4 chờ hoàn ứng";
@@ -91,6 +99,12 @@ namespace QLVT.GUI
                 btnTaiDuLieuERP.Enabled = false;
                 MessageBox.Show($"Lỗi kiểm tra kết nối ERP: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void SetTaiDuLieuERPProgress(bool isLoading)
+        {
+            prgTaiDuLieuERP.Visible = isLoading;
+            prgTaiDuLieuERP.MarqueeAnimationSpeed = isLoading ? 32 : 0;
         }
 
         private void SetupDataGridView()
@@ -282,6 +296,7 @@ namespace QLVT.GUI
                 btnTaiDuLieuERP.Text = "Đang tải...";
                 lblConnectionStatus.Text = "Đang tải dữ liệu từ ERP...";
                 lblConnectionStatus.ForeColor = UIColorPalette.WarningOrange;
+                SetTaiDuLieuERPProgress(true);
 
                 var confirmResult = MessageBox.Show(
                     "Bạn có chắc chắn muốn tải dữ liệu mới từ ERP?\n\n" +
@@ -313,6 +328,7 @@ namespace QLVT.GUI
             {
                 btnTaiDuLieuERP.Enabled = true;
                 btnTaiDuLieuERP.Text = "Tải dữ liệu ERP";
+                SetTaiDuLieuERPProgress(false);
             }
         }
 

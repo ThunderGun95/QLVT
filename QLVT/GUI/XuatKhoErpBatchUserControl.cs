@@ -18,8 +18,11 @@ namespace QLVT.GUI
     /// </summary>
     public partial class XuatKhoErpBatchUserControl : UserControl
     {
+        private const int PagePadding = 18;
+
         private readonly XuatKhoBLL xuatKhoBLL;
         private readonly WarehouseDAL warehouseDAL;
+        private readonly Label lblTitle = new();
         private List<BatchExportItem> batchItems = new();
         private BackgroundWorker batchWorker;
         private bool isProcessing = false;
@@ -27,11 +30,149 @@ namespace QLVT.GUI
         public XuatKhoErpBatchUserControl()
         {
             InitializeComponent();
-            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
+            ApplyModernStyle();
+            SetupBatchGridColumns();
             xuatKhoBLL = new XuatKhoBLL();
             warehouseDAL = new WarehouseDAL();
             SetupBackgroundWorker();
             CheckERPConnection();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblTitle.Text = "XUẤT KHO ERP HÀNG LOẠT";
+            UIStyleHelper.ApplyTitleBarStyle(lblTitle);
+            Controls.Add(lblTitle);
+            lblTitle.BringToFront();
+
+            grpInput.Text = "Thông tin phiếu";
+            grpProgress.Text = "Trạng thái xử lý";
+            grpActions.Text = "Thao tác";
+            grpResults.Text = "Danh sách phiếu";
+            foreach (var groupBox in new[] { grpInput, grpProgress, grpActions, grpResults })
+            {
+                UIStyleHelper.ApplyGroupBoxStyle(groupBox);
+            }
+
+            lblNam.Text = "Năm";
+            lblTuSo.Text = "Từ số";
+            lblDenSo.Text = "Đến số";
+            lblNote.Text = "Hệ thống tự tìm kho nhân viên theo mã nhân viên trong phiếu, xử lý vật tư VP và vật tư thường theo quy tắc xuất kho ERP.";
+            lblNote.ForeColor = UIColorPalette.TextMuted;
+            foreach (var label in new[] { lblNam, lblTuSo, lblDenSo, lblConnectionStatus, lblSummary, lblProgress, lblNote })
+            {
+                UIStyleHelper.ApplyStandardLabelStyle(label);
+            }
+            lblNote.AutoSize = false;
+            lblConnectionStatus.AutoSize = false;
+            lblSummary.AutoSize = false;
+            lblProgress.AutoSize = false;
+
+            btnGenerate.Text = "Tạo danh sách";
+            btnStart.Text = "Bắt đầu";
+            btnStop.Text = "Dừng";
+            btnReset.Text = "Làm mới";
+            btnExportLog.Text = "Xuất log";
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnGenerate, new Size(126, 34));
+            UIStyleHelper.ApplySuccessButtonStyle(btnStart, new Size(96, 34));
+            UIStyleHelper.ApplyDangerButtonStyle(btnStop, new Size(92, 34));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnReset, new Size(96, 34));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnExportLog, new Size(96, 34));
+
+            foreach (var numeric in new[] { nudNam, nudTuSo, nudDenSo })
+            {
+                numeric.Font = UIFonts.TextStandard;
+                numeric.BorderStyle = BorderStyle.FixedSingle;
+                numeric.Height = 25;
+            }
+            nudNam.Value = Math.Min(nudNam.Maximum, Math.Max(nudNam.Minimum, DateTime.Now.Year));
+
+            lblStatus.BorderStyle = BorderStyle.FixedSingle;
+            lblStatus.Padding = new Padding(10, 0, 10, 0);
+            UIStyleHelper.ApplyStatusLabelStyle(lblStatus);
+            UIStyleHelper.ApplyDataGridViewStyle(dgvBatchList);
+            dgvBatchList.Dock = DockStyle.None;
+
+            Resize += (_, _) => LayoutModern();
+            LayoutModern();
+        }
+
+        private void LayoutModern()
+        {
+            SuspendLayout();
+
+            var contentTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+            var contentWidth = Math.Max(680, Width - PagePadding * 2);
+
+            grpInput.Location = new Point(PagePadding, contentTop);
+            grpInput.Size = new Size(contentWidth, 98);
+
+            lblNam.Location = new Point(18, 34);
+            nudNam.Location = new Point(62, 30);
+            nudNam.Size = new Size(86, 25);
+
+            lblTuSo.Location = new Point(174, 34);
+            nudTuSo.Location = new Point(226, 30);
+            nudTuSo.Size = new Size(104, 25);
+
+            lblDenSo.Location = new Point(356, 34);
+            nudDenSo.Location = new Point(418, 30);
+            nudDenSo.Size = new Size(104, 25);
+
+            btnGenerate.Location = new Point(Math.Max(548, grpInput.ClientSize.Width - btnGenerate.Width - 18), 26);
+
+            lblNote.Location = new Point(18, 66);
+            lblNote.Size = new Size(Math.Max(480, grpInput.ClientSize.Width - 36), 22);
+
+            grpProgress.Location = new Point(PagePadding, grpInput.Bottom + 10);
+            grpProgress.Size = new Size(contentWidth, 104);
+
+            lblConnectionStatus.Location = new Point(18, 25);
+            lblConnectionStatus.Size = new Size(260, 22);
+            lblSummary.Location = new Point(Math.Min(300, grpProgress.ClientSize.Width - 280), 25);
+            lblSummary.Size = new Size(Math.Max(220, grpProgress.ClientSize.Width - lblSummary.Left - 18), 22);
+            lblProgress.Location = new Point(18, 58);
+            lblProgress.Size = new Size(Math.Max(360, grpProgress.ClientSize.Width - 420), 22);
+
+            progressBar.Location = new Point(18, 78);
+            progressBar.Size = new Size(Math.Max(360, grpProgress.ClientSize.Width - 300), 14);
+
+            lblStatus.Location = new Point(progressBar.Right + 14, 67);
+            lblStatus.Size = new Size(Math.Max(180, grpProgress.ClientSize.Width - lblStatus.Left - 18), 26);
+
+            grpActions.Location = new Point(PagePadding, grpProgress.Bottom + 10);
+            grpActions.Size = new Size(contentWidth, 66);
+
+            btnStart.Location = new Point(18, 24);
+            btnStop.Location = new Point(btnStart.Right + 10, 24);
+            btnReset.Location = new Point(btnStop.Right + 10, 24);
+            btnExportLog.Location = new Point(grpActions.ClientSize.Width - btnExportLog.Width - 18, 24);
+
+            grpResults.Location = new Point(PagePadding, grpActions.Bottom + 10);
+            grpResults.Size = new Size(contentWidth, Math.Max(260, Height - grpActions.Bottom - PagePadding - 10));
+
+            dgvBatchList.Location = new Point(16, 28);
+            dgvBatchList.Size = new Size(grpResults.ClientSize.Width - 32, grpResults.ClientSize.Height - 44);
+
+            ResumeLayout(false);
+        }
+
+        private void SetupBatchGridColumns()
+        {
+            dgvBatchList.Columns.Clear();
+            dgvBatchList.AutoGenerateColumns = false;
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("SoPhieu", "Số phiếu", "SoPhieu", 100, 10));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("Nam", "Năm", "Nam", 80, 7));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("Status", "Trạng thái", "Status", 120, 12));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("Message", "Thông báo", "Message", 360, 34));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("TransactionId", "Mã GD", "TransactionId", 90, 8));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("EmployeeName", "Nhân viên", "EmployeeName", 180, 18));
+            dgvBatchList.Columns.Add(UIStyleHelper.CreateReadOnlyColumn("EmployeeWarehouseCode", "Kho NV", "EmployeeWarehouseCode", 120, 11));
+            dgvBatchList.Columns["Nam"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvBatchList.Columns["TransactionId"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvBatchList.Columns["EmployeeWarehouseCode"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         private void SetupBackgroundWorker()
@@ -50,14 +191,14 @@ namespace QLVT.GUI
         {
             if (!xuatKhoBLL.TestERPConnection())
             {
-                lblConnectionStatus.Text = "❌ Không thể kết nối ERP";
-                lblConnectionStatus.ForeColor = Color.Red;
+                lblConnectionStatus.Text = "Không thể kết nối ERP";
+                lblConnectionStatus.ForeColor = UIColorPalette.StatusError;
                 btnStart.Enabled = false;
             }
             else
             {
-                lblConnectionStatus.Text = "✅ Kết nối ERP thành công";
-                lblConnectionStatus.ForeColor = Color.Green;
+                lblConnectionStatus.Text = "Kết nối ERP thành công";
+                lblConnectionStatus.ForeColor = UIColorPalette.StatusSuccess;
             }
         }
 
@@ -141,7 +282,7 @@ namespace QLVT.GUI
             progressBar.Maximum = batchItems.Count;
             
             lblStatus.Text = "Đang xử lý...";
-            lblStatus.ForeColor = Color.Blue;
+            UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Processing);
 
             batchWorker.RunWorkerAsync();
         }
@@ -152,7 +293,7 @@ namespace QLVT.GUI
             {
                 batchWorker.CancelAsync();
                 lblStatus.Text = "Đang dừng...";
-                lblStatus.ForeColor = Color.Orange;
+                UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Warning);
             }
         }
 
@@ -163,7 +304,7 @@ namespace QLVT.GUI
             progressBar.Value = 0;
             lblSummary.Text = "";
             lblStatus.Text = "Sẵn sàng";
-            lblStatus.ForeColor = Color.Black;
+            UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Ready);
             
             btnGenerate.Enabled = true;
             btnStart.Enabled = false;
@@ -224,7 +365,7 @@ namespace QLVT.GUI
                 System.Threading.Thread.Sleep(100);
             }
 
-            e.Result = $"Hoàn thành! Thành công: {successful}, Lỗi: {failed}";
+            e.Result = $"Hoàn thành. Thành công: {successful}, Lỗi: {failed}";
         }
 
         private void ProcessSingleExportOrder(BatchExportItem item, string username)
@@ -298,17 +439,17 @@ namespace QLVT.GUI
             if (e.Cancelled)
             {
                 lblStatus.Text = "Đã dừng xử lý";
-                lblStatus.ForeColor = Color.Orange;
+                UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Warning);
             }
             else if (e.Error != null)
             {
                 lblStatus.Text = $"Lỗi: {e.Error.Message}";
-                lblStatus.ForeColor = Color.Red;
+                UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Error);
             }
             else
             {
                 lblStatus.Text = e.Result?.ToString() ?? "Hoàn thành";
-                lblStatus.ForeColor = Color.Green;
+                UIStyleHelper.ApplyStatusLabelStyle(lblStatus, StatusType.Success);
             }
 
             UpdateProgress();
@@ -341,16 +482,16 @@ namespace QLVT.GUI
                 switch (item.Status)
                 {
                     case BatchStatus.Pending:
-                        row.DefaultCellStyle.BackColor = Color.LightGray;
+                        row.DefaultCellStyle.BackColor = UIColorPalette.SurfaceMuted;
                         break;
                     case BatchStatus.Processing:
-                        row.DefaultCellStyle.BackColor = Color.LightBlue;
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(219, 234, 254);
                         break;
                     case BatchStatus.Success:
-                        row.DefaultCellStyle.BackColor = Color.LightGreen;
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(220, 252, 231);
                         break;
                     case BatchStatus.Failed:
-                        row.DefaultCellStyle.BackColor = Color.LightPink;
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(254, 226, 226);
                         break;
                 }
             }

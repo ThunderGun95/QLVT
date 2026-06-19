@@ -1,11 +1,14 @@
 using System.ComponentModel;
 using QLVT.BLL;
 using QLVT.Models;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
     public partial class NhapKhoUserControl : UserControl
     {
+        private const int PagePadding = 18;
+
         private NhapKhoManualBLL nhapKhoBLL;
         private PhieuNhapKho? currentPhieu;
         private BindingList<PhieuNhapKhoChiTiet> chiTietList;
@@ -14,11 +17,95 @@ namespace QLVT.GUI
         public NhapKhoUserControl()
         {
             InitializeComponent();
-            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
+            ApplyModernStyle();
             nhapKhoBLL = new NhapKhoManualBLL();
             chiTietList = new BindingList<PhieuNhapKhoChiTiet>();
             InitializeData();
             SetupEvents();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblTitle.Text = "NHẬP KHO";
+            UIStyleHelper.ApplyTitleBarStyle(lblTitle);
+            lblTitle.AutoSize = false;
+
+            grpThongTinPhieu.Text = "Thông tin phiếu nhập";
+            grpChiTiet.Text = "Chi tiết phiếu nhập";
+            UIStyleHelper.ApplyGroupBoxStyle(grpThongTinPhieu);
+            UIStyleHelper.ApplyGroupBoxStyle(grpChiTiet);
+
+            lblKhoNhap.Text = "Kho nhập";
+            lblNgayGhiNhan.Text = "Ngày ghi nhận";
+            lblGhiChu.Text = "Ghi chú";
+            foreach (var label in new[] { lblKhoNhap, lblNgayGhiNhan, lblGhiChu })
+            {
+                UIStyleHelper.ApplyStandardLabelStyle(label);
+            }
+
+            UIStyleHelper.ApplyComboBoxStyle(cboKhoNhap);
+            UIStyleHelper.ApplyTextBoxStyle(txtGhiChu);
+            txtGhiChu.Multiline = true;
+            txtGhiChu.ScrollBars = ScrollBars.Vertical;
+
+            dtpNgayGhiNhan.Font = UIFonts.TextStandard;
+            dtpNgayGhiNhan.CalendarFont = UIFonts.TextStandard;
+
+            btnThemVatTu.Text = "Thêm vật tư";
+            btnTaoMoi.Text = "Tạo mới";
+            btnLuu.Text = "Lưu phiếu";
+            btnIn.Text = "In phiếu";
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnThemVatTu, new Size(118, 34));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnTaoMoi, new Size(106, 34));
+            UIStyleHelper.ApplySuccessButtonStyle(btnLuu, new Size(112, 34));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnIn, new Size(100, 34));
+
+            pnlButtons.BackColor = UIColorPalette.BackgroundLight;
+            pnlButtons.Dock = DockStyle.None;
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChiTietPhieu);
+
+            Resize += (_, _) => LayoutModern();
+            LayoutModern();
+        }
+
+        private void LayoutModern()
+        {
+            SuspendLayout();
+
+            var contentTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+            var contentWidth = Math.Max(620, Width - PagePadding * 2);
+
+            grpThongTinPhieu.Location = new Point(PagePadding, contentTop);
+            grpThongTinPhieu.Size = new Size(contentWidth, 124);
+
+            lblKhoNhap.Location = new Point(18, 32);
+            cboKhoNhap.Location = new Point(126, 28);
+            cboKhoNhap.Size = new Size(Math.Min(320, Math.Max(210, grpThongTinPhieu.ClientSize.Width / 3)), 25);
+
+            lblNgayGhiNhan.Location = new Point(Math.Max(360, grpThongTinPhieu.ClientSize.Width / 2), 32);
+            dtpNgayGhiNhan.Location = new Point(lblNgayGhiNhan.Right + 14, 28);
+            dtpNgayGhiNhan.Size = new Size(150, 25);
+
+            lblGhiChu.Location = new Point(18, 70);
+            txtGhiChu.Location = new Point(126, 66);
+            txtGhiChu.Size = new Size(Math.Max(420, grpThongTinPhieu.ClientSize.Width - 144), 44);
+
+            grpChiTiet.Location = new Point(PagePadding, grpThongTinPhieu.Bottom + 10);
+            grpChiTiet.Size = new Size(contentWidth, Math.Max(260, Height - grpThongTinPhieu.Bottom - 82));
+
+            btnThemVatTu.Location = new Point(16, 24);
+            dgvChiTietPhieu.Location = new Point(16, 66);
+            dgvChiTietPhieu.Size = new Size(grpChiTiet.ClientSize.Width - 32, grpChiTiet.ClientSize.Height - 82);
+
+            pnlButtons.Location = new Point(PagePadding, Height - 56);
+            pnlButtons.Size = new Size(contentWidth, 42);
+            btnIn.Location = new Point(0, 4);
+            btnTaoMoi.Location = new Point(pnlButtons.Width - btnTaoMoi.Width - btnLuu.Width - 12, 4);
+            btnLuu.Location = new Point(pnlButtons.Width - btnLuu.Width, 4);
+
+            ResumeLayout(false);
         }
 
         private void InitializeData()
@@ -83,6 +170,7 @@ namespace QLVT.GUI
 
         private void SetupDataGridView()
         {
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChiTietPhieu);
             dgvChiTietPhieu.AutoGenerateColumns = false;
             dgvChiTietPhieu.Columns.Clear();
             dgvChiTietPhieu.AllowUserToAddRows = false;
@@ -147,6 +235,22 @@ namespace QLVT.GUI
             deleteColumn.DefaultCellStyle.ForeColor = Color.White;
             deleteColumn.DefaultCellStyle.Font = new Font("Arial", 10F, FontStyle.Bold);
             dgvChiTietPhieu.Columns.Add(deleteColumn);
+
+            dgvChiTietPhieu.Columns["MaVatTu"].HeaderText = "Mã VT";
+            dgvChiTietPhieu.Columns["MaVatTu"].FillWeight = 12;
+            dgvChiTietPhieu.Columns["TenVatTu"].HeaderText = "Tên vật tư";
+            dgvChiTietPhieu.Columns["TenVatTu"].FillWeight = 48;
+            dgvChiTietPhieu.Columns["DonViTinh"].HeaderText = "ĐVT";
+            dgvChiTietPhieu.Columns["DonViTinh"].FillWeight = 9;
+            dgvChiTietPhieu.Columns["DonViTinh"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvChiTietPhieu.Columns["SoLuong"].HeaderText = "SL nhập";
+            dgvChiTietPhieu.Columns["SoLuong"].FillWeight = 12;
+            dgvChiTietPhieu.Columns["Delete"].HeaderText = "Xóa";
+            dgvChiTietPhieu.Columns["Delete"].FillWeight = 8;
+            ((DataGridViewButtonColumn)dgvChiTietPhieu.Columns["Delete"]).Text = "Xóa";
+            dgvChiTietPhieu.Columns["Delete"].DefaultCellStyle.BackColor = UIColorPalette.DangerRed;
+            dgvChiTietPhieu.Columns["Delete"].DefaultCellStyle.ForeColor = Color.White;
+            dgvChiTietPhieu.Columns["Delete"].DefaultCellStyle.Font = UIFonts.ButtonStandard;
 
             LoadTransactionDetails();
         }

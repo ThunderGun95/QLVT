@@ -74,7 +74,7 @@ namespace QLVT.ERP.DAL
                   AND CONVERT(DATE, hu.ThoiGianHoanUng) > @FilterDate
                 --  AND YEAR(mc4.NgayTC) > 2024
 AND hu.ThoiGianHoanUng > '2025/01/01'  
-                  AND hu.ThoiGianHoanUng < '2025/02/01'  
+                  AND hu.ThoiGianHoanUng < '2025/03/01'  
                   -- AND mc4.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
                   -- AND mc4.MaNhanVienXayLap in ('ndtan', 'nhhai', 'phhung', 'pvnam', 'hsduan2', 'kienpv', 'pvhoan', 'nhquang2', 'dnba', 'lvhanh', 'ddthuat', 'vdvuong', 'nhthang2', 'dnhat2', 'nncanh', 'pxthang2', 'vtcau', 'ntdung', 'thchien', 'hhtuong', 'nvtuan', 'knbinh') 
                   -- Thêm cái này để hoàn tổ mc4 trước
@@ -154,7 +154,7 @@ AND hu.ThoiGianHoanUng > '2025/01/01'
                   AND year(sc.ThoiGianHoanUng) = 2025
                   -- AND CONVERT(DATE, sc.ThoiGianHoanUng) > @FilterDate
                   AND sc.ThoiGianHoanUng > '2025/01/02'
-                    AND sc.ThoiGianHoanUng < '2025/02/01'  
+ AND sc.ThoiGianHoanUng < '2025/03/01'  
                   -- AND sc.MaNhanVienKyThuat NOT IN ('hqthong', 'nqhoan', 'dtthang', 'ltthu', 'vddung', 'sutm', 'vhdieu', 'ldthuan', 'hvhan', 'thinpv')
                 ORDER BY sc.ThoiGianHoanUng";
 

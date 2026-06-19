@@ -290,7 +290,7 @@ namespace QLVT.GUI
             }
         }
 
-        private void BtnHoanUng_Click(object sender, EventArgs e)
+        private async void BtnHoanUng_Click(object sender, EventArgs e)
         {
             if (hoSo.DaHoanUng == true)
             {
@@ -322,7 +322,7 @@ namespace QLVT.GUI
                 try
                 {
                     // Gọi BLL để xác nhận hoàn ứng với số lượng đã chỉnh sửa
-                    hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON, chiTietList);
+                    await hoanUngBLL.DC_XacNhanHoanUng(hoSo.MADON, chiTietList);
                     
                     MessageBox.Show("Hoàn ứng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.DialogResult = DialogResult.OK;

@@ -27,7 +27,7 @@ namespace QLVT.ERP.DAL
                             LEFT JOIN ViewNhanViens nv on nv.UserID = px.MaNguoiNhan
                          WHERE TTXK = 'TT_A'
                             AND ThoiGianKT > '2025/01/01'
-AND ThoiGianKT < '2025/02/01' 
+AND ThoiGianKT < '2025/03/01' 
                             AND SoPhieuXuatKho = @soPhieu AND NAM = @nam
                             ";
 

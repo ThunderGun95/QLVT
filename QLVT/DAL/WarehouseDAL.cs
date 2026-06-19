@@ -398,6 +398,238 @@ namespace QLVT.DAL
             }
             return null;
         }
+
+        public List<Warehouse> GetWarehousesForManagement()
+        {
+            var warehouses = new List<Warehouse>();
+            string sql = @"
+                SELECT w.Id, w.MaKho, w.TenKho, w.LoaiKho, w.MaNV, s.TenNV,
+                       w.DiaChi, w.GhiChu, ISNULL(w.KhoUuTien, 0) AS KhoUuTien, w.IsActive
+                FROM Warehouses w
+                LEFT JOIN Staffs s ON s.MaNV = w.MaNV
+                WHERE w.IsActive = 1
+                ORDER BY
+                    CASE WHEN w.LoaiKho IN ('CANHAN', 'PERSONAL') THEN 1 ELSE 0 END,
+                    ISNULL(s.TenNV, ''),
+                    w.MaKho";
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                using (var command = new SqlCommand(sql, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        warehouses.Add(ReadWarehouse(reader));
+                    }
+                }
+            }
+
+            return warehouses;
+        }
+
+        public int SaveWarehouse(Warehouse warehouse)
+        {
+            if (warehouse == null)
+                throw new ArgumentNullException(nameof(warehouse));
+
+            if (string.IsNullOrWhiteSpace(warehouse.MaKho))
+                throw new Exception("Mã kho không được để trống");
+
+            if (string.IsNullOrWhiteSpace(warehouse.TenKho))
+                throw new Exception("Tên kho không được để trống");
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        EnsureUniqueWarehouseCode(connection, transaction, warehouse.MaKho.Trim(), warehouse.Id);
+
+                        int warehouseId;
+                        if (warehouse.Id > 0)
+                        {
+                            string updateSql = @"
+                                UPDATE Warehouses
+                                SET MaKho = @MaKho,
+                                    TenKho = @TenKho,
+                                    LoaiKho = @LoaiKho,
+                                    MaNV = @MaNV,
+                                    DiaChi = @DiaChi,
+                                    GhiChu = @GhiChu,
+                                    KhoUuTien = @KhoUuTien
+                                WHERE Id = @Id";
+
+                            using (var command = new SqlCommand(updateSql, connection, transaction))
+                            {
+                                AddWarehouseParameters(command, warehouse);
+                                command.Parameters.AddWithValue("@Id", warehouse.Id);
+                                command.ExecuteNonQuery();
+                            }
+
+                            warehouseId = warehouse.Id;
+                        }
+                        else
+                        {
+                            string insertSql = @"
+                                INSERT INTO Warehouses (MaKho, TenKho, LoaiKho, MaNV, DiaChi, GhiChu, KhoUuTien, IsActive, CreatedDate)
+                                VALUES (@MaKho, @TenKho, @LoaiKho, @MaNV, @DiaChi, @GhiChu, @KhoUuTien, 1, GETDATE());
+                                SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+                            using (var command = new SqlCommand(insertSql, connection, transaction))
+                            {
+                                AddWarehouseParameters(command, warehouse);
+                                warehouseId = Convert.ToInt32(command.ExecuteScalar());
+                            }
+                        }
+
+                        if (IsPersonalWarehouse(warehouse.LoaiKho) && warehouse.KhoUuTien && !string.IsNullOrWhiteSpace(warehouse.MaNV))
+                        {
+                            SetPriorityWarehouse(connection, transaction, warehouse.MaNV!, warehouseId);
+                        }
+
+                        transaction.Commit();
+                        return warehouseId;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public void DeactivateWarehouse(int warehouseId)
+        {
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                string sql = "UPDATE Warehouses SET IsActive = 0, KhoUuTien = 0 WHERE Id = @Id";
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", warehouseId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void SetPriorityWarehouse(string maNV, int warehouseId)
+        {
+            if (string.IsNullOrWhiteSpace(maNV))
+                throw new Exception("Không xác định được nhân viên của kho cá nhân");
+
+            using (var connection = DatabaseHelper.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        SetPriorityWarehouse(connection, transaction, maNV, warehouseId);
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private static void SetPriorityWarehouse(SqlConnection connection, SqlTransaction transaction, string maNV, int warehouseId)
+        {
+            string clearSql = @"
+                UPDATE Warehouses
+                SET KhoUuTien = 0
+                WHERE MaNV = @MaNV AND LoaiKho IN ('CANHAN', 'PERSONAL') AND IsActive = 1";
+
+            using (var command = new SqlCommand(clearSql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@MaNV", maNV);
+                command.ExecuteNonQuery();
+            }
+
+            string setSql = @"
+                UPDATE Warehouses
+                SET KhoUuTien = 1
+                WHERE Id = @Id AND MaNV = @MaNV AND LoaiKho IN ('CANHAN', 'PERSONAL') AND IsActive = 1";
+
+            using (var command = new SqlCommand(setSql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@Id", warehouseId);
+                command.Parameters.AddWithValue("@MaNV", maNV);
+                int rows = command.ExecuteNonQuery();
+                if (rows == 0)
+                {
+                    throw new Exception("Kho được chọn không phải kho cá nhân của nhân viên này");
+                }
+            }
+        }
+
+        private static void EnsureUniqueWarehouseCode(SqlConnection connection, SqlTransaction transaction, string maKho, int currentId)
+        {
+            string sql = @"
+                SELECT COUNT(*)
+                FROM Warehouses
+                WHERE MaKho = @MaKho AND Id <> @Id";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@MaKho", maKho);
+                command.Parameters.AddWithValue("@Id", currentId);
+                if (Convert.ToInt32(command.ExecuteScalar()) > 0)
+                {
+                    throw new Exception($"Mã kho {maKho} đã tồn tại");
+                }
+            }
+        }
+
+        private static void AddWarehouseParameters(SqlCommand command, Warehouse warehouse)
+        {
+            command.Parameters.AddWithValue("@MaKho", warehouse.MaKho.Trim());
+            command.Parameters.AddWithValue("@TenKho", warehouse.TenKho.Trim());
+            command.Parameters.AddWithValue("@LoaiKho", NormalizeWarehouseType(warehouse.LoaiKho));
+            command.Parameters.AddWithValue("@MaNV", string.IsNullOrWhiteSpace(warehouse.MaNV) ? DBNull.Value : warehouse.MaNV.Trim());
+            command.Parameters.AddWithValue("@DiaChi", string.IsNullOrWhiteSpace(warehouse.DiaChi) ? DBNull.Value : warehouse.DiaChi.Trim());
+            command.Parameters.AddWithValue("@GhiChu", string.IsNullOrWhiteSpace(warehouse.GhiChu) ? DBNull.Value : warehouse.GhiChu.Trim());
+            command.Parameters.AddWithValue("@KhoUuTien", warehouse.KhoUuTien);
+        }
+
+        private static Warehouse ReadWarehouse(SqlDataReader reader)
+        {
+            return new Warehouse
+            {
+                Id = Convert.ToInt32(reader["Id"]),
+                MaKho = reader["MaKho"].ToString() ?? string.Empty,
+                TenKho = reader["TenKho"].ToString() ?? string.Empty,
+                LoaiKho = reader["LoaiKho"].ToString() ?? string.Empty,
+                MaNV = reader["MaNV"] == DBNull.Value ? null : reader["MaNV"].ToString(),
+                TenNV = reader["TenNV"] == DBNull.Value ? null : reader["TenNV"].ToString(),
+                DiaChi = reader["DiaChi"] == DBNull.Value ? null : reader["DiaChi"].ToString(),
+                GhiChu = reader["GhiChu"] == DBNull.Value ? null : reader["GhiChu"].ToString(),
+                KhoUuTien = reader["KhoUuTien"] != DBNull.Value && Convert.ToBoolean(reader["KhoUuTien"]),
+                IsActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"])
+            };
+        }
+
+        private static bool IsPersonalWarehouse(string loaiKho)
+        {
+            return string.Equals(loaiKho, "CANHAN", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(loaiKho, "PERSONAL", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeWarehouseType(string loaiKho)
+        {
+            if (IsPersonalWarehouse(loaiKho))
+                return "CANHAN";
+
+            return "COMPANY";
+        }
         
     }
 }

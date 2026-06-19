@@ -7,11 +7,14 @@ using QLVT.BLL;
 using QLVT.Models;
 using QLVT.ERP.Models;
 using QLVT.DAL;
+using QLVT.Utils;
 
 namespace QLVT.GUI
 {
     public partial class XuatKhoErpUserControl : UserControl
     {
+        private const int PagePadding = 18;
+
         private readonly XuatKhoBLL exportBLL;
         private readonly WarehouseDAL warehouseDAL;
         private ERP_PhieuXuatKho? currentOrder;
@@ -20,11 +23,116 @@ namespace QLVT.GUI
         public XuatKhoErpUserControl()
         {
             InitializeComponent();
-            QLVT.Utils.UIStyleHelper.ApplyControlTreeStyle(this);
+            ApplyModernStyle();
             exportBLL = new XuatKhoBLL();
             warehouseDAL = new WarehouseDAL();
             SetupDataGridView();
             CheckERPConnection();
+        }
+
+        private void ApplyModernStyle()
+        {
+            UIStyleHelper.ApplyFormStyle(this);
+
+            lblTitle.Text = "XUẤT KHO ERP";
+            UIStyleHelper.ApplyTitleBarStyle(lblTitle);
+
+            grpTimKiem.Text = "Tìm kiếm phiếu xuất";
+            grpPhieuInfo.Text = "Thông tin phiếu";
+            grpChiTiet.Text = "Chi tiết vật tư";
+            foreach (var groupBox in new[] { grpTimKiem, grpPhieuInfo, grpChiTiet })
+            {
+                UIStyleHelper.ApplyGroupBoxStyle(groupBox);
+            }
+
+            lblSoPhieuTimLabel.Text = "Số phiếu";
+            lblSoPhieuLabel.Text = "Số phiếu";
+            lblKhoXuatLabel.Text = "Kho xuất";
+            lblNguoiTaoLabel.Text = "Người nhận";
+            lblTrangThaiLabel.Text = "Trạng thái";
+            foreach (var label in new[]
+            {
+                lblSoPhieuTimLabel, lblSeparator, lblConnectionStatus,
+                lblSoPhieuLabel, lblSoPhieu, lblKhoXuatLabel, lblKhoXuat,
+                lblNguoiTaoLabel, lblNguoiTao, lblTrangThaiLabel, lblTrangThai,
+                lblMappingStatus
+            })
+            {
+                UIStyleHelper.ApplyStandardLabelStyle(label);
+            }
+
+            UIStyleHelper.ApplyTextBoxStyle(txtSoPhieu);
+            UIStyleHelper.ApplyTextBoxStyle(txtNam);
+
+            btnTimPhieu.Text = "Tìm phiếu";
+            btnRefresh.Text = "Làm mới";
+            btnMapping.Text = "Mapping";
+            btnXacNhan.Text = "Xác nhận xuất kho";
+            UIStyleHelper.ApplyPrimaryButtonStyle(btnTimPhieu, new Size(106, 34));
+            UIStyleHelper.ApplySecondaryButtonStyle(btnRefresh, new Size(100, 34));
+            UIStyleHelper.ApplyWarningButtonStyle(btnMapping, new Size(108, 34));
+            UIStyleHelper.ApplySuccessButtonStyle(btnXacNhan, new Size(176, 42));
+
+            lblStatus.AutoSize = false;
+            lblStatus.BorderStyle = BorderStyle.FixedSingle;
+            lblStatus.Padding = new Padding(10, 0, 10, 0);
+            UIStyleHelper.ApplyStatusLabelStyle(lblStatus);
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChiTiet);
+
+            txtNam.Text = string.IsNullOrWhiteSpace(txtNam.Text) ? DateTime.Now.Year.ToString() : txtNam.Text;
+
+            Resize += (_, _) => LayoutModern();
+            LayoutModern();
+        }
+
+        private void LayoutModern()
+        {
+            SuspendLayout();
+
+            var contentTop = UIStyleHelper.PageHeaderHeight + UIStyleHelper.PageHeaderContentGap;
+            var contentWidth = Math.Max(760, Width - PagePadding * 2);
+
+            grpTimKiem.Location = new Point(PagePadding, contentTop);
+            grpTimKiem.Size = new Size(contentWidth, 82);
+
+            lblSoPhieuTimLabel.Location = new Point(18, 34);
+            txtSoPhieu.Location = new Point(82, 30);
+            txtSoPhieu.Size = new Size(92, 25);
+            lblSeparator.Location = new Point(txtSoPhieu.Right + 8, 33);
+            txtNam.Location = new Point(lblSeparator.Right + 8, 30);
+            txtNam.Size = new Size(70, 25);
+            btnTimPhieu.Location = new Point(txtNam.Right + 14, 26);
+            btnRefresh.Location = new Point(btnTimPhieu.Right + 10, 26);
+            lblConnectionStatus.Location = new Point(btnRefresh.Right + 20, 34);
+            lblConnectionStatus.Size = new Size(Math.Max(260, grpTimKiem.ClientSize.Width - lblConnectionStatus.Left - 18), 22);
+
+            grpPhieuInfo.Location = new Point(PagePadding, grpTimKiem.Bottom + 10);
+            grpPhieuInfo.Size = new Size(Math.Max(560, contentWidth - 210), 92);
+
+            lblSoPhieuLabel.Location = new Point(18, 30);
+            lblSoPhieu.Location = new Point(102, 30);
+            lblKhoXuatLabel.Location = new Point(18, 58);
+            lblKhoXuat.Location = new Point(102, 58);
+            lblNguoiTaoLabel.Location = new Point(Math.Max(340, grpPhieuInfo.ClientSize.Width / 2), 30);
+            lblNguoiTao.Location = new Point(lblNguoiTaoLabel.Right + 14, 30);
+            lblTrangThaiLabel.Location = new Point(lblNguoiTaoLabel.Left, 58);
+            lblTrangThai.Location = new Point(lblNguoiTao.Location.X, 58);
+
+            btnXacNhan.Location = new Point(PagePadding + contentWidth - btnXacNhan.Width, grpPhieuInfo.Top + 28);
+
+            grpChiTiet.Location = new Point(PagePadding, grpPhieuInfo.Bottom + 10);
+            grpChiTiet.Size = new Size(contentWidth, Math.Max(280, Height - grpPhieuInfo.Bottom - 70));
+
+            lblMappingStatus.Location = new Point(16, 28);
+            lblMappingStatus.Size = new Size(Math.Max(360, grpChiTiet.ClientSize.Width - 160), 22);
+            btnMapping.Location = new Point(grpChiTiet.ClientSize.Width - btnMapping.Width - 16, 22);
+            dgvChiTiet.Location = new Point(16, 58);
+            dgvChiTiet.Size = new Size(grpChiTiet.ClientSize.Width - 32, grpChiTiet.ClientSize.Height - 74);
+
+            lblStatus.Location = new Point(PagePadding, Height - 42);
+            lblStatus.Size = new Size(contentWidth, 28);
+
+            ResumeLayout(false);
         }
 
         private void CheckERPConnection()
@@ -45,6 +153,8 @@ namespace QLVT.GUI
 
         private void SetupDataGridView()
         {
+            dgvChiTiet.Columns.Clear();
+            UIStyleHelper.ApplyDataGridViewStyle(dgvChiTiet);
             dgvChiTiet.AutoGenerateColumns = false;
             dgvChiTiet.AllowUserToAddRows = false;
             dgvChiTiet.AllowUserToDeleteRows = false;
@@ -110,24 +220,39 @@ namespace QLVT.GUI
                 Width = 70
             });
 
-            // Set row numbering
-            dgvChiTiet.RowPostPaint += (sender, e) =>
-            {
-                var grid = sender as DataGridView;
-                var rowIdx = (e.RowIndex + 1).ToString();
-
-                var centerFormat = new StringFormat()
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
-
-                var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, 
-                    grid.RowHeadersWidth, e.RowBounds.Height);
-                e.Graphics.DrawString(rowIdx, grid.Font, SystemBrushes.ControlText, headerBounds, centerFormat);
-            };
-
             dgvChiTiet.Columns["TenVatTu"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgvChiTiet.RowHeadersVisible = false;
+            dgvChiTiet.DataBindingComplete += (_, _) => UpdateDataGridViewSTT();
+
+            dgvChiTiet.Columns["STT"].HeaderText = "STT";
+            dgvChiTiet.Columns["STT"].FillWeight = 5;
+            dgvChiTiet.Columns["STT"].ReadOnly = true;
+            dgvChiTiet.Columns["STT"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+            dgvChiTiet.Columns["MappedSupplyCode"].HeaderText = "Mã VT";
+            dgvChiTiet.Columns["MappedSupplyCode"].FillWeight = 11;
+            dgvChiTiet.Columns["MappedSupplyCode"].ReadOnly = true;
+
+            dgvChiTiet.Columns["TenVatTu"].HeaderText = "Tên vật tư ERP";
+            dgvChiTiet.Columns["TenVatTu"].FillWeight = 34;
+            dgvChiTiet.Columns["TenVatTu"].ReadOnly = true;
+
+            dgvChiTiet.Columns["SoLuong"].HeaderText = "Số lượng";
+            dgvChiTiet.Columns["SoLuong"].FillWeight = 9;
+            dgvChiTiet.Columns["SoLuong"].ReadOnly = true;
+
+            dgvChiTiet.Columns["DonViTinh"].HeaderText = "ĐVT";
+            dgvChiTiet.Columns["DonViTinh"].FillWeight = 7;
+            dgvChiTiet.Columns["DonViTinh"].ReadOnly = true;
+            dgvChiTiet.Columns["DonViTinh"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+            dgvChiTiet.Columns["KhoXuatDisplay"].HeaderText = "Kho xuất";
+            dgvChiTiet.Columns["KhoXuatDisplay"].FillWeight = 24;
+            dgvChiTiet.Columns["KhoXuatDisplay"].ReadOnly = true;
+
+            dgvChiTiet.Columns["IsMapped"].HeaderText = "Mapped";
+            dgvChiTiet.Columns["IsMapped"].FillWeight = 10;
+            dgvChiTiet.Columns["IsMapped"].ReadOnly = true;
         }
 
         private void btnTimPhieu_Click(object sender, EventArgs e)
